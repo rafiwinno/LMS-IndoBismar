@@ -1,13 +1,14 @@
-import React from 'react';
-import { 
-  LayoutDashboard, 
-  Users, 
-  BookOpen, 
-  FileText, 
+import {
+  LayoutDashboard,
+  Users,
+  BookOpen,
+  FileText,
   ClipboardList,
   GraduationCap,
-  UserSquare2, 
-  BarChart3
+  UserSquare2,
+  BarChart3,
+  X,
+  LogOut,
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -19,9 +20,11 @@ export function cn(...inputs: ClassValue[]) {
 interface SidebarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
+  isOpen: boolean;
+  setIsOpen: (isOpen: boolean) => void;
 }
 
-export function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
+export function Sidebar({ activeTab, setActiveTab, isOpen, setIsOpen }: SidebarProps) {
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'participants', label: 'Participants', icon: Users },
@@ -34,41 +37,78 @@ export function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
   ];
 
   return (
-    <div className="w-64 bg-slate-900 text-white flex flex-col h-full">
-      <div className="p-6 border-b border-slate-800">
-        <h2 className="text-2xl font-bold text-indigo-400">Indo Bismar</h2>
-        <p className="text-xs text-slate-400 mt-1 uppercase tracking-wider">LMS Admin Branch</p>
-      </div>
-      <nav className="flex-1 py-4 overflow-y-auto">
-        <ul className="space-y-1 px-3">
+    <>
+      {/* Mobile overlay */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-20 bg-slate-900/50 lg:hidden"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside className={cn(
+        "fixed inset-y-0 left-0 z-30 w-64 bg-slate-900 text-slate-300 transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 flex flex-col",
+        isOpen ? "translate-x-0" : "-translate-x-full"
+      )}>
+        {/* Logo */}
+        <div className="flex items-center justify-between h-16 px-6 bg-slate-950/50">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center font-bold text-white">
+              IB
+            </div>
+            <span className="text-lg font-bold text-white tracking-tight">LMS Indo Bismar</span>
+          </div>
+          <button
+            onClick={() => setIsOpen(false)}
+            className="lg:hidden p-1 rounded-md hover:bg-slate-800 text-slate-400 hover:text-white"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Admin label */}
+        <div className="px-6 py-2">
+          <p className="text-xs text-slate-500 uppercase tracking-wider">Admin Panel</p>
+        </div>
+
+        {/* Nav */}
+        <nav className="flex-1 px-4 py-2 space-y-1 overflow-y-auto">
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
             return (
-              <li key={item.id}>
-                <button
-                  onClick={() => setActiveTab(item.id)}
-                  className={cn(
-                    "w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors text-sm font-medium",
-                    isActive 
-                      ? "bg-indigo-600 text-white" 
-                      : "text-slate-300 hover:bg-slate-800 hover:text-white"
-                  )}
-                >
-                  <Icon size={18} className={cn(isActive ? "text-white" : "text-slate-400")} />
-                  <span>{item.label}</span>
-                </button>
-              </li>
+              <button
+                key={item.id}
+                onClick={() => { setActiveTab(item.id); setIsOpen(false); }}
+                className={cn(
+                  "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-medium text-sm",
+                  isActive
+                    ? "bg-blue-600/10 text-blue-400"
+                    : "hover:bg-slate-800/50 hover:text-white"
+                )}
+              >
+                <Icon size={20} className={isActive ? "text-blue-400" : "text-slate-400"} />
+                {item.label}
+              </button>
             );
           })}
-        </ul>
-      </nav>
-      <div className="p-4 border-t border-slate-800">
-        <div className="bg-slate-800 rounded-lg p-4">
-          <p className="text-xs text-slate-400 mb-1">Current Branch</p>
-          <p className="text-sm font-semibold text-white">Surabaya Central</p>
+        </nav>
+
+        {/* Footer */}
+        <div className="p-4 border-t border-slate-800">
+          <div className="px-3 py-1 mb-2">
+            <p className="text-xs text-slate-500">Current Branch</p>
+            <p className="text-sm font-semibold text-white">Surabaya Central</p>
+          </div>
+          <button
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-medium text-sm hover:bg-slate-800/50 hover:text-white text-slate-400"
+          >
+            <LogOut size={20} />
+            Keluar
+          </button>
         </div>
-      </div>
-    </div>
+      </aside>
+    </>
   );
 }
