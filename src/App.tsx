@@ -31,6 +31,9 @@ import TrainerDashboard from './pages/trainer/Dashboard';
 
 // Superadmin Pages
 import SuperAdminDashboard from './pages/superadmin/Dashboard';
+import SuperAdminLayout from './components/superadmin/Header';
+import Users from './pages/superadmin/Users';
+import Branches from './pages/superadmin/Branches';
 
 // Komponen untuk redirect root "/" berdasarkan role yang sedang login
 function RootRedirect() {
@@ -70,13 +73,17 @@ export default function App() {
 
         {/* ===== ADMIN ROUTES ===== */}
         <Route
-          path="/admin/dashboard"
+          path="/superadmin"
           element={
-            <ProtectedRoute allowedRoles={['admin']}>
-              <AdminDashboard />
+            <ProtectedRoute allowedRoles={['superadmin']}>
+              <SuperAdminLayout />
             </ProtectedRoute>
           }
-        />
+        >
+          <Route path="dashboard" element={<SuperAdminDashboard />} />
+          <Route path="users" element={<Users />} />
+          <Route path="branches" element={<Branches />} />
+        </Route>
 
         {/* ===== TRAINER ROUTES ===== */}
         <Route
@@ -90,13 +97,17 @@ export default function App() {
 
         {/* ===== SUPERADMIN ROUTES ===== */}
         <Route
-          path="/superadmin/dashboard"
+          path="/superadmin"
           element={
             <ProtectedRoute allowedRoles={['superadmin']}>
-              <SuperAdminDashboard />
+              <SuperAdminLayout />
             </ProtectedRoute>
           }
-        />
+        >
+          <Route path="dashboard" element={<SuperAdminDashboard />} />
+          <Route path="users" element={<Users />} />
+          <Route path="branches" element={<Branches />} />
+        </Route>
 
         {/* Halaman unauthorized */}
         <Route

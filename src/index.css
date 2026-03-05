@@ -1,1 +1,5 @@
 @import "tailwindcss";
+@tailwind utilities;
+
+button, [role="button"], select, label[for], a { cursor: pointer; }
+button:disabled, [disabled] { cursor: not-allowed; }
