@@ -3,12 +3,12 @@ import { Link } from 'react-router-dom';
 
 export default function Courses() {
   const courses = [
-    { id: 1, title: 'Pengenalan Jaringan Komputer', trainer: 'Ahmad Santoso', progress: 100, status: 'Selesai', category: 'Teknis' },
-    { id: 2, title: 'Dasar Pemrograman Web', trainer: 'Budi Raharjo', progress: 65, status: 'Sedang Berjalan', category: 'Teknis' },
-    { id: 3, title: 'Troubleshooting Hardware', trainer: 'Citra Dewi', progress: 20, status: 'Sedang Berjalan', category: 'Teknis' },
-    { id: 4, title: 'Komunikasi Profesional', trainer: 'Dian Sastro', progress: 0, status: 'Belum Dimulai', category: 'Non-Teknis' },
-    { id: 5, title: 'Manajemen Waktu', trainer: 'Eko Prasetyo', progress: 0, status: 'Belum Dimulai', category: 'Non-Teknis' },
-    { id: 6, title: 'Keamanan Siber Dasar', trainer: 'Fahmi Reza', progress: 0, status: 'Belum Dimulai', category: 'Teknis' },
+    { id: 1, title: 'Pengenalan Jaringan Komputer', progress: 100, status: 'Selesai' },
+    { id: 2, title: 'Dasar Pemrograman Web', progress: 65, status: 'Sedang Berjalan' },
+    { id: 3, title: 'Troubleshooting Hardware', progress: 20, status: 'Sedang Berjalan' },
+    { id: 4, title: 'Komunikasi Profesional', progress: 0, status: 'Belum Dimulai' },
+    { id: 5, title: 'Manajemen Waktu', progress: 0, status: 'Belum Dimulai' },
+    { id: 6, title: 'Keamanan Siber Dasar', progress: 0, status: 'Belum Dimulai'},
   ];
 
   return (
@@ -16,7 +16,6 @@ export default function Courses() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Daftar Course</h1>
-          <p className="text-slate-500 text-sm mt-1">Course yang tersedia untuk cabang Surabaya Pusat</p>
         </div>
         
         <div className="flex items-center gap-3 w-full sm:w-auto">
@@ -54,19 +53,9 @@ export default function Courses() {
             </div>
             
             <div className="p-5 flex-1 flex flex-col">
-              <div className="mb-2">
-                <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
-                  {course.category}
-                </span>
-              </div>
-              
               <h3 className="font-bold text-slate-900 mb-2 group-hover:text-blue-600 transition-colors line-clamp-2">
                 {course.title}
               </h3>
-              
-              <p className="text-sm text-slate-500 mb-6 flex-1">
-                Trainer: <span className="font-medium text-slate-700">{course.trainer}</span>
-              </p>
               
               <div className="mt-auto">
                 <div className="flex justify-between text-xs mb-1.5">
