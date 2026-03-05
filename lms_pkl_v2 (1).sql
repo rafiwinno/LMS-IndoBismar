@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Waktu pembuatan: 05 Mar 2026 pada 04.49
+-- Waktu pembuatan: 05 Mar 2026 pada 04.59
 -- Versi server: 10.4.32-MariaDB
 -- Versi PHP: 8.2.12
 
@@ -224,6 +224,23 @@ CREATE TABLE `pengumpulan_tugas` (
 -- --------------------------------------------------------
 
 --
+-- Struktur dari tabel `penilaian_pkl`
+--
+
+CREATE TABLE `penilaian_pkl` (
+  `id_penilaian` int(11) NOT NULL,
+  `id_pengguna` int(11) DEFAULT NULL,
+  `nilai_teknis` decimal(5,2) DEFAULT NULL,
+  `nilai_non_teknis` decimal(5,2) DEFAULT NULL,
+  `nilai_akhir` decimal(5,2) DEFAULT NULL,
+  `catatan` text DEFAULT NULL,
+  `dinilai_oleh` int(11) DEFAULT NULL,
+  `tanggal_penilaian` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Struktur dari tabel `pertanyaan`
 --
 
@@ -413,6 +430,14 @@ ALTER TABLE `pengumpulan_tugas`
   ADD KEY `id_pengguna` (`id_pengguna`);
 
 --
+-- Indeks untuk tabel `penilaian_pkl`
+--
+ALTER TABLE `penilaian_pkl`
+  ADD PRIMARY KEY (`id_penilaian`),
+  ADD KEY `id_pengguna` (`id_pengguna`),
+  ADD KEY `dinilai_oleh` (`dinilai_oleh`);
+
+--
 -- Indeks untuk tabel `pertanyaan`
 --
 ALTER TABLE `pertanyaan`
@@ -538,6 +563,12 @@ ALTER TABLE `pengumpulan_tugas`
   MODIFY `id_pengumpulan` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT untuk tabel `penilaian_pkl`
+--
+ALTER TABLE `penilaian_pkl`
+  MODIFY `id_penilaian` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT untuk tabel `pertanyaan`
 --
 ALTER TABLE `pertanyaan`
@@ -648,6 +679,13 @@ ALTER TABLE `pengguna`
 ALTER TABLE `pengumpulan_tugas`
   ADD CONSTRAINT `pengumpulan_tugas_ibfk_1` FOREIGN KEY (`id_tugas`) REFERENCES `tugas` (`id_tugas`),
   ADD CONSTRAINT `pengumpulan_tugas_ibfk_2` FOREIGN KEY (`id_pengguna`) REFERENCES `pengguna` (`id_pengguna`);
+
+--
+-- Ketidakleluasaan untuk tabel `penilaian_pkl`
+--
+ALTER TABLE `penilaian_pkl`
+  ADD CONSTRAINT `penilaian_pkl_ibfk_1` FOREIGN KEY (`id_pengguna`) REFERENCES `pengguna` (`id_pengguna`),
+  ADD CONSTRAINT `penilaian_pkl_ibfk_2` FOREIGN KEY (`dinilai_oleh`) REFERENCES `pengguna` (`id_pengguna`);
 
 --
 -- Ketidakleluasaan untuk tabel `pertanyaan`
