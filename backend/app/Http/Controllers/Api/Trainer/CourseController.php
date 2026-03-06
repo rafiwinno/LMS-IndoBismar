@@ -17,21 +17,23 @@ class CourseController extends Controller
     }
 
     // 2. Buat course baru
-    public function store(Request $request)
-    {
-        $course = Course::create([
-            'id_pengguna' => $request->id_pengguna,
-            'id_cabang' => $request->id_cabang,
-            'judul_kursus' => $request->judul_kursus,
-            'deskripsi' => $request->deskripsi,
-            'status' => 'draft'
-        ]);
+   public function store(Request $request)
+{
+    $user = $request->user();
 
-        return response()->json([
-            'message' => 'Course berhasil dibuat',
-            'data' => $course
-        ]);
-    }
+    $course = Course::create([
+        'id_pengguna' => $user->id_pengguna,
+        'id_cabang' => $user->id_cabang,
+        'judul_kursus' => $request->judul_kursus,
+        'deskripsi' => $request->deskripsi,
+        'status' => 'draft'
+    ]);
+
+    return response()->json([
+        'message' => 'Course berhasil dibuat',
+        'data' => $course
+    ]);
+}
 
     // 3. Detail course
     public function show($id)
