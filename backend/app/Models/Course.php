@@ -12,10 +12,15 @@ class Course extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'id_trainer',
+        'id_pengguna',
         'id_cabang',
         'judul_kursus',
         'deskripsi',
         'status'
     ];
+
+    public function trainer()
+    {
+        return $this->belongsTo(User::class, 'id_pengguna');
+    }
 }

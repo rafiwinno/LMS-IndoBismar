@@ -2,11 +2,11 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Support\Facades\Hash;
 
-class User extends Model
+class User extends Authenticatable
 {
     use HasApiTokens;
 
@@ -21,15 +21,22 @@ class User extends Model
         'email',
         'password',
         'nomor_hp',
-        'id_role'
+        'id_role',
+        'id_cabang'
     ];
 
     protected $hidden = [
-        'password'
+        'password',
+        'remember_token'
     ];
 
     public function setPasswordAttribute($value)
     {
         $this->attributes['password'] = Hash::make($value);
+    }
+
+    public function courses()
+    {
+        return $this->hasMany(Course::class,'id_pengguna');
     }
 }

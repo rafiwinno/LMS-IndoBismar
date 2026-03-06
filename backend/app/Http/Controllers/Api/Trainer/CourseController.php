@@ -20,7 +20,7 @@ class CourseController extends Controller
     public function store(Request $request)
     {
         $course = Course::create([
-            'id_trainer' => $request->id_trainer,
+            'id_pengguna' => $request->id_pengguna,
             'id_cabang' => $request->id_cabang,
             'judul_kursus' => $request->judul_kursus,
             'deskripsi' => $request->deskripsi,

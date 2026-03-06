@@ -19,7 +19,8 @@ class UserSeeder extends Seeder
                 'password' => Hash::make('password'),
                 'nomor_hp' => null,
                 'id_role' => 1,
-                'status' => 'aktif'
+                'status' => 'aktif',
+                'id_cabang' => '1'
             ],
 
             [
@@ -29,7 +30,8 @@ class UserSeeder extends Seeder
                 'password' => Hash::make('password'),
                 'nomor_hp' => null,
                 'id_role' => 2,
-                'status' => 'aktif'
+                'status' => 'aktif',
+                'id_cabang' => '1'
             ],
 
             [
@@ -39,7 +41,8 @@ class UserSeeder extends Seeder
                 'password' => Hash::make('password'),
                 'nomor_hp' => null,
                 'id_role' => 3,
-                'status' => 'aktif'
+                'status' => 'aktif',
+                'id_cabang' => '1'
             ],
 
             [
@@ -49,7 +52,8 @@ class UserSeeder extends Seeder
                 'password' => Hash::make('password'),
                 'nomor_hp' => '08123456789',
                 'id_role' => 4,
-                'status' => 'aktif'
+                'status' => 'aktif',
+                'id_cabang' => '1'
             ]
 
         ]);
