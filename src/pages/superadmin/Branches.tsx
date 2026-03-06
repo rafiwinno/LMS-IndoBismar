@@ -1,6 +1,3 @@
-// src/pages/superadmin/Branches.tsx
-// ✅ Self-contained — semua komponen ada di file ini
-
 import { useState, useMemo, useEffect } from 'react';
 import {
   Search, Plus, MapPin, Users, Edit2, Trash2,
@@ -112,11 +109,11 @@ function BranchModal({ isOpen, onClose, onSuccess, initialData }: BranchModalPro
   };
 
   const inputCls = (k: string) =>
-    `w-full pl-9 pr-3 py-2.5 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors ${
+    `w-full pl-9 pr-3 py-2.5 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
       errors[k] ? 'border-red-300 bg-red-50' : 'border-slate-300 bg-white'
     }`;
   const inputClsNoIcon = (k: string) =>
-    `w-full px-3 py-2.5 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors ${
+    `w-full px-3 py-2.5 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
       errors[k] ? 'border-red-300 bg-red-50' : 'border-slate-300 bg-white'
     }`;
 
@@ -193,7 +190,7 @@ function BranchModal({ isOpen, onClose, onSuccess, initialData }: BranchModalPro
               Alamat <span className="text-red-500">*</span>
             </label>
             <textarea
-              className={`w-full px-3 py-2.5 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors resize-none ${
+              className={`w-full px-3 py-2.5 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors resize-none ${
                 errors.address ? 'border-red-300 bg-red-50' : 'border-slate-300 bg-white'
               }`}
               placeholder="Jl. Basuki Rahmat No. 10"
@@ -246,7 +243,7 @@ function BranchModal({ isOpen, onClose, onSuccess, initialData }: BranchModalPro
             Batal
           </button>
           <button type="button" onClick={handleSubmit} disabled={loading}
-            className="flex items-center gap-2 px-5 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors shadow-sm cursor-pointer">
+            className="flex items-center gap-2 px-5 py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors shadow-sm cursor-pointer">
             {loading
               ? <><span className="animate-spin inline-block w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full" /> Menyimpan...</>
               : isEdit ? '✓ Simpan Perubahan' : '+ Create Branch'
@@ -301,11 +298,11 @@ function DetailDrawer({ branch, onClose, onEdit }: { branch: Branch; onClose: ()
         </div>
         <div className="flex-1 overflow-y-auto p-5">
           {/* Header card */}
-          <div className="bg-gradient-to-br from-indigo-500 to-indigo-700 rounded-xl p-5 text-white mb-5">
+          <div className="bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl p-5 text-white mb-5">
             <div className="flex items-start justify-between">
               <div>
                 <p className="font-bold text-lg leading-tight">{branch.name}</p>
-                <p className="text-indigo-200 text-xs font-mono mt-1">{branch.code}</p>
+                <p className="text-blue-200 text-xs font-mono mt-1">{branch.code}</p>
               </div>
               <span className={`text-xs font-bold px-2 py-1 rounded-md ${
                 branch.status === 'Active' ? 'bg-emerald-400/30 text-emerald-100' :
@@ -319,7 +316,7 @@ function DetailDrawer({ branch, onClose, onEdit }: { branch: Branch; onClose: ()
               </div>
               <div>
                 <p className="text-2xl font-bold">{branch.totalUsers}</p>
-                <p className="text-indigo-200 text-xs">Total Users</p>
+                <p className="text-blue-200 text-xs">Total Users</p>
               </div>
             </div>
           </div>
@@ -343,7 +340,7 @@ function DetailDrawer({ branch, onClose, onEdit }: { branch: Branch; onClose: ()
         </div>
         <div className="p-4 border-t border-slate-100">
           <button type="button" onClick={onEdit}
-            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors cursor-pointer">
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors cursor-pointer">
             <Edit2 className="w-4 h-4" /> Edit Cabang
           </button>
         </div>
@@ -443,7 +440,7 @@ export default function Branches() {
           </p>
         </div>
         <button type="button" onClick={() => setShowCreate(true)}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium shadow-sm cursor-pointer">
+          className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-sm cursor-pointer">
           <Plus className="w-4 h-4" /> Create Branch
         </button>
       </div>
@@ -453,22 +450,22 @@ export default function Branches() {
         <div className="relative w-full sm:w-80">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input type="text" placeholder="Search by name, code, or city..."
-            className="w-full pl-9 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-white"
+            className="w-full pl-9 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white"
             value={search}
             onChange={e => { setSearch(e.target.value); setPage(1); }}
           />
         </div>
         <div className="flex gap-2 w-full sm:w-auto">
           <select value={filterStatus} onChange={e => { setFilterStatus(e.target.value); setPage(1); }}
-            className={`flex-1 sm:flex-none px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors cursor-pointer ${
-              filterStatus ? 'border-indigo-400 bg-indigo-50 text-indigo-700' : 'border-slate-300 bg-white text-slate-600'
+            className={`flex-1 sm:flex-none px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors cursor-pointer ${
+              filterStatus ? 'border-blue-400 bg-blue-50 text-blue-700' : 'border-slate-300 bg-white text-slate-600'
             }`}>
             <option value="">All Status</option>
             {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
           </select>
           <select value={filterCity} onChange={e => { setFilterCity(e.target.value); setPage(1); }}
-            className={`flex-1 sm:flex-none px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors cursor-pointer ${
-              filterCity ? 'border-indigo-400 bg-indigo-50 text-indigo-700' : 'border-slate-300 bg-white text-slate-600'
+            className={`flex-1 sm:flex-none px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors cursor-pointer ${
+              filterCity ? 'border-blue-400 bg-blue-50 text-blue-700' : 'border-slate-300 bg-white text-slate-600'
             }`}>
             <option value="">All Cities</option>
             {CITIES.map(c => <option key={c} value={c}>{c}</option>)}
@@ -486,7 +483,7 @@ export default function Branches() {
       {hasFilter && (
         <p className="text-sm text-slate-500">
           Menampilkan <span className="font-semibold text-slate-700">{filtered.length}</span> dari {branches.length} cabang
-          <span className="text-indigo-500 font-medium ml-1">(filtered)</span>
+          <span className="text-blue-500 font-medium ml-1">(filtered)</span>
         </p>
       )}
 
@@ -512,7 +509,7 @@ export default function Branches() {
                   </div>
                   <div className="flex gap-1 shrink-0">
                     <button type="button" onClick={() => setEditTarget(branch)}
-                      className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg border border-transparent hover:border-indigo-200 transition-all cursor-pointer"
+                      className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg border border-transparent hover:border-blue-200 transition-all cursor-pointer"
                       title="Edit cabang">
                       <Edit2 className="w-4 h-4" />
                     </button>
@@ -539,8 +536,8 @@ export default function Branches() {
               {/* Card Footer */}
               <div className="bg-slate-50 px-5 py-3 border-t border-slate-100 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-lg bg-indigo-100 flex items-center justify-center">
-                    <Users className="w-3.5 h-3.5 text-indigo-600" />
+                  <div className="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center">
+                    <Users className="w-3.5 h-3.5 text-blue-600" />
                   </div>
                   <div>
                     <p className="text-xs text-slate-400 leading-none">Total Users</p>
@@ -548,7 +545,7 @@ export default function Branches() {
                   </div>
                 </div>
                 <button type="button" onClick={() => setDetailTarget(branch)}
-                  className="text-xs font-medium text-indigo-600 hover:text-indigo-800 hover:underline transition-colors cursor-pointer">
+                  className="text-xs font-medium text-blue-600 hover:text-blue-800 hover:underline transition-colors cursor-pointer">
                   Lihat detail →
                 </button>
               </div>
@@ -560,7 +557,7 @@ export default function Branches() {
           <Search className="w-8 h-8 mx-auto mb-2 text-slate-300" />
           <p className="text-sm text-slate-500 font-medium">Tidak ada cabang yang ditemukan.</p>
           <button type="button" onClick={resetFilters}
-            className="text-xs text-indigo-600 hover:underline mt-1 cursor-pointer">
+            className="text-xs text-blue-600 hover:underline mt-1 cursor-pointer">
             Reset semua filter
           </button>
         </div>
@@ -582,7 +579,7 @@ export default function Branches() {
                 ? <span key={`e${i}`} className="px-1 text-slate-400 text-xs">…</span>
                 : <button key={p} type="button" onClick={() => goPage(Number(p))}
                     className={`w-8 h-8 rounded-lg text-xs font-semibold border transition-colors cursor-pointer ${
-                      page === p ? 'bg-indigo-600 border-indigo-600 text-white shadow-sm' : 'border-slate-300 text-slate-600 hover:bg-slate-50'
+                      page === p ? 'bg-blue-600 border-blue-600 text-white shadow-sm' : 'border-slate-300 text-slate-600 hover:bg-slate-50'
                     }`}>{p}</button>
             )}
             <button type="button" onClick={() => goPage(page + 1)} disabled={page === totalPages}
