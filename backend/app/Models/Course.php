@@ -7,8 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 class Course extends Model
 {
     protected $table = 'kursus';
-
     protected $primaryKey = 'id_kursus';
+
+    public $timestamps = false;
 
     protected $fillable = [
         'id_trainer',

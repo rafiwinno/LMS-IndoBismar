@@ -22,7 +22,7 @@ Route::post('/login/staff', [AuthController::class,'loginStaff']);
 
 
 
-Route::prefix('trainer')->group(function () {
+Route::middleware('auth:sanctum')->prefix('trainer')->group(function () {
 
     Route::get('/courses', [CourseController::class, 'index']);
     Route::post('/courses', [CourseController::class, 'store']);
