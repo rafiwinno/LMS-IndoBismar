@@ -39,41 +39,47 @@ class AuthController extends Controller
 
     // LOGIN PESERTA (EMAIL)
     public function loginPeserta(Request $request)
-    {
-        $user = User::where('email',$request->email)
-                    ->where('id_role',4)
-                    ->first();
+{
+    $user = User::where('email',$request->email)
+                ->where('id_role',4)
+                ->first();
 
-        if(!$user || !Hash::check($request->password,$user->password)){
-            return response()->json([
-                'message' => 'Email atau password salah'
-            ],401);
-        }
-
+    if(!$user || !Hash::check($request->password,$user->password)){
         return response()->json([
-            'message' => 'Login berhasil',
-            'user' => $user
-        ]);
+            'message' => 'Email atau password salah'
+        ],401);
     }
+
+    $token = $user->createToken('auth_token')->plainTextToken;
+
+    return response()->json([
+        'message' => 'Login berhasil',
+        'token' => $token,
+        'user' => $user
+    ]);
+}
 
 
     // LOGIN ADMIN / TRAINER (USERNAME)
     public function loginStaff(Request $request)
-    {
-        $user = User::where('username',$request->username)
-                    ->whereIn('id_role',[1,2,3])
-                    ->first();
+{
+    $user = User::where('username',$request->username)
+                ->whereIn('id_role',[1,2,3])
+                ->first();
 
-        if(!$user || !Hash::check($request->password,$user->password)){
-            return response()->json([
-                'message' => 'Username atau password salah'
-            ],401);
-        }
-
+    if(!$user || !Hash::check($request->password,$user->password)){
         return response()->json([
-            'message' => 'Login berhasil',
-            'user' => $user
-        ]);
+            'message' => 'Username atau password salah'
+        ],401);
     }
+
+    $token = $user->createToken('auth_token')->plainTextToken;
+
+    return response()->json([
+        'message' => 'Login berhasil',
+        'token' => $token,
+        'user' => $user
+    ]);
+}
 
 }
