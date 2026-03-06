@@ -1,4 +1,3 @@
-
 export type Role = "user" | "admin" | "trainer" | "superadmin";
 
 export interface User {
@@ -8,23 +7,19 @@ export interface User {
   role: Role;
 }
 
-// simpan user ke localStorage setelah login
 export const saveUser = (user: User) => {
   localStorage.setItem("lms_user", JSON.stringify(user));
 };
 
-// ambil user dari localStorage
 export const getUser = (): User | null => {
   const data = localStorage.getItem("lms_user");
   return data ? JSON.parse(data) : null;
 };
 
-// hapus user dari localStorage (logout)
 export const removeUser = () => {
   localStorage.removeItem("lms_user");
 };
 
-// redirect path berdasarkan role
 export const getDashboardPath = (role: Role): string => {
   switch (role) {
     case "superadmin": return "/superadmin/dashboard";
@@ -33,4 +28,25 @@ export const getDashboardPath = (role: Role): string => {
     case "user":
     default:           return "/dashboard";
   }
-};
+}; // ← tutup getDashboardPath di sini
+
+export interface DashboardStats {
+  total_active_users: number;
+  total_branches: number;
+}
+
+export interface WeeklyChartItem {
+  day: string;
+  date: string;
+  active_users: number;
+}
+
+export interface DashboardData {
+  stats: DashboardStats;
+  weekly_chart: WeeklyChartItem[];
+}
+
+export interface LoginResponse {
+  token: string;
+  user: User & { role: Role };
+}

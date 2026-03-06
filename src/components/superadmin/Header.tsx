@@ -1,6 +1,7 @@
-import { Outlet, NavLink, Link } from 'react-router-dom';
+import { Outlet, NavLink, Link, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, Users, Building2, LogOut, Menu, Bell, X } from 'lucide-react';
 import { useState } from 'react';
+import { authService } from '../../services/api';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -11,12 +12,25 @@ function cn(...inputs: ClassValue[]) {
 export default function SuperAdminLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const navigate = useNavigate();
 
   const navigation = [
     { name: 'National Dashboard', href: '/superadmin/dashboard', icon: LayoutDashboard },
     { name: 'User Management', href: '/superadmin/users', icon: Users },
     { name: 'Branch Management', href: '/superadmin/branches', icon: Building2 },
   ];
+
+  const handleLogout = async () => {
+  try {
+    await authService.logout();
+  } catch {
+    // tetap logout meski request gagal
+    localStorage.removeItem('lms_token');
+    localStorage.removeItem('lms_user');
+  } finally {
+    navigate('/');
+  }
+};
 
   return (
     <div className="min-h-screen bg-slate-50 flex">
@@ -95,11 +109,14 @@ export default function SuperAdminLayout() {
 
         {/* Logout */}
         <div className="p-4 border-t border-slate-800 shrink-0">
-          <button className={cn(
-            "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-medium text-sm",
-            "text-slate-400 hover:bg-slate-800/50 hover:text-white w-full",
-            !isSidebarOpen && "lg:justify-center"
-          )}>
+          <button
+            onClick={handleLogout}
+            className={cn(
+              "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-medium text-sm",
+              "text-slate-400 hover:bg-slate-800/50 hover:text-white w-full",
+              !isSidebarOpen && "lg:justify-center"
+            )}
+          >
             <LogOut size={20} className="shrink-0" />
             <span className={cn("whitespace-nowrap", !isSidebarOpen && "lg:hidden")}>
               Logout

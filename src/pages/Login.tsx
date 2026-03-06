@@ -1,41 +1,32 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, LogIn } from 'lucide-react';
-import { saveUser, getDashboardPath, User } from '../pages/types';
+import { saveUser, getDashboardPath } from './types';
+import { authService } from '../services/api';
 
 export default function Login() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
 
-    // ============================================================
-    // SIMULASI LOGIN - ganti bagian ini dengan API call ke Laravel
-    // Contoh nanti: const res = await fetch('/api/login', {...})
-    // ============================================================
-    const dummyUsers: User[] = [
-      { id: 1, name: 'Budi Wibowo',   email: 'user@lms.com',       role: 'user'       },
-      { id: 2, name: 'Ahmad Admin',   email: 'admin@lms.com',      role: 'admin'      },
-      { id: 3, name: 'Citra Trainer', email: 'trainer@lms.com',    role: 'trainer'    },
-      { id: 4, name: 'Super Admin',   email: 'superadmin@lms.com', role: 'superadmin' },
-    ];
-
-    const found = dummyUsers.find(u => u.email === email);
-
-    if (!found || password !== '123456') {
-      setError('Email atau password salah.');
-      return;
+    try {
+      const res = await authService.login(email, password);
+      localStorage.setItem('lms_token', res.token);
+      saveUser(res.user);
+      navigate(getDashboardPath(res.user.role));
+    } catch (err: any) {
+      const msg = err.response?.data?.message || 'Email atau password salah.';
+      setError(msg);
+    } finally {
+      setLoading(false);
     }
-
-    // Simpan user ke localStorage
-    saveUser(found);
-
-    // Redirect ke dashboard sesuai role
-    navigate(getDashboardPath(found.role));
   };
 
   return (
@@ -50,15 +41,6 @@ export default function Login() {
         </div>
 
         <div className="p-8">
-          {/* Akun demo untuk testing - hapus saat production */}
-          <div className="mb-6 p-3 bg-blue-50 rounded-lg border border-blue-100 text-xs text-slate-600">
-            <p className="font-semibold text-slate-700 mb-1">Akun Demo (password: 123456)</p>
-            <p>👤 user@lms.com</p>
-            <p>🛠️ admin@lms.com</p>
-            <p>👨‍🏫 trainer@lms.com</p>
-            <p>⚙️ superadmin@lms.com</p>
-          </div>
-
           <form onSubmit={handleLogin} className="space-y-5">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1.5">Email</label>
@@ -105,10 +87,11 @@ export default function Login() {
 
             <button
               type="submit"
-              className="w-full flex justify-center items-center gap-2 py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+              disabled={loading}
+              className="w-full flex justify-center items-center gap-2 py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
             >
               <LogIn className="w-4 h-4" />
-              Masuk
+              {loading ? 'Memproses...' : 'Masuk'}
             </button>
           </form>
 
