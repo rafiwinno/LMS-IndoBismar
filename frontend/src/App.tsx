@@ -1,135 +1,94 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { getUser, getDashboardPath } from './pages/types';
-import ProtectedRoute from './components/ProtectedRoute';
-
-// Layout
-import Layout from './components/user/Layout';
-
-// Auth Pages
-import Login from './pages/Login';
-import Register from './pages/Register';
-
-// User Pages
-import UserDashboard from './pages/user/Dashboard';
-import Courses from './pages/user/Courses';
-import CourseDetail from './pages/user/CourseDetail';
-import Tasks from './pages/user/Tasks';
-import Quiz from './pages/user/Quiz';
-import Grades from './pages/user/Grades';
-import Profile from './pages/user/Profile';
-
-// Admin Pages
-import AdminDashboard from './pages/admin/Dashboard';
-
-// Trainer Pages
-import TrainerDashboard from './pages/trainer/Dashboard';
-
-// Superadmin Pages
-import SuperAdminDashboard from './pages/superadmin/Dashboard';
-
-// Komponen untuk redirect root "/" berdasarkan role yang sedang login
-function RootRedirect() {
-  const user = getUser();
-  if (!user) return <Navigate to="/login" replace />;
-  return <Navigate to={getDashboardPath(user.role)} replace />;
-}
+import React, { useState, useEffect } from 'react';
+import { Sidebar } from './components/Sidebar';
+import Header from './components/Header';
+import { Dashboard } from './components/Dashboard';
+import { Participants } from './components/Participants';
+import { Courses } from './components/Courses';
+import { Materials } from './components/Materials';
+import { Assignments } from './components/Assignments';
+import { Exams } from './components/Exams';
+import { Trainers } from './components/Trainers';
+import { Reports } from './components/Reports';
+import Login from './components/Login';
+import { api } from './lib/api';
 
 export default function App() {
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    const stored = localStorage.getItem('user');
+    const token = localStorage.getItem('token');
+    if (stored && token) {
+      setUser(JSON.parse(stored));
+    }
+    setChecking(false);
+  }, []);
+
+  const handleLogin = (userData: any) => {
+    setUser(userData);
+  };
+
+  const handleLogout = async () => {
+    try { await api.logout(); } catch {}
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setUser(null);
+  };
+
+  if (checking) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-slate-900">
+        <div className="text-slate-400">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Login onLogin={handleLogin} />;
+  }
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'dashboard':    return <Dashboard />;
+      case 'participants': return <Participants />;
+      case 'courses':      return <Courses />;
+      case 'materials':    return <Materials />;
+      case 'assignments':  return <Assignments />;
+      case 'exams':        return <Exams />;
+      case 'trainers':     return <Trainers />;
+      case 'reports':      return <Reports />;
+      default:
+        return (
+          <div className="flex items-center justify-center h-full text-slate-500">
+            <h2 className="text-2xl font-semibold">
+              {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Module
+            </h2>
+          </div>
+        );
+    }
+  };
+
   return (
-    <Router>
-      <Routes>
-        {/* Auth */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-
-        {/* Root: redirect sesuai role */}
-        <Route path="/" element={<RootRedirect />} />
-
-        {/* ===== USER ROUTES ===== */}
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute allowedRoles={['user']}>
-              <Layout />
-            </ProtectedRoute>
-          }
-        >
-          <Route path="dashboard" element={<UserDashboard />} />
-          <Route path="courses" element={<Courses />} />
-          <Route path="courses/:id" element={<CourseDetail />} />
-          <Route path="tasks" element={<Tasks />} />
-          <Route path="tasks/quiz/:id" element={<Quiz />} />
-          <Route path="grades" element={<Grades />} />
-          <Route path="profile" element={<Profile />} />
-        </Route>
-
-        {/* ===== ADMIN ROUTES ===== */}
-        <Route
-          path="/admin/dashboard"
-          element={
-            <ProtectedRoute allowedRoles={['admin']}>
-              <AdminDashboard />
-            </ProtectedRoute>
-          }
-        />
-
-        {/* ===== TRAINER ROUTES ===== */}
-        <Route
-          path="/trainer/dashboard"
-          element={
-            <ProtectedRoute allowedRoles={['trainer']}>
-              <TrainerDashboard />
-            </ProtectedRoute>
-          }
-        />
-
-        {/* ===== SUPERADMIN ROUTES ===== */}
-        <Route
-          path="/superadmin/dashboard"
-          element={
-            <ProtectedRoute allowedRoles={['superadmin']}>
-              <SuperAdminDashboard />
-            </ProtectedRoute>
-          }
-        />
-
-        {/* Halaman unauthorized */}
-        <Route
-          path="/unauthorized"
-          element={
-            <div className="min-h-screen flex items-center justify-center bg-slate-50">
-              <div className="text-center">
-                <h1 className="text-4xl font-bold text-red-500">403</h1>
-                <p className="mt-2 text-slate-600">Anda tidak memiliki akses ke halaman ini.</p>
-                <a href="/login" className="mt-4 inline-block text-blue-600 underline">
-                  Kembali ke Login
-                </a>
-              </div>
-            </div>
-          }
-        />
-
-        {/* 404 - halaman tidak ditemukan */}
-        <Route
-          path="*"
-          element={
-            <div className="min-h-screen flex items-center justify-center bg-slate-50">
-              <div className="text-center">
-                <h1 className="text-4xl font-bold text-slate-700">404</h1>
-                <p className="mt-2 text-slate-600">Halaman tidak ditemukan.</p>
-                <a href="/" className="mt-4 inline-block text-blue-600 underline">
-                  Kembali ke Beranda
-                </a>
-              </div>
-            </div>
-          }
-        />
-      </Routes>
-    </Router>
+    <div className="flex h-screen bg-slate-50 font-sans text-slate-900">
+      <Sidebar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        isOpen={sidebarOpen}
+        setIsOpen={setSidebarOpen}
+        onLogout={handleLogout}
+        user={user}
+      />
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <Header onMenuClick={() => setSidebarOpen(true)} user={user} />
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
+          <div className="max-w-7xl mx-auto">
+            {renderContent()}
+          </div>
+        </main>
+      </div>
+    </div>
   );
 }

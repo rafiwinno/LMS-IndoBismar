@@ -1,14 +1,7 @@
 import {
-  LayoutDashboard,
-  Users,
-  BookOpen,
-  FileText,
-  ClipboardList,
-  GraduationCap,
-  UserSquare2,
-  BarChart3,
-  X,
-  LogOut,
+  LayoutDashboard, Users, BookOpen, FileText,
+  ClipboardList, GraduationCap, UserSquare2,
+  BarChart3, X, LogOut,
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -22,31 +15,28 @@ interface SidebarProps {
   setActiveTab: (tab: string) => void;
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
+  onLogout?: () => void;
+  user?: any;
 }
 
-export function Sidebar({ activeTab, setActiveTab, isOpen, setIsOpen }: SidebarProps) {
+export function Sidebar({ activeTab, setActiveTab, isOpen, setIsOpen, onLogout, user }: SidebarProps) {
   const menuItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'participants', label: 'Participants', icon: Users },
-    { id: 'courses', label: 'Courses', icon: BookOpen },
-    { id: 'materials', label: 'Materials', icon: FileText },
-    { id: 'assignments', label: 'Assignments', icon: ClipboardList },
-    { id: 'exams', label: 'Exams', icon: GraduationCap },
-    { id: 'trainers', label: 'Trainers', icon: UserSquare2 },
-    { id: 'reports', label: 'Reports', icon: BarChart3 },
+    { id: 'dashboard',    label: 'Dashboard',    icon: LayoutDashboard },
+    { id: 'participants', label: 'Participants',  icon: Users },
+    { id: 'courses',      label: 'Courses',       icon: BookOpen },
+    { id: 'materials',    label: 'Materials',     icon: FileText },
+    { id: 'assignments',  label: 'Assignments',   icon: ClipboardList },
+    { id: 'exams',        label: 'Exams',         icon: GraduationCap },
+    { id: 'trainers',     label: 'Trainers',      icon: UserSquare2 },
+    { id: 'reports',      label: 'Reports',       icon: BarChart3 },
   ];
 
   return (
     <>
-      {/* Mobile overlay */}
       {isOpen && (
-        <div
-          className="fixed inset-0 z-20 bg-slate-900/50 lg:hidden"
-          onClick={() => setIsOpen(false)}
-        />
+        <div className="fixed inset-0 z-20 bg-slate-900/50 lg:hidden" onClick={() => setIsOpen(false)} />
       )}
 
-      {/* Sidebar */}
       <aside className={cn(
         "fixed inset-y-0 left-0 z-30 w-64 bg-slate-900 text-slate-300 transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 flex flex-col",
         isOpen ? "translate-x-0" : "-translate-x-full"
@@ -54,25 +44,18 @@ export function Sidebar({ activeTab, setActiveTab, isOpen, setIsOpen }: SidebarP
         {/* Logo */}
         <div className="flex items-center justify-between h-16 px-6 bg-slate-950/50">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center font-bold text-white">
-              IB
-            </div>
+            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center font-bold text-white">IB</div>
             <span className="text-lg font-bold text-white tracking-tight">LMS Indo Bismar</span>
           </div>
-          <button
-            onClick={() => setIsOpen(false)}
-            className="lg:hidden p-1 rounded-md hover:bg-slate-800 text-slate-400 hover:text-white"
-          >
+          <button onClick={() => setIsOpen(false)} className="lg:hidden p-1 rounded-md hover:bg-slate-800 text-slate-400 hover:text-white">
             <X size={20} />
           </button>
         </div>
 
-        {/* Admin label */}
         <div className="px-6 py-2">
           <p className="text-xs text-slate-500 uppercase tracking-wider">Admin Panel</p>
         </div>
 
-        {/* Nav */}
         <nav className="flex-1 px-4 py-2 space-y-1 overflow-y-auto">
           {menuItems.map((item) => {
             const Icon = item.icon;
@@ -83,9 +66,7 @@ export function Sidebar({ activeTab, setActiveTab, isOpen, setIsOpen }: SidebarP
                 onClick={() => { setActiveTab(item.id); setIsOpen(false); }}
                 className={cn(
                   "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-medium text-sm",
-                  isActive
-                    ? "bg-blue-600/10 text-blue-400"
-                    : "hover:bg-slate-800/50 hover:text-white"
+                  isActive ? "bg-blue-600/10 text-blue-400" : "hover:bg-slate-800/50 hover:text-white"
                 )}
               >
                 <Icon size={20} className={isActive ? "text-blue-400" : "text-slate-400"} />
@@ -95,14 +76,15 @@ export function Sidebar({ activeTab, setActiveTab, isOpen, setIsOpen }: SidebarP
           })}
         </nav>
 
-        {/* Footer */}
         <div className="p-4 border-t border-slate-800">
           <div className="px-3 py-1 mb-2">
-            <p className="text-xs text-slate-500">Current Branch</p>
-            <p className="text-sm font-semibold text-white">Surabaya Central</p>
+            <p className="text-xs text-slate-500">Login sebagai</p>
+            <p className="text-sm font-semibold text-white">{user?.nama || 'Admin'}</p>
+            <p className="text-xs text-slate-400">{user?.role || 'Administrator'}</p>
           </div>
           <button
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-medium text-sm hover:bg-slate-800/50 hover:text-white text-slate-400"
+            onClick={onLogout}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-medium text-sm hover:bg-red-500/10 hover:text-red-400 text-slate-400"
           >
             <LogOut size={20} />
             Keluar
