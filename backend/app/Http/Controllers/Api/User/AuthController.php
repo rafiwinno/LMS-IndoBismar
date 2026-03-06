@@ -50,9 +50,13 @@ class AuthController extends Controller
             ],401);
         }
 
+        // Menambahkan Token
+        $token = $user->createToken('api-token')->plainTextToken;
+
         return response()->json([
             'message' => 'Login berhasil',
-            'user' => $user
+            'user' => $user,
+            'token' => $token
         ]);
     }
 
