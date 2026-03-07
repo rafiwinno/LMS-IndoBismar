@@ -12,7 +12,7 @@ interface Jadwal {
   tanggal: string; jam: string; ruangan: string; tipe: string;
 }
 
-const initials = (nama: string) => nama.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+const initials = (nama: string | null | undefined) => (nama ?? '?').split(' ').map(n => n[0] ?? '').join('').substring(0, 2).toUpperCase() || '?';
 
 export function Trainers() {
   const [activeTab, setActiveTab] = useState<'list' | 'schedule'>('list');
@@ -90,8 +90,8 @@ export function Trainers() {
   };
 
   const filteredTrainers = trainers.filter(t =>
-    t.nama.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    t.email.toLowerCase().includes(searchTerm.toLowerCase())
+    (t.nama ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (t.email ?? '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const filteredJadwal = jadwal.filter(j =>
