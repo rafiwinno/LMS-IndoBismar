@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api\Trainer;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\Course;
+use App\Models\Trainer\Course;
 
 class CourseController extends Controller
 {
