@@ -10,7 +10,7 @@ class DashboardController extends Controller
 {
     public function stats(Request $request)
     {
-        $id_pengguna = $request->id_pengguna;
+        $id_pengguna = $request->user()->id_pengguna;
 
         // Total kursus yang diikuti peserta
         $totalKursus = DB::table('peserta_kursus')

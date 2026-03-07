@@ -12,7 +12,7 @@ class ProfileController extends Controller
     // Ambil profil peserta
     public function show(Request $request)
     {
-        $id_pengguna = $request->id_pengguna;
+        $id_pengguna = $request->user()->id_pengguna;
 
         $user = DB::table('pengguna')
             ->leftJoin('cabang', 'pengguna.id_cabang', '=', 'cabang.id_cabang')

@@ -11,7 +11,7 @@ class KuisController extends Controller
     // Semua kuis yang tersedia
     public function index(Request $request)
     {
-        $id_pengguna = $request->id_pengguna;
+        $id_pengguna = $request->user()->id_pengguna;
 
         $kuis = DB::table('kuis')
             ->join('kursus', 'kuis.id_kursus', '=', 'kursus.id_kursus')

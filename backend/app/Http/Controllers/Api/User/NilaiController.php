@@ -11,7 +11,7 @@ class NilaiController extends Controller
     // Nilai dan progress peserta
     public function index(Request $request)
     {
-        $id_pengguna = $request->id_pengguna;
+        $id_pengguna = $request->user()->id_pengguna;
 
         // Nilai PKL (teknis & non teknis)
         $nilaiPkl = DB::table('penilaian_pkl')

@@ -17,7 +17,6 @@ class KursusController extends Controller
                 'kursus.id_kursus',
                 'kursus.judul_kursus',
                 'kursus.deskripsi',
-                'kursus.status',
                 'trainer.nama as nama_trainer'
             )
             ->get();
@@ -28,13 +27,16 @@ class KursusController extends Controller
     // Detail satu kursus beserta materinya
     public function show(Request $request, $id_kursus)
     {
-        $id_pengguna = $request->id_pengguna;
+        $id_pengguna = $request->user()->id_pengguna;
 
         $kursus = DB::table('kursus')
             ->leftJoin('pengguna as trainer', 'kursus.id_trainer', '=', 'trainer.id_pengguna')
             ->where('kursus.id_kursus', $id_kursus)
             ->select(
-                'kursus.*',
+                'kursus.id_kursus',
+                'kursus.judul_kursus',
+                'kursus.deskripsi',
+                'kursus.id_trainer',
                 'trainer.nama as nama_trainer'
             )
             ->first();
@@ -43,19 +45,16 @@ class KursusController extends Controller
             return response()->json(['message' => 'Kursus tidak ditemukan'], 404);
         }
 
-        // Ambil materi kursus
         $materi = DB::table('materi')
             ->where('id_kursus', $id_kursus)
             ->get();
 
-        // Ambil progress materi peserta
         $progress = DB::table('progress_materi')
             ->where('id_pengguna', $id_pengguna)
             ->whereIn('id_materi', $materi->pluck('id_materi'))
             ->get()
             ->keyBy('id_materi');
 
-        // Gabungkan materi dengan progress
         $materiDenganProgress = $materi->map(function ($item) use ($progress) {
             $item->status_progress = isset($progress[$item->id_materi])
                 ? $progress[$item->id_materi]->status

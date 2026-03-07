@@ -21,7 +21,7 @@ Route::post('/login/staff',    [AuthController::class, 'loginStaff']);
 
 // ===== USER / PESERTA =====
 // Semua route di sini butuh id_pengguna dikirim di body/query
-Route::prefix('user')->group(function () {
+Route::middleware('auth:sanctum')->prefix('user')->group(function () {
 
     // Dashboard
     Route::get('/dashboard',   [DashboardController::class, 'stats']);
