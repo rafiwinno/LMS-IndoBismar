@@ -9,40 +9,37 @@ use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
-
     // REGISTER PESERTA
     public function register(Request $request)
     {
         $request->validate([
-            'nama' => 'required',
+            'nama'     => 'required',
             'username' => 'required|unique:pengguna',
-            'email' => 'required|email|unique:pengguna',
+            'email'    => 'required|email|unique:pengguna',
             'password' => 'required|min:6',
             'nomor_hp' => 'required'
         ]);
 
         $user = User::create([
-            'nama' => $request->nama,
+            'nama'     => $request->nama,
             'username' => $request->username,
-            'email' => $request->email,
+            'email'    => $request->email,
             'password' => $request->password,
             'nomor_hp' => $request->nomor_hp,
-            'id_role' => 4 // peserta
+            'id_role'  => 4
         ]);
 
         return response()->json([
             'message' => 'Register berhasil',
-            'data' => $user
+            'data'    => $user
         ]);
     }
 
-
-    // LOGIN PESERTA (EMAIL)
     // LOGIN PESERTA (EMAIL)
     public function loginPeserta(Request $request)
     {
         $request->validate([
-            'email' => 'required|email',
+            'email'    => 'required|email',
             'password' => 'required'
         ]);
 
@@ -60,32 +57,40 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Login berhasil',
-            'token' => $token,
-            'user' => $user
+            'token'   => $token,
+            'user'    => $user
         ]);
     }
 
-
     // LOGIN ADMIN / TRAINER (USERNAME)
     public function loginStaff(Request $request)
-{
-    $user = User::where('username',$request->username)
-                ->whereIn('id_role',[1,2,3])
-                ->first();
+    {
+        $user = User::where('username', $request->username)
+                    ->whereIn('id_role', [1, 2, 3])
+                    ->first();
 
-    if(!$user || !Hash::check($request->password,$user->password)){
+        if (!$user || !Hash::check($request->password, $user->password)) {
+            return response()->json([
+                'message' => 'Username atau password salah'
+            ], 401);
+        }
+
+        $token = $user->createToken('auth_token')->plainTextToken;
+
         return response()->json([
-            'message' => 'Username atau password salah'
-        ],401);
+            'message' => 'Login berhasil',
+            'token'   => $token,
+            'user'    => $user
+        ]);
     }
 
-    $token = $user->createToken('auth_token')->plainTextToken;
+    // LOGOUT
+    public function logout(Request $request)
+    {
+        $request->user()->currentAccessToken()->delete();
 
-    return response()->json([
-        'message' => 'Login berhasil',
-        'token' => $token,
-        'user' => $user
-    ]);
-}
-
+        return response()->json([
+            'message' => 'Logout berhasil'
+        ]);
+    }
 }

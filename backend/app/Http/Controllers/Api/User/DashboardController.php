@@ -12,37 +12,30 @@ class DashboardController extends Controller
     {
         $id_pengguna = $request->user()->id_pengguna;
 
-        // Total kursus yang diikuti peserta
-        $totalKursus = DB::table('peserta_kursus')
+        // Total kursus yang tersedia
+        $totalKursus = DB::table('kursus')->count();
+
+        // Total kuis yang tersedia
+        $totalKuis = DB::table('kuis')->count();
+
+        // Kuis yang sudah dikerjakan peserta
+        $kuisSelesai = DB::table('attempt_kuis')
             ->where('id_pengguna', $id_pengguna)
             ->count();
 
-        // Kursus yang sudah selesai
-        $kursusSelesai = DB::table('peserta_kursus')
-            ->where('id_pengguna', $id_pengguna)
-            ->where('status', 'selesai')
-            ->count();
+        // Kuis yang belum dikerjakan
+        $kuisBelum = $totalKuis - $kuisSelesai;
 
-        // Tugas pending (belum dikumpulkan)
-        $tugasPending = DB::table('tugas')
-            ->join('peserta_kursus', 'tugas.id_kursus', '=', 'peserta_kursus.id_kursus')
-            ->leftJoin('pengumpulan_tugas', function ($join) use ($id_pengguna) {
-                $join->on('pengumpulan_tugas.id_tugas', '=', 'tugas.id_tugas')
-                     ->where('pengumpulan_tugas.id_pengguna', '=', $id_pengguna);
-            })
-            ->where('peserta_kursus.id_pengguna', $id_pengguna)
-            ->whereNull('pengumpulan_tugas.id_tugas')
-            ->count();
-
-        // Nilai rata-rata
-        $nilaiRata = DB::table('penilaian_pkl')
+        // Nilai rata-rata dari attempt kuis
+        $nilaiRata = DB::table('attempt_kuis')
             ->where('id_pengguna', $id_pengguna)
-            ->avg('nilai_akhir');
+            ->avg('skor');
 
         return response()->json([
-            'total_kursus'   => $totalKursus,
-            'kursus_selesai' => $kursusSelesai,
-            'tugas_pending'  => $tugasPending,
+            'total_kursus'  => $totalKursus,
+            'total_kuis'    => $totalKuis,
+            'kuis_selesai'  => $kuisSelesai,
+            'kuis_belum'    => $kuisBelum < 0 ? 0 : $kuisBelum,
             'nilai_rata_rata' => $nilaiRata ? round($nilaiRata, 2) : 0,
         ]);
     }

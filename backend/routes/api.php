@@ -18,6 +18,7 @@ Route::get('/test', function () {
 Route::post('/register',       [AuthController::class, 'register']);
 Route::post('/login/peserta',  [AuthController::class, 'loginPeserta']);
 Route::post('/login/staff',    [AuthController::class, 'loginStaff']);
+Route::post('/logout',         [AuthController::class, 'logout'])->middleware('auth:sanctum');
 
 // ===== USER / PESERTA =====
 // Semua route di sini butuh id_pengguna dikirim di body/query
