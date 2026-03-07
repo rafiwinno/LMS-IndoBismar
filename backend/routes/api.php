@@ -29,7 +29,6 @@ Route::prefix('user')->group(function () {
     // Kursus
     Route::get('/kursus',                          [KursusController::class, 'index']);
     Route::get('/kursus/{id_kursus}',              [KursusController::class, 'show']);
-    Route::post('/kursus/{id_kursus}/daftar',      [KursusController::class, 'daftar']);
 
     // Kuis
     Route::get('/kuis',                            [KuisController::class, 'index']);
