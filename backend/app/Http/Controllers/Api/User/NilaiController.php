@@ -28,44 +28,24 @@ class NilaiController extends Controller
             ->where('id_pengguna', $id_pengguna)
             ->get();
 
-        // Progress per kursus
-        $progressKursus = DB::table('peserta_kursus')
-            ->join('kursus', 'peserta_kursus.id_kursus', '=', 'kursus.id_kursus')
-            ->where('peserta_kursus.id_pengguna', $id_pengguna)
+        // Riwayat kuis peserta
+        $riwayatKuis = DB::table('attempt_kuis')
+            ->join('kuis', 'attempt_kuis.id_kuis', '=', 'kuis.id_kuis')
+            ->join('kursus', 'kuis.id_kursus', '=', 'kursus.id_kursus')
+            ->where('attempt_kuis.id_pengguna', $id_pengguna)
             ->select(
-                'kursus.id_kursus',
+                'kuis.judul_kuis',
                 'kursus.judul_kursus',
-                'peserta_kursus.status',
-                'peserta_kursus.tanggal_daftar'
+                'attempt_kuis.skor',
+                'attempt_kuis.waktu_mulai',
+                'attempt_kuis.status'
             )
             ->get();
 
-        // Hitung progress materi per kursus
-        $progressKursus = $progressKursus->map(function ($kursus) use ($id_pengguna) {
-            $totalMateri = DB::table('materi')
-                ->where('id_kursus', $kursus->id_kursus)
-                ->count();
-
-            $materiSelesai = DB::table('progress_materi')
-                ->join('materi', 'progress_materi.id_materi', '=', 'materi.id_materi')
-                ->where('materi.id_kursus', $kursus->id_kursus)
-                ->where('progress_materi.id_pengguna', $id_pengguna)
-                ->where('progress_materi.status', 'selesai')
-                ->count();
-
-            $kursus->total_materi   = $totalMateri;
-            $kursus->materi_selesai = $materiSelesai;
-            $kursus->persentase     = $totalMateri > 0
-                ? round(($materiSelesai / $totalMateri) * 100)
-                : 0;
-
-            return $kursus;
-        });
-
         return response()->json([
-            'nilai_pkl'       => $nilaiPkl,
+            'nilai_pkl'        => $nilaiPkl,
             'nilai_non_teknis' => $nilaiNonTeknis,
-            'progress_kursus' => $progressKursus,
+            'riwayat_kuis'     => $riwayatKuis,
         ]);
     }
 }

@@ -44,16 +44,6 @@ class KuisController extends Controller
             return response()->json(['message' => 'Kuis tidak ditemukan'], 404);
         }
 
-        // Cek apakah peserta terdaftar di kursus kuis ini
-        $terdaftar = DB::table('peserta_kursus')
-            ->where('id_pengguna', $id_pengguna)
-            ->where('id_kursus', $kuis->id_kursus)
-            ->exists();
-
-        if (!$terdaftar) {
-            return response()->json(['message' => 'Kamu tidak terdaftar di kursus ini'], 403);
-        }
-
         // Cek apakah sudah pernah mengerjakan
         $sudahKerjakan = DB::table('attempt_kuis')
             ->where('id_pengguna', $id_pengguna)

@@ -6,134 +6,66 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
-class KuisController extends Controller
+class KursusController extends Controller
 {
-    // Semua kuis yang tersedia
+    // Semua kursus yang tersedia
     public function index(Request $request)
     {
-        $id_pengguna = $request->id_pengguna;
-
-        $kuis = DB::table('kuis')
-            ->join('kursus', 'kuis.id_kursus', '=', 'kursus.id_kursus')
-            ->leftJoin('attempt_kuis', function ($join) use ($id_pengguna) {
-                $join->on('attempt_kuis.id_kuis', '=', 'kuis.id_kuis')
-                     ->where('attempt_kuis.id_pengguna', '=', $id_pengguna);
-            })
+        $kursus = DB::table('kursus')
+            ->leftJoin('pengguna as trainer', 'kursus.id_trainer', '=', 'trainer.id_pengguna')
             ->select(
-                'kuis.id_kuis',
-                'kuis.judul_kuis',
-                'kuis.waktu_mulai',
-                'kuis.waktu_selesai',
+                'kursus.id_kursus',
                 'kursus.judul_kursus',
-                'attempt_kuis.skor',
-                DB::raw('CASE WHEN attempt_kuis.id_attempt IS NOT NULL THEN "sudah" ELSE "belum" END as status_attempt')
+                'kursus.deskripsi',
+                'kursus.status',
+                'trainer.nama as nama_trainer'
             )
             ->get();
 
-        return response()->json(['data' => $kuis]);
+        return response()->json(['data' => $kursus]);
     }
 
-    // Peserta kerjakan kuis & simpan jawaban
-    public function kerjakan(Request $request, $id_kuis)
+    // Detail satu kursus beserta materinya
+    public function show(Request $request, $id_kursus)
     {
         $id_pengguna = $request->id_pengguna;
 
-        // Cek apakah kuis ada
-        $kuis = DB::table('kuis')->where('id_kuis', $id_kuis)->first();
-        if (!$kuis) {
-            return response()->json(['message' => 'Kuis tidak ditemukan'], 404);
-        }
-
-        // Cek apakah peserta terdaftar di kursus kuis ini
-        $terdaftar = DB::table('peserta_kursus')
-            ->where('id_pengguna', $id_pengguna)
-            ->where('id_kursus', $kuis->id_kursus)
-            ->exists();
-
-        if (!$terdaftar) {
-            return response()->json(['message' => 'Kamu tidak terdaftar di kursus ini'], 403);
-        }
-
-        // Cek apakah sudah pernah mengerjakan
-        $sudahKerjakan = DB::table('attempt_kuis')
-            ->where('id_pengguna', $id_pengguna)
-            ->where('id_kuis', $id_kuis)
-            ->exists();
-
-        if ($sudahKerjakan) {
-            return response()->json(['message' => 'Kamu sudah mengerjakan kuis ini'], 409);
-        }
-
-        // Hitung nilai otomatis dari jawaban
-        // $request->jawaban = [['id_pertanyaan' => 1, 'id_pilihan' => 3], ...]
-        $jawaban = $request->jawaban ?? [];
-        $totalPertanyaan = DB::table('pertanyaan')->where('id_kuis', $id_kuis)->count();
-        $benar = 0;
-
-        foreach ($jawaban as $item) {
-            $isBenar = DB::table('pilihan_jawaban')
-                ->where('id_pilihan', $item['id_pilihan'])
-                ->where('id_pertanyaan', $item['id_pertanyaan'])
-                ->where('is_correct', 1)
-                ->exists();
-
-            if ($isBenar) $benar++;
-        }
-
-        $nilai = $totalPertanyaan > 0 ? round(($benar / $totalPertanyaan) * 100, 2) : 0;
-
-        // Simpan attempt
-        $id_attempt = DB::table('attempt_kuis')->insertGetId([
-            'id_pengguna'   => $id_pengguna,
-            'id_kuis'       => $id_kuis,
-            'skor'          => $nilai,
-            'waktu_mulai'   => now(),
-            'status'        => 'selesai',
-        ]);
-
-        // Simpan detail jawaban
-        foreach ($jawaban as $item) {
-            DB::table('jawaban_kuis')->insert([
-                'id_attempt'     => $id_attempt,
-                'id_pertanyaan'  => $item['id_pertanyaan'],
-                'id_pilihan'     => $item['id_pilihan'],
-            ]);
-        }
-
-        return response()->json([
-            'message'   => 'Kuis berhasil dikerjakan',
-            'nilai'     => $nilai,
-            'benar'     => $benar,
-            'total'     => $totalPertanyaan,
-        ], 201);
-    }
-
-    // Detail kuis beserta pertanyaan dan pilihan jawaban
-    public function show($id_kuis)
-    {
-        $kuis = DB::table('kuis')
-            ->where('id_kuis', $id_kuis)
+        $kursus = DB::table('kursus')
+            ->leftJoin('pengguna as trainer', 'kursus.id_trainer', '=', 'trainer.id_pengguna')
+            ->where('kursus.id_kursus', $id_kursus)
+            ->select(
+                'kursus.*',
+                'trainer.nama as nama_trainer'
+            )
             ->first();
 
-        if (!$kuis) {
-            return response()->json(['message' => 'Kuis tidak ditemukan'], 404);
+        if (!$kursus) {
+            return response()->json(['message' => 'Kursus tidak ditemukan'], 404);
         }
 
-        $pertanyaan = DB::table('pertanyaan')
-            ->where('id_kuis', $id_kuis)
+        // Ambil materi kursus
+        $materi = DB::table('materi')
+            ->where('id_kursus', $id_kursus)
             ->get();
 
-        $pertanyaanDenganPilihan = $pertanyaan->map(function ($item) {
-            $item->pilihan = DB::table('pilihan_jawaban')
-                ->where('id_pertanyaan', $item->id_pertanyaan)
-                ->select('id_pilihan', 'teks_pilihan') // tidak kirim is_correct ke frontend
-                ->get();
+        // Ambil progress materi peserta
+        $progress = DB::table('progress_materi')
+            ->where('id_pengguna', $id_pengguna)
+            ->whereIn('id_materi', $materi->pluck('id_materi'))
+            ->get()
+            ->keyBy('id_materi');
+
+        // Gabungkan materi dengan progress
+        $materiDenganProgress = $materi->map(function ($item) use ($progress) {
+            $item->status_progress = isset($progress[$item->id_materi])
+                ? $progress[$item->id_materi]->status
+                : 'belum';
             return $item;
         });
 
         return response()->json([
-            'kuis'       => $kuis,
-            'pertanyaan' => $pertanyaanDenganPilihan,
+            'kursus' => $kursus,
+            'materi' => $materiDenganProgress,
         ]);
     }
 }
