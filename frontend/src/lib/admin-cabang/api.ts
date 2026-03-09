@@ -52,6 +52,7 @@ export const api = {
   deletePeserta: (id: number) => apiFetch(`/peserta/${id}`, { method: 'DELETE' }),
   updateStatusPeserta: (id: number, status: string) =>
     apiFetch(`/peserta/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
+  getPesertaDetail: (id: number) => apiFetch(`/peserta/${id}`),
 
   // Kursus
   getKursus: (params?: string) => apiFetch(`/kursus${params ? '?' + params : ''}`),
@@ -86,12 +87,17 @@ export const api = {
     apiFetch(`/kuis/attempts/${attemptId}/grade-essay`, { method: 'PATCH', body: JSON.stringify({ scores }) }),
 
   // Trainer
-  getTrainer: () => apiFetch('/trainer'),
-  getAllJadwal: () => apiFetch('/trainer/jadwal/all'),
+  getTrainer: (params?: string) => apiFetch(`/trainer${params ? '?' + params : ''}`),
+  deleteTrainer: (id: number) => apiFetch(`/trainer/${id}`, { method: 'DELETE' }),
+  getAllJadwal: (params?: string) => apiFetch(`/trainer/jadwal/all${params ? '?' + params : ''}`),
   createJadwal: (data: any) => apiFetch('/trainer/jadwal', { method: 'POST', body: JSON.stringify(data) }),
   updateJadwal: (id: number, data: any) => apiFetch(`/trainer/jadwal/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteJadwal: (id: number) => apiFetch(`/trainer/jadwal/${id}`, { method: 'DELETE' }),
 
   // Laporan
   getLaporan: () => apiFetch('/laporan/dashboard'),
+  getLaporanPeserta: () => apiFetch('/laporan/peserta'),
+  getLaporanKursus: () => apiFetch('/laporan/kursus'),
+  getLaporanKuis: () => apiFetch('/laporan/kuis'),
+  getLaporanTrainer: () => apiFetch('/laporan/trainer'),
 };

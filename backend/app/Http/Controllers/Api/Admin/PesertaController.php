@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Pengguna;
+use App\Models\ProgressMateri;
+use App\Models\AttemptKuis;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
@@ -84,10 +86,24 @@ class PesertaController extends Controller
 
     public function show($id)
     {
-        $peserta = Pengguna::with(['role', 'cabang', 'dataPkl', 'pesertaKursus.kursus', 'penilaianPkl'])
-            ->findOrFail($id);
+        $peserta = Pengguna::with([
+            'role', 'cabang', 'dataPkl',
+            'pesertaKursus.kursus.materi',
+            'pesertaKursus.kursus.kuis',
+            'penilaianPkl',
+        ])->findOrFail($id);
 
-        return response()->json($this->formatPesertaDetail($peserta));
+        $progressMateri = ProgressMateri::where('id_pengguna', $id)
+            ->where('status', 'selesai')
+            ->pluck('id_materi')
+            ->all();
+
+        $completedKuis = AttemptKuis::where('id_pengguna', $id)
+            ->where('status', 'selesai')
+            ->pluck('id_kuis')
+            ->all();
+
+        return response()->json($this->formatPesertaDetail($peserta, $progressMateri, $completedKuis));
     }
 
     public function update(Request $request, $id)
@@ -189,17 +205,52 @@ class PesertaController extends Controller
         ];
     }
 
-    private function formatPesertaDetail($p)
+    private function formatPesertaDetail($p, array $progressMateri = [], array $completedKuis = [])
     {
+        $kursusData = $p->pesertaKursus->map(function ($pk) use ($progressMateri, $completedKuis) {
+            $kursus = $pk->kursus;
+            if (!$kursus) return null;
+
+            $totalMateri   = $kursus->materi->count();
+            $selesaiMateri = $kursus->materi->filter(fn($m) => in_array($m->id_materi, $progressMateri))->count();
+
+            $totalKuis   = $kursus->kuis->count();
+            $selesaiKuis = $kursus->kuis->filter(fn($k) => in_array($k->id_kuis, $completedKuis))->count();
+
+            // Selesai = semua materi dibuka DAN semua kuis dikerjakan (minimal ada 1 konten)
+            $adaKonten = ($totalMateri + $totalKuis) > 0;
+            $isSelesai = $adaKonten
+                && ($totalMateri === 0 || $selesaiMateri === $totalMateri)
+                && ($totalKuis   === 0 || $selesaiKuis   === $totalKuis);
+
+            // Auto-sync peserta_kursus.status
+            $adaProgress = ($selesaiMateri + $selesaiKuis) > 0;
+            $statusBaru  = $isSelesai ? 'selesai' : ($adaProgress ? 'sedang_belajar' : 'belum_mulai');
+            if ($pk->status !== $statusBaru) {
+                $pk->update(['status' => $statusBaru]);
+            }
+
+            return [
+                'id'             => $kursus->id_kursus,
+                'judul'          => $kursus->judul_kursus,
+                'status'         => $statusBaru,
+                'materi_total'   => $totalMateri,
+                'materi_selesai' => $selesaiMateri,
+                'kuis_total'     => $totalKuis,
+                'kuis_selesai'   => $selesaiKuis,
+            ];
+        })->filter()->values();
+
+        $selesaiCount = $kursusData->where('status', 'selesai')->count();
+        $totalCount   = $kursusData->count();
+        $progress     = $totalCount > 0 ? round(($selesaiCount / $totalCount) * 100) : 0;
+
         return array_merge($this->formatPeserta($p), [
+            'progress'        => $progress,
             'periode_mulai'   => $p->dataPkl->periode_mulai ?? null,
             'periode_selesai' => $p->dataPkl->periode_selesai ?? null,
-            'kursus'          => $p->pesertaKursus->map(fn($pk) => [
-                'id'     => $pk->kursus->id_kursus ?? null,
-                'judul'  => $pk->kursus->judul_kursus ?? null,
-                'status' => $pk->status,
-            ]),
-            'penilaian_pkl' => $p->penilaianPkl ? [
+            'kursus'          => $kursusData,
+            'penilaian_pkl'   => $p->penilaianPkl ? [
                 'nilai_teknis'     => $p->penilaianPkl->nilai_teknis,
                 'nilai_non_teknis' => $p->penilaianPkl->nilai_non_teknis,
                 'nilai_akhir'      => $p->penilaianPkl->nilai_akhir,

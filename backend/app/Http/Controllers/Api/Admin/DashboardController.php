@@ -25,13 +25,13 @@ class DashboardController extends Controller
 
         $avgScore = AttemptKuis::where('status', 'selesai')->avg('skor') ?? 0;
 
-        // ── Progress peserta per minggu (6 minggu terakhir) ──────────────────
+        // ── Kuis selesai per minggu (6 minggu terakhir) ──────────────────────
         $progressData = collect(range(5, 0))->map(function ($weekBack) {
             $start = now()->subWeeks($weekBack)->startOfWeek();
             $end   = now()->subWeeks($weekBack)->endOfWeek();
 
-            $selesai = PesertaKursus::where('status', 'selesai')
-                ->whereBetween('tanggal_daftar', [$start, $end])
+            $selesai = AttemptKuis::where('status', 'selesai')
+                ->whereBetween('waktu_selesai', [$start, $end])
                 ->count();
 
             return [
@@ -54,12 +54,12 @@ class DashboardController extends Controller
                 ];
             });
 
-        // ── Submission rate per hari (7 hari terakhir) ───────────────────────
+        // ── Materi dibuka per hari (7 hari terakhir) ─────────────────────────
         $days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
         $submissionData = collect(range(6, 0))->map(function ($dayBack) use ($days) {
             $date = now()->subDays($dayBack)->toDateString();
-            $count = DB::table('pengumpulan_tugas')
-                ->whereDate('tanggal_kumpul', $date)->count();
+            $count = DB::table('progress_materi')
+                ->whereDate('waktu_update', $date)->count();
             return [
                 'name' => $days[now()->subDays($dayBack)->dayOfWeek],
                 'rate' => $count,

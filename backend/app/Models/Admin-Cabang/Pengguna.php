@@ -24,9 +24,9 @@ class Pengguna extends Authenticatable
     // Auto-hash password setiap kali di-set
     public function setPasswordAttribute($value)
     {
-        $this->attributes['password'] = Hash::needsRehash($value)
-            ? Hash::make($value)
-            : $value;
+        $this->attributes['password'] = str_starts_with($value, '$2y$') || str_starts_with($value, '$2b$')
+            ? $value
+            : Hash::make($value);
     }
 
     public function role()          { return $this->belongsTo(Role::class, 'id_role', 'id_role'); }

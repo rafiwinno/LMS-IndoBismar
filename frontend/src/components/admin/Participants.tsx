@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Eye, Filter, Mail, MapPin, BookOpen, TrendingUp, Plus, Edit2, Trash2, X, Check } from 'lucide-react';
+import { Search, Eye, Mail, MapPin, BookOpen, TrendingUp, Plus, Edit2, Trash2, X, CheckCircle } from 'lucide-react';
 import { api } from '../lib/api';
 
 interface Peserta {
@@ -29,6 +29,8 @@ export function Participants() {
   const [error, setError] = useState('');
   const [page, setPage] = useState(1);
   const [meta, setMeta] = useState<any>(null);
+  const [detailPeserta, setDetailPeserta] = useState<any>(null);
+  const [loadingDetail, setLoadingDetail] = useState(false);
 
   const fetchPeserta = async (p = 1, search = '') => {
     setLoading(true);
@@ -84,6 +86,19 @@ export function Participants() {
       fetchPeserta(page, searchTerm);
     } catch (e: any) {
       alert(e.message);
+    }
+  };
+
+  const openDetail = async (p: Peserta) => {
+    setLoadingDetail(true);
+    setDetailPeserta({ ...p, kursus: [] });
+    try {
+      const res = await api.getPesertaDetail(p.id);
+      setDetailPeserta(res);
+    } catch (e: any) {
+      alert(e.message);
+    } finally {
+      setLoadingDetail(false);
     }
   };
 
@@ -172,6 +187,7 @@ export function Participants() {
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end space-x-2">
+                        <button onClick={() => openDetail(p)} title="Lihat Kursus" className="text-green-600 hover:text-green-800 p-1.5 rounded-md hover:bg-green-50 transition-colors"><Eye className="w-4 h-4" /></button>
                         <button onClick={() => openEdit(p)} className="text-indigo-600 hover:text-indigo-900 p-1.5 rounded-md hover:bg-indigo-50 transition-colors"><Edit2 className="w-4 h-4" /></button>
                         <button onClick={() => handleDelete(p.id)} className="text-red-500 hover:text-red-700 p-1.5 rounded-md hover:bg-red-50 transition-colors"><Trash2 className="w-4 h-4" /></button>
                       </div>
@@ -220,6 +236,58 @@ export function Participants() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Detail Kursus Modal */}
+      {detailPeserta && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col">
+            <div className="flex items-center justify-between p-6 border-b">
+              <div>
+                <h3 className="text-lg font-semibold">{detailPeserta.nama}</h3>
+                <p className="text-sm text-gray-500">Progress Kursus</p>
+              </div>
+              <button onClick={() => setDetailPeserta(null)}><X className="w-5 h-5 text-gray-400 hover:text-gray-600" /></button>
+            </div>
+            <div className="p-6 overflow-y-auto flex-1">
+              {loadingDetail ? (
+                <div className="flex justify-center py-8"><div className="w-6 h-6 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" /></div>
+              ) : detailPeserta.kursus?.length === 0 ? (
+                <p className="text-center text-gray-400 py-8">Belum terdaftar di kursus manapun.</p>
+              ) : (
+                <ul className="space-y-3">
+                  {detailPeserta.kursus?.map((k: any) => (
+                    <li key={k.id} className="p-3 border border-gray-200 rounded-lg space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <BookOpen className="w-4 h-4 text-indigo-400 flex-shrink-0" />
+                          <span className="text-sm font-medium text-gray-800">{k.judul}</span>
+                        </div>
+                        <span className={`flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${k.status === 'selesai' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                          {k.status === 'selesai' && <CheckCircle className="w-3 h-3" />}
+                          {k.status === 'selesai' ? 'Selesai' : 'Belum selesai'}
+                        </span>
+                      </div>
+                      <div className="flex gap-4 text-xs text-gray-500 pl-6">
+                        <span>Materi: <span className="font-medium text-gray-700">{k.materi_selesai}/{k.materi_total}</span></span>
+                        <span>Kuis: <span className="font-medium text-gray-700">{k.kuis_selesai}/{k.kuis_total}</span></span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+            <div className="px-6 py-4 border-t bg-gray-50 rounded-b-xl">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-500">{detailPeserta.kursus?.filter((k: any) => k.status === 'selesai').length ?? 0} / {detailPeserta.kursus?.length ?? 0} kursus selesai</span>
+                <span className="font-semibold text-indigo-600">{detailPeserta.progress}%</span>
+              </div>
+              <div className="w-full h-2 bg-gray-200 rounded-full mt-2">
+                <div className={`h-full rounded-full transition-all ${detailPeserta.progress >= 80 ? 'bg-green-500' : detailPeserta.progress >= 50 ? 'bg-indigo-500' : 'bg-amber-500'}`} style={{ width: `${detailPeserta.progress}%` }} />
+              </div>
+            </div>
+          </div>
         </div>
       )}
 

@@ -4,116 +4,237 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Materi;
+use App\Models\ProgressMateri;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 
 class MateriController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $materi = Materi::with('kursus')->get();
-        return response()->json([
-            'data' => $materi->map(fn($m) => $this->formatMateri($m))
-        ]);
-    }
+        $query = Materi::query();
 
-    public function show($id)
-    {
-        $materi = Materi::with('kursus')->findOrFail($id);
-        return response()->json(['data' => $this->formatMateri($materi)]);
+        if ($request->has('id_kursus')) {
+            $query->where('id_kursus', $request->id_kursus);
+        }
+
+        $materi = $query->orderBy('urutan')->get();
+
+        return response()->json([
+            'success' => true,
+            'data'    => $materi->map(fn($m) => $this->formatMateri($m)),
+        ]);
     }
 
     public function store(Request $request)
     {
-        $request->validate([
-            'judul_materi' => 'required|string|max:200',
-            'tipe_materi'  => 'required|in:pdf,video,ppt,link_drive,dokumen',
+        $validator = Validator::make($request->all(), [
             'id_kursus'    => 'required|exists:kursus,id_kursus',
+            'judul_materi' => 'required|string|max:255',
+            'tipe_materi'  => 'required|in:pdf,video,ppt,link_drive,dokumen',
             'file_materi'  => 'nullable|file|max:5120',
             'youtube_url'  => 'nullable|url',
             'drive_url'    => 'nullable|url',
+            'urutan'       => 'nullable|integer',
         ]);
 
-        $fileUrl = null;
-        $ukuran  = null;
-
-        if ($request->tipe_materi === 'video') {
-            $fileUrl = $request->youtube_url;
-        } elseif ($request->tipe_materi === 'link_drive') {
-            $fileUrl = $request->drive_url;
-        } elseif ($request->hasFile('file_materi')) {
-            $file    = $request->file('file_materi');
-            $path    = $file->store('materi', 'public');
-            $fileUrl = url(Storage::url($path));
-            $ukuran  = $this->formatBytes($file->getSize());
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal',
+                'errors'  => $validator->errors(),
+            ], 422);
         }
 
-        $urutan = Materi::where('id_kursus', $request->id_kursus)->max('urutan') + 1;
-
-        $materi = Materi::create([
+        $data = [
             'id_kursus'    => $request->id_kursus,
             'judul_materi' => $request->judul_materi,
             'tipe_materi'  => $request->tipe_materi,
-            'file_materi'  => $fileUrl,
-            'ukuran'       => $ukuran,
-            'urutan'       => $urutan,
-        ]);
+            'urutan'       => $request->urutan ?? 0,
+        ];
+
+        if ($request->hasFile('file_materi')) {
+            $file     = $request->file('file_materi');
+            $path     = $file->store('materi', 'public');
+            $data['file_materi'] = $path;
+            $data['ukuran']      = $this->formatBytes($file->getSize());
+        }
+
+        if ($request->tipe_materi === 'video' && $request->youtube_url) {
+            $data['file_materi'] = $request->youtube_url;
+        }
+
+        if ($request->tipe_materi === 'link_drive' && $request->drive_url) {
+            $data['file_materi'] = $request->drive_url;
+        }
+
+        $materi = Materi::create($data);
 
         return response()->json([
-            'message' => 'Materi berhasil ditambahkan.',
-            'data'    => $this->formatMateri($materi->load('kursus')),
+            'success' => true,
+            'message' => 'Materi berhasil ditambahkan',
+            'data'    => $this->formatMateri($materi),
         ], 201);
+    }
+
+    public function show($id)
+    {
+        $materi = Materi::find($id);
+
+        if (!$materi) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Materi tidak ditemukan',
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data'    => $this->formatMateri($materi),
+        ]);
     }
 
     public function update(Request $request, $id)
     {
-        $materi = Materi::findOrFail($id);
+        $materi = Materi::find($id);
 
-        $request->validate([
-            'judul_materi' => 'sometimes|string|max:200',
+        if (!$materi) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Materi tidak ditemukan',
+            ], 404);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'judul_materi' => 'sometimes|string|max:255',
             'tipe_materi'  => 'sometimes|in:pdf,video,ppt,link_drive,dokumen',
+            'file_materi'  => 'nullable|file|max:5120',
             'youtube_url'  => 'nullable|url',
             'drive_url'    => 'nullable|url',
+            'urutan'       => 'nullable|integer',
         ]);
 
-        $materi->update($request->only(['judul_materi', 'tipe_materi', 'urutan']));
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal',
+                'errors'  => $validator->errors(),
+            ], 422);
+        }
+
+        if ($request->has('judul_materi')) {
+            $materi->judul_materi = $request->judul_materi;
+        }
+
+        if ($request->has('tipe_materi')) {
+            $materi->tipe_materi = $request->tipe_materi;
+        }
+
+        if ($request->has('urutan')) {
+            $materi->urutan = $request->urutan;
+        }
+
+        if ($request->hasFile('file_materi')) {
+            // Hapus file lama jika ada
+            if ($materi->file_materi && !str_starts_with($materi->file_materi, 'http')) {
+                Storage::disk('public')->delete($materi->file_materi);
+            }
+            $file = $request->file('file_materi');
+            $path = $file->store('materi', 'public');
+            $materi->file_materi = $path;
+            $materi->ukuran      = $this->formatBytes($file->getSize());
+        }
+
+        if ($request->tipe_materi === 'video' && $request->youtube_url) {
+            $materi->file_materi = $request->youtube_url;
+        }
+
+        if ($request->tipe_materi === 'link_drive' && $request->drive_url) {
+            $materi->file_materi = $request->drive_url;
+        }
+
+        $materi->save();
 
         return response()->json([
-            'message' => 'Materi berhasil diupdate.',
-            'data'    => $this->formatMateri($materi->load('kursus')),
+            'success' => true,
+            'message' => 'Materi berhasil diperbarui',
+            'data'    => $this->formatMateri($materi),
         ]);
     }
 
     public function destroy($id)
     {
-        $materi = Materi::findOrFail($id);
+        $materi = Materi::find($id);
+
+        if (!$materi) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Materi tidak ditemukan',
+            ], 404);
+        }
+
+        // Hapus file fisik jika bukan URL eksternal
+        if ($materi->file_materi && !str_starts_with($materi->file_materi, 'http')) {
+            Storage::disk('public')->delete($materi->file_materi);
+        }
+
         $materi->delete();
-        return response()->json(['message' => 'Materi berhasil dihapus.']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Materi berhasil dihapus',
+        ]);
     }
 
     public function updateProgress(Request $request, $id)
     {
-        $materi = Materi::findOrFail($id);
-        return response()->json(['message' => 'Progress updated.', 'data' => $materi]);
+        $request->validate([
+            'id_pengguna' => 'required|exists:pengguna,id_pengguna',
+        ]);
+
+        Materi::findOrFail($id);
+
+        ProgressMateri::updateOrCreate(
+            ['id_pengguna' => $request->id_pengguna, 'id_materi' => $id],
+            ['status' => 'selesai', 'waktu_update' => now()]
+        );
+
+        return response()->json(['message' => 'Progress materi berhasil diperbarui.']);
     }
 
-    private function formatBytes($bytes)
+    private function formatMateri(Materi $materi): array
     {
-        if ($bytes >= 1048576) return number_format($bytes / 1048576, 2) . ' MB';
-        return number_format($bytes / 1024, 2) . ' KB';
-    }
+        $fileUrl = null;
 
-    private function formatMateri($materi)
-    {
+        if ($materi->file_materi) {
+            if (str_starts_with($materi->file_materi, 'http')) {
+                $fileUrl = $materi->file_materi;
+            } else {
+                $fileUrl = Storage::disk('public')->url($materi->file_materi);
+            }
+        }
+
         return [
-            'id'          => $materi->id_materi,
-            'judul'       => $materi->judul_materi,
-            'tipe'        => $materi->tipe_materi,
-            'file_url'    => $materi->file_materi,
-            'ukuran'      => $materi->ukuran,
-            'id_kursus'   => $materi->id_kursus,
-            'kursus'      => $materi->kursus?->judul_kursus ?? '',
-            'dibuat_pada' => $materi->created_at,
+            'id_materi'    => $materi->id_materi,
+            'id_kursus'    => $materi->id_kursus,
+            'kursus'       => $materi->kursus?->judul_kursus,
+            'judul_materi' => $materi->judul_materi,
+            'tipe_materi'  => $materi->tipe_materi,
+            'file_materi'  => $fileUrl,
+            'ukuran'       => $materi->ukuran,
+            'urutan'       => $materi->urutan,
+            'dibuat_pada'  => $materi->dibuat_pada,
         ];
+    }
+
+    private function formatBytes(int $bytes): string
+    {
+        if ($bytes >= 1048576) {
+            return round($bytes / 1048576, 2) . ' MB';
+        } elseif ($bytes >= 1024) {
+            return round($bytes / 1024, 2) . ' KB';
+        }
+        return $bytes . ' B';
     }
 }

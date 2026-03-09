@@ -96,14 +96,16 @@ Route::middleware('auth:sanctum')->group(function () {
     // ── Trainer ────────────────────────────────────────────────────────────
     Route::prefix('trainer')->group(function () {
         Route::get('/',        [TrainerController::class, 'index']);
-        Route::get('/{id}',    [TrainerController::class, 'show']);
-        Route::put('/{id}',    [TrainerController::class, 'update']);
-        Route::patch('/{id}/status', [TrainerController::class, 'updateStatus']);
-        // Jadwal trainer
+        // Jadwal routes MUST be before /{id} to avoid wildcard conflict
         Route::get('/jadwal/all',         [TrainerController::class, 'allJadwal']);
         Route::post('/jadwal',            [TrainerController::class, 'storeJadwal']);
         Route::put('/jadwal/{id}',        [TrainerController::class, 'updateJadwal']);
         Route::delete('/jadwal/{id}',     [TrainerController::class, 'deleteJadwal']);
+        // Trainer by ID (wildcard — must come last)
+        Route::get('/{id}',    [TrainerController::class, 'show']);
+        Route::put('/{id}',    [TrainerController::class, 'update']);
+        Route::delete('/{id}', [TrainerController::class, 'destroy']);
+        Route::patch('/{id}/status', [TrainerController::class, 'updateStatus']);
     });
 
     // ── Laporan (Reports) ──────────────────────────────────────────────────
@@ -111,7 +113,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/dashboard',    [LaporanController::class, 'dashboard']);
         Route::get('/peserta',      [LaporanController::class, 'peserta']);
         Route::get('/kursus',       [LaporanController::class, 'kursus']);
-        Route::get('/tugas',        [LaporanController::class, 'tugas']);
+        Route::get('/kuis',         [LaporanController::class, 'kuis']);
         Route::get('/trainer',      [LaporanController::class, 'trainer']);
     });
 

@@ -1,6 +1,6 @@
 import {
   LayoutDashboard, Users, BookOpen, FileText,
-  ClipboardList, GraduationCap, UserSquare2,
+  GraduationCap, UserSquare2,
   BarChart3, X, LogOut,
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
@@ -25,7 +25,6 @@ export function Sidebar({ activeTab, setActiveTab, isOpen, setIsOpen, onLogout, 
     { id: 'participants', label: 'Participants',  icon: Users },
     { id: 'courses',      label: 'Courses',       icon: BookOpen },
     { id: 'materials',    label: 'Materials',     icon: FileText },
-    { id: 'assignments',  label: 'Assignments',   icon: ClipboardList },
     { id: 'exams',        label: 'Exams',         icon: GraduationCap },
     { id: 'trainers',     label: 'Trainers',      icon: UserSquare2 },
     { id: 'reports',      label: 'Reports',       icon: BarChart3 },

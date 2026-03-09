@@ -211,7 +211,7 @@ class KuisController extends Controller
     {
         Kuis::findOrFail($id);
 
-        $attempts = AttemptKuis::with(['pengguna', 'jawabanKuis.pertanyaan'])
+        $attempts = AttemptKuis::with(['pengguna', 'jawabanKuis.pertanyaan.pilihanJawaban', 'jawabanKuis.pilihan'])
             ->where('id_kuis', $id)
             ->where('status', 'selesai')
             ->get();
@@ -231,11 +231,20 @@ class KuisController extends Controller
                 'jawaban_essay' => $a->jawabanKuis
                     ->filter(fn($j) => $j->pertanyaan?->tipe === 'essay')
                     ->map(fn($j) => [
-                        'id_jawaban'  => $j->id_jawaban,
-                        'pertanyaan'  => $j->pertanyaan?->pertanyaan,
-                        'bobot_nilai' => $j->pertanyaan?->bobot_nilai,
-                        'jawaban_text'=> $j->jawaban_text,
-                        'skor'        => $j->skor,
+                        'id_jawaban'   => $j->id_jawaban,
+                        'pertanyaan'   => $j->pertanyaan?->pertanyaan,
+                        'bobot_nilai'  => $j->pertanyaan?->bobot_nilai,
+                        'jawaban_text' => $j->jawaban_text,
+                        'skor'         => $j->skor,
+                    ])->values(),
+                'jawaban_pg' => $a->jawabanKuis
+                    ->filter(fn($j) => $j->pertanyaan?->tipe === 'pilihan_ganda')
+                    ->map(fn($j) => [
+                        'pertanyaan'      => $j->pertanyaan?->pertanyaan,
+                        'bobot_nilai'     => $j->pertanyaan?->bobot_nilai,
+                        'jawaban_dipilih' => $j->pilihan?->teks_jawaban,
+                        'benar'           => $j->skor > 0,
+                        'jawaban_benar'   => $j->pertanyaan?->pilihanJawaban->firstWhere('benar', true)?->teks_jawaban,
                     ])->values(),
             ]),
         ]);

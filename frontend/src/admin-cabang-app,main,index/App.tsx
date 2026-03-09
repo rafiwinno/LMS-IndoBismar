@@ -5,7 +5,6 @@ import { Dashboard } from './components/Dashboard';
 import { Participants } from './components/Participants';
 import { Courses } from './components/Courses';
 import { Materials } from './components/Materials';
-import { Assignments } from './components/Assignments';
 import { Exams } from './components/Exams';
 import { Trainers } from './components/Trainers';
 import { Reports } from './components/Reports';
@@ -56,7 +55,6 @@ export default function App() {
       case 'participants': return <Participants />;
       case 'courses':      return <Courses />;
       case 'materials':    return <Materials />;
-      case 'assignments':  return <Assignments />;
       case 'exams':        return <Exams />;
       case 'trainers':     return <Trainers />;
       case 'reports':      return <Reports />;
@@ -73,16 +71,20 @@ export default function App() {
 
   return (
     <div className="flex h-screen bg-slate-50 font-sans text-slate-900">
-      <Sidebar
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        isOpen={sidebarOpen}
-        setIsOpen={setSidebarOpen}
-        onLogout={handleLogout}
-        user={user}
-      />
+      <div id="no-print">
+        <Sidebar
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          isOpen={sidebarOpen}
+          setIsOpen={setSidebarOpen}
+          onLogout={handleLogout}
+          user={user}
+        />
+      </div>
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <Header onMenuClick={() => setSidebarOpen(true)} user={user} />
+        <div id="no-print">
+          <Header onMenuClick={() => setSidebarOpen(true)} user={user} />
+        </div>
         <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
           <div className="max-w-7xl mx-auto">
             {renderContent()}

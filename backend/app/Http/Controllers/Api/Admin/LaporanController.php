@@ -90,31 +90,29 @@ class LaporanController extends Controller
     }
 
     /**
-     * GET /api/laporan/tugas
+     * GET /api/laporan/kuis
      */
-    public function tugas()
+    public function kuis()
     {
-        $data = DB::table('tugas as t')
-            ->leftJoin('kursus as k', 'k.id_kursus', '=', 't.id_kursus')
-            ->leftJoin('pengumpulan_tugas as pt', 'pt.id_tugas', '=', 't.id_tugas')
-            ->leftJoin('peserta_kursus as pk', 'pk.id_kursus', '=', 't.id_kursus')
+        $data = DB::table('kuis as k')
+            ->leftJoin('kursus as kr', 'kr.id_kursus', '=', 'k.id_kursus')
+            ->leftJoin('attempt_kuis as ak', 'ak.id_kuis', '=', 'k.id_kuis')
             ->select(
-                't.judul_tugas',
-                'k.judul_kursus',
-                't.deadline',
-                DB::raw('COUNT(DISTINCT pt.id_pengumpulan) as submissions'),
-                DB::raw('COUNT(DISTINCT pk.id_peserta_kursus) as total_peserta'),
-                DB::raw('AVG(pt.nilai) as avg_nilai')
+                'k.id_kuis',
+                'k.judul_kuis',
+                'kr.judul_kursus',
+                DB::raw('COUNT(DISTINCT ak.id_attempt) as total_attempts'),
+                DB::raw('COUNT(DISTINCT CASE WHEN ak.status = "selesai" THEN ak.id_attempt END) as selesai'),
+                DB::raw('AVG(CASE WHEN ak.status = "selesai" THEN ak.skor END) as avg_skor')
             )
-            ->groupBy('t.id_tugas', 't.judul_tugas', 'k.judul_kursus', 't.deadline')
+            ->groupBy('k.id_kuis', 'k.judul_kuis', 'kr.judul_kursus')
             ->get()
             ->map(fn($r) => [
-                'judul'        => $r->judul_tugas,
-                'kursus'       => $r->judul_kursus,
-                'deadline'     => $r->deadline,
-                'submissions'  => $r->submissions,
-                'total'        => $r->total_peserta,
-                'avg_nilai'    => $r->avg_nilai ? round($r->avg_nilai, 1) : null,
+                'judul'          => $r->judul_kuis,
+                'kursus'         => $r->judul_kursus ?? '-',
+                'total_attempts' => (int) $r->total_attempts,
+                'selesai'        => (int) $r->selesai,
+                'avg_skor'       => $r->avg_skor ? round($r->avg_skor, 1) : null,
             ]);
 
         return response()->json(['data' => $data]);

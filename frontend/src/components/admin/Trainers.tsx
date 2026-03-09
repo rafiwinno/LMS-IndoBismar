@@ -89,6 +89,12 @@ export function Trainers() {
     catch (e: any) { alert(e.message); }
   };
 
+  const handleDeleteTrainer = async (id: number, nama: string) => {
+    if (!confirm(`Hapus trainer "${nama}"? Aksi ini tidak bisa dibatalkan.`)) return;
+    try { await api.deleteTrainer(id); fetchTrainers(searchTerm); }
+    catch (e: any) { alert(e.message); }
+  };
+
   const filteredTrainers = trainers.filter(t =>
     (t.nama ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     (t.email ?? '').toLowerCase().includes(searchTerm.toLowerCase())
@@ -153,10 +159,16 @@ export function Trainers() {
                     <BookOpen className="w-4 h-4 mr-1 text-indigo-500" />
                     <span>{t.courses} Kursus</span>
                   </div>
-                  <button onClick={() => setActiveTab('schedule')}
-                    className="text-indigo-600 hover:text-indigo-900 p-1 rounded-md hover:bg-indigo-50 transition-colors" title="Lihat Jadwal">
-                    <CalendarIcon className="w-4 h-4" />
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button onClick={() => setActiveTab('schedule')}
+                      className="text-indigo-600 hover:text-indigo-900 p-1 rounded-md hover:bg-indigo-50 transition-colors" title="Lihat Jadwal">
+                      <CalendarIcon className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => handleDeleteTrainer(t.id, t.nama)}
+                      className="text-red-500 hover:text-red-700 p-1 rounded-md hover:bg-red-50 transition-colors" title="Hapus Trainer">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}

@@ -53,6 +53,8 @@ export function Exams() {
   // Grading essay
   const [gradingAttempt, setGradingAttempt] = useState<any>(null);
   const [essayScores, setEssayScores] = useState<Record<number, number>>({});
+  // Detail PG
+  const [pgDetailAttempt, setPgDetailAttempt] = useState<any>(null);
 
   const fetchKuis = async (search = '') => {
     setLoading(true);
@@ -184,7 +186,7 @@ export function Exams() {
   };
 
   const fmt = (d: string) => d ? new Date(d).toLocaleString('id-ID') : '-';
-  const closeModal = () => { setModalMode('none'); setError(''); setGradingAttempt(null); };
+  const closeModal = () => { setModalMode('none'); setError(''); setGradingAttempt(null); setPgDetailAttempt(null); };
 
   // ── Soal saat ini ──────────────────────────────────────────────────────────
   const currentSoal = soalList[activeSoal];
@@ -216,6 +218,7 @@ export function Exams() {
                   <th className="px-6 py-4">Judul Kuis</th>
                   <th className="px-6 py-4">Kursus</th>
                   <th className="px-6 py-4">Waktu Mulai</th>
+                  <th className="px-6 py-4">Deadline</th>
                   <th className="px-6 py-4">Peserta</th>
                   <th className="px-6 py-4">Rata-rata</th>
                   <th className="px-6 py-4 text-right">Aksi</th>
@@ -231,6 +234,13 @@ export function Exams() {
                     </td>
                     <td className="px-6 py-4 text-gray-600">{k.kursus}</td>
                     <td className="px-6 py-4 text-gray-600 text-sm">{fmt(k.waktu_mulai)}</td>
+                    <td className="px-6 py-4 text-sm">
+                      {k.waktu_selesai ? (
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${new Date(k.waktu_selesai) < new Date() ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`}>
+                          {new Date(k.waktu_selesai) < new Date() ? '⏰' : '🕐'} {fmt(k.waktu_selesai)}
+                        </span>
+                      ) : '-'}
+                    </td>
                     <td className="px-6 py-4 text-gray-600">{k.participants}</td>
                     <td className="px-6 py-4">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${(k.avg_score || 0) >= 80 ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'}`}>
@@ -250,7 +260,7 @@ export function Exams() {
                     </td>
                   </tr>
                 ))}
-                {kuis.length === 0 && <tr><td colSpan={6} className="px-6 py-10 text-center text-gray-400">Belum ada kuis</td></tr>}
+                {kuis.length === 0 && <tr><td colSpan={7} className="px-6 py-10 text-center text-gray-400">Belum ada kuis</td></tr>}
               </tbody>
             </table>
           </div>
@@ -478,6 +488,39 @@ export function Exams() {
                   Simpan Penilaian
                 </button>
               </div>
+            ) : pgDetailAttempt ? (
+              /* Detail jawaban pilihan ganda */
+              <div className="flex-1 overflow-y-auto p-6">
+                <button onClick={() => setPgDetailAttempt(null)} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 mb-4">
+                  <ArrowLeft className="w-4 h-4" /> Kembali
+                </button>
+                <h4 className="font-semibold text-gray-800 mb-1">Jawaban Pilihan Ganda — {pgDetailAttempt.peserta}</h4>
+                <p className="text-xs text-gray-400 mb-4">
+                  {pgDetailAttempt.jawaban_pg?.filter((j: any) => j.benar).length ?? 0} benar dari {pgDetailAttempt.jawaban_pg?.length ?? 0} soal
+                </p>
+                <div className="space-y-3">
+                  {pgDetailAttempt.jawaban_pg?.map((j: any, i: number) => (
+                    <div key={i} className={`rounded-lg border p-4 ${j.benar ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
+                      <div className="flex items-start gap-2 mb-2">
+                        <span className={`text-xs font-bold px-1.5 py-0.5 rounded flex-shrink-0 mt-0.5 ${j.benar ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'}`}>
+                          {j.benar ? '✓' : '✗'}
+                        </span>
+                        <p className="text-sm font-medium text-gray-800">{i + 1}. {j.pertanyaan}</p>
+                      </div>
+                      <div className="ml-6 space-y-1 text-sm">
+                        <p className={`${j.benar ? 'text-green-700' : 'text-red-600'}`}>
+                          Jawaban: <span className="font-medium">{j.jawaban_dipilih || '(tidak dijawab)'}</span>
+                        </p>
+                        {!j.benar && (
+                          <p className="text-green-700">
+                            Jawaban benar: <span className="font-medium">{j.jawaban_benar}</span>
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             ) : (
               /* Tabel hasil */
               <div className="overflow-y-auto flex-1">
@@ -487,6 +530,7 @@ export function Exams() {
                       <th className="px-6 py-3">Peserta</th>
                       <th className="px-6 py-3">Skor</th>
                       <th className="px-6 py-3">Waktu Selesai</th>
+                      <th className="px-6 py-3">Pilihan Ganda</th>
                       <th className="px-6 py-3">Essay</th>
                     </tr>
                   </thead>
@@ -501,6 +545,17 @@ export function Exams() {
                         </td>
                         <td className="px-6 py-3 text-sm text-gray-500">{fmt(r.waktu_selesai)}</td>
                         <td className="px-6 py-3">
+                          {r.jawaban_pg?.length > 0 && (
+                            <button onClick={() => setPgDetailAttempt(r)}
+                              className="text-xs text-emerald-600 hover:text-emerald-800 font-medium border border-emerald-200 hover:border-emerald-400 px-2 py-1 rounded-md transition-colors">
+                              {r.jawaban_pg.filter((j: any) => !j.benar).length > 0
+                                ? `${r.jawaban_pg.filter((j: any) => !j.benar).length} salah`
+                                : 'Semua benar'
+                              }
+                            </button>
+                          )}
+                        </td>
+                        <td className="px-6 py-3">
                           {r.has_essay && (
                             <button onClick={() => { setGradingAttempt(r); setEssayScores({}); }}
                               className="text-xs text-indigo-600 hover:text-indigo-800 font-medium border border-indigo-200 hover:border-indigo-400 px-2 py-1 rounded-md transition-colors">
@@ -511,7 +566,7 @@ export function Exams() {
                       </tr>
                     ))}
                     {(!results?.data || results.data.length === 0) && (
-                      <tr><td colSpan={4} className="px-6 py-10 text-center text-gray-400">Belum ada peserta yang mengerjakan</td></tr>
+                      <tr><td colSpan={5} className="px-6 py-10 text-center text-gray-400">Belum ada peserta yang mengerjakan</td></tr>
                     )}
                   </tbody>
                 </table>

@@ -52,6 +52,13 @@ class TrainerController extends Controller
         ]);
     }
 
+    public function destroy($id)
+    {
+        Pengguna::findOrFail($id)->delete();
+
+        return response()->json(['message' => 'Trainer berhasil dihapus.']);
+    }
+
     public function updateStatus(Request $request, $id)
     {
         $request->validate(['status' => 'required|in:aktif,pending,ditolak']);

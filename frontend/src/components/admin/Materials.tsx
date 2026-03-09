@@ -3,8 +3,8 @@ import { Plus, Search, FileText, File, Download, Trash2, X, Youtube, ExternalLin
 import { api } from '../lib/api';
 
 interface Materi {
-  id: number; judul: string; tipe: string;
-  file_url: string; ukuran: string; kursus: string; id_kursus: number; dibuat_pada: string;
+  id_materi: number; judul_materi: string; tipe_materi: string;
+  file_materi: string; ukuran: string; kursus: string; id_kursus: number; dibuat_pada: string;
 }
 
 const getYoutubeId = (url: string) => {
@@ -111,15 +111,15 @@ export function Materials() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {materi.map(m => {
-            const ytId = m.tipe === 'video' ? getYoutubeId(m.file_url) : null;
+            const ytId = m.tipe_materi === 'video' ? getYoutubeId(m.file_materi) : null;
             const thumb = ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : null;
-            const cfg = tipeConfig[m.tipe] ?? tipeConfig.dokumen;
+            const cfg = tipeConfig[m.tipe_materi] ?? tipeConfig.dokumen;
             return (
-              <div key={m.id} onClick={() => setViewer(m)}
+              <div key={m.id_materi} onClick={() => setViewer(m)}
                 className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md hover:border-indigo-300 transition-all cursor-pointer group">
                 {thumb ? (
                   <div className="relative h-36">
-                    <img src={thumb} alt={m.judul} className="w-full h-full object-cover" />
+                    <img src={thumb} alt={m.judul_materi} className="w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                       <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center shadow-lg">
                         <div className="w-0 h-0 border-t-8 border-b-8 border-transparent ml-1" style={{borderLeft: '14px solid white'}} />
@@ -138,8 +138,8 @@ export function Materials() {
                 )}
                 <div className="p-4">
                   <div className="flex justify-between items-start mb-1">
-                    <h3 className="font-semibold text-gray-900 line-clamp-1 flex-1 mr-2 group-hover:text-indigo-600 transition-colors">{m.judul}</h3>
-                    <button onClick={e => handleDelete(m.id, e)} className="text-gray-300 hover:text-red-500 p-0.5 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0">
+                    <h3 className="font-semibold text-gray-900 line-clamp-1 flex-1 mr-2 group-hover:text-indigo-600 transition-colors">{m.judul_materi}</h3>
+                    <button onClick={e => handleDelete(m.id_materi, e)} className="text-gray-300 hover:text-red-500 p-0.5 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
@@ -168,16 +168,16 @@ export function Materials() {
                   <ChevronLeft className="w-5 h-5" />
                 </button>
                 <div className="min-w-0">
-                  <h3 className="font-semibold text-gray-900 truncate">{viewer.judul}</h3>
+                  <h3 className="font-semibold text-gray-900 truncate">{viewer.judul_materi}</h3>
                   <p className="text-xs text-indigo-600">{viewer.kursus}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0 ml-4">
-                {viewer.file_url && (
-                  <a href={viewer.file_url} target="_blank" rel="noopener noreferrer"
+                {viewer.file_materi && (
+                  <a href={viewer.file_materi} target="_blank" rel="noopener noreferrer"
                     className="flex items-center gap-1.5 px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-600 transition-colors">
                     <ExternalLink className="w-4 h-4" />
-                    {viewer.tipe === 'video' ? 'Buka YouTube' : viewer.tipe === 'link_drive' ? 'Buka Drive' : 'Download'}
+                    {viewer.tipe_materi === 'video' ? 'Buka YouTube' : viewer.tipe_materi === 'link_drive' ? 'Buka Drive' : 'Download'}
                   </a>
                 )}
                 <button onClick={() => setViewer(null)} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-600">
@@ -186,22 +186,22 @@ export function Materials() {
               </div>
             </div>
             <div className="flex-1 overflow-hidden">
-              {viewer.tipe === 'video' && getYoutubeId(viewer.file_url) ? (
+              {viewer.tipe_materi === 'video' && getYoutubeId(viewer.file_materi) ? (
                 <div className="w-full h-full min-h-[400px] bg-black flex items-center justify-center">
-                  <iframe src={`https://www.youtube.com/embed/${getYoutubeId(viewer.file_url)}?autoplay=1`}
+                  <iframe src={`https://www.youtube.com/embed/${getYoutubeId(viewer.file_materi)}?autoplay=1`}
                     className="w-full h-full min-h-[400px]"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen />
                 </div>
-              ) : viewer.tipe === 'pdf' && viewer.file_url ? (
-                <iframe src={viewer.file_url} className="w-full h-full min-h-[500px]" title={viewer.judul} />
-              ) : viewer.tipe === 'ppt' && viewer.file_url ? (
+              ) : viewer.tipe_materi === 'pdf' && viewer.file_materi ? (
+                <iframe src={viewer.file_materi} className="w-full h-full min-h-[500px]" title={viewer.judul_materi} />
+              ) : viewer.tipe_materi === 'ppt' && viewer.file_materi ? (
                 <iframe
-                  src={`https://docs.google.com/viewer?url=${encodeURIComponent(viewer.file_url)}&embedded=true`}
-                  className="w-full h-full min-h-[500px]" title={viewer.judul} />
-              ) : viewer.tipe === 'link_drive' && viewer.file_url ? (
-                <iframe src={viewer.file_url.replace('/view', '/preview')}
-                  className="w-full h-full min-h-[500px]" title={viewer.judul} allow="autoplay" />
+                  src={`https://docs.google.com/viewer?url=${encodeURIComponent(viewer.file_materi)}&embedded=true`}
+                  className="w-full h-full min-h-[500px]" title={viewer.judul_materi} />
+              ) : viewer.tipe_materi === 'link_drive' && viewer.file_materi ? (
+                <iframe src={viewer.file_materi.replace('/view', '/preview')}
+                  className="w-full h-full min-h-[500px]" title={viewer.judul_materi} allow="autoplay" />
               ) : (
                 <div className="flex flex-col items-center justify-center h-64 gap-4 text-gray-500">
                   <File className="w-16 h-16 text-gray-300" />

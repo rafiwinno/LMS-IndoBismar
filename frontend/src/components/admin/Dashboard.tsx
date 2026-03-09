@@ -36,7 +36,7 @@ export function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Progress Peserta</h3>
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">Kuis Diselesaikan (per Minggu)</h3>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={progressData}>
@@ -73,7 +73,7 @@ export function Dashboard() {
             </div>
 
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Submission Rate</h3>
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Materi Dibuka (per Hari)</h3>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={submissionData}>
