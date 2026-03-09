@@ -1,48 +1,62 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Clock, AlertTriangle, CheckCircle, ChevronLeft } from 'lucide-react';
+import { Clock, CheckCircle, ChevronLeft } from 'lucide-react';
+import API from '../../api/api';
+
+interface Pilihan {
+  id_pilihan: number;
+  teks_jawaban: string;
+}
+
+interface Pertanyaan {
+  id_pertanyaan: number;
+  pertanyaan: string;
+  pilihan: Pilihan[];
+}
+
+interface KuisDetail {
+  id_kuis: number;
+  judul_kuis: string;
+  waktu_selesai: string;
+}
 
 export default function Quiz() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [timeLeft, setTimeLeft] = useState(1800); // 30 minutes in seconds
+  const [kuis, setKuis] = useState<KuisDetail | null>(null);
+  const [pertanyaan, setPertanyaan] = useState<Pertanyaan[]>([]);
+  const [loading, setLoading] = useState(true);
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [answers, setAnswers] = useState<Record<number, string>>({});
+  const [answers, setAnswers] = useState<Record<number, number>>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [hasil, setHasil] = useState<{ nilai: number; benar: number; total: number } | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(1800);
 
-  // Mock quiz data
-  const quiz = {
-    title: 'Kuis 1: HTML & CSS Dasar',
-    course: 'Dasar Pemrograman Web',
-    duration: 30, // minutes
-    questions: [
-      {
-        id: 1,
-        type: 'multiple_choice',
-        question: 'Tag HTML mana yang digunakan untuk membuat paragraf?',
-        options: ['<p>', '<h1>', '<br>', '<div>'],
-        correctAnswer: '<p>'
-      },
-      {
-        id: 2,
-        type: 'multiple_choice',
-        question: 'Apa kepanjangan dari CSS?',
-        options: ['Computer Style Sheets', 'Cascading Style Sheets', 'Creative Style Sheets', 'Colorful Style Sheets'],
-        correctAnswer: 'Cascading Style Sheets'
-      },
-      {
-        id: 3,
-        type: 'essay',
-        question: 'Jelaskan perbedaan antara margin dan padding dalam CSS!',
-        correctAnswer: ''
-      }
-    ]
-  };
+  useEffect(() => {
+    API.get(`/user/kuis/${id}`)
+      .then(res => {
+        setKuis(res.data.kuis);
+        setPertanyaan(res.data.pertanyaan);
+      })
+      .catch(err => console.error(err))
+      .finally(() => setLoading(false));
+
+    // Cek apakah kuis sudah dikerjakan
+    API.get('/user/kuis')
+      .then(res => {
+        const kuisList = res.data.data;
+        const thisKuis = kuisList.find((k: any) => k.id_kuis === Number(id));
+        if (thisKuis?.status_attempt === 'sudah') {
+          navigate('/tasks');
+        }
+      });
+  }, [id]);
 
   useEffect(() => {
     if (timeLeft > 0 && !isSubmitted) {
-      const timerId = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
-      return () => clearTimeout(timerId);
+      const timer = setTimeout(() => setTimeLeft(t => t - 1), 1000);
+      return () => clearTimeout(timer);
     } else if (timeLeft === 0 && !isSubmitted) {
       handleSubmit();
     }
@@ -54,15 +68,37 @@ export default function Quiz() {
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
-  const handleAnswer = (answer: string) => {
-    setAnswers({ ...answers, [currentQuestion]: answer });
+  const handleAnswer = (id_pilihan: number) => {
+    setAnswers({ ...answers, [currentQuestion]: id_pilihan });
   };
 
-  const handleSubmit = () => {
-    setIsSubmitted(true);
+  const handleSubmit = async () => {
+    setSubmitting(true);
+    try {
+      const jawaban = pertanyaan.map((p, index) => ({
+        id_pertanyaan: p.id_pertanyaan,
+        id_pilihan: answers[index] ?? 0,
+      }));
+
+      const res = await API.post(`/user/kuis/${id}/kerjakan`, { jawaban });
+      setHasil(res.data);
+      setIsSubmitted(true);
+    } catch (err: any) {
+      const msg = err.response?.data?.message || '';
+      if (msg === 'Kamu sudah mengerjakan kuis ini') {
+        navigate('/tasks');
+      } else {
+        alert(msg || 'Gagal mengumpulkan kuis.');
+      }
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  if (isSubmitted) {
+  if (loading) return <div className="text-center text-slate-500 py-12">Memuat kuis...</div>;
+  if (!kuis) return <div className="text-center text-slate-500 py-12">Kuis tidak ditemukan.</div>;
+
+  if (isSubmitted && hasil) {
     return (
       <div className="max-w-2xl mx-auto mt-12 text-center">
         <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-200">
@@ -70,26 +106,25 @@ export default function Quiz() {
             <CheckCircle size={40} />
           </div>
           <h2 className="text-2xl font-bold text-slate-900 mb-2">Kuis Berhasil Dikumpulkan!</h2>
-          <p className="text-slate-600 mb-8">Terima kasih telah mengerjakan {quiz.title}. Hasil Anda telah tersimpan.</p>
-          
+          <p className="text-slate-600 mb-8">Terima kasih telah mengerjakan {kuis.judul_kuis}.</p>
+
           <div className="bg-slate-50 rounded-xl p-6 border border-slate-100 mb-8 inline-block text-left">
-            <div className="flex items-center gap-4 mb-4">
-              <span className="text-slate-500 font-medium w-32">Skor Sementara:</span>
-              <span className="text-2xl font-bold text-slate-900">80/100</span>
+            <div className="flex items-center gap-4 mb-3">
+              <span className="text-slate-500 font-medium w-32">Nilai:</span>
+              <span className="text-3xl font-bold text-emerald-600">{hasil.nilai}</span>
             </div>
             <div className="flex items-center gap-4">
-              <span className="text-slate-500 font-medium w-32">Waktu Selesai:</span>
-              <span className="text-slate-900 font-semibold">{formatTime(1800 - timeLeft)}</span>
+              <span className="text-slate-500 font-medium w-32">Jawaban Benar:</span>
+              <span className="text-slate-900 font-semibold">{hasil.benar} / {hasil.total}</span>
             </div>
-            <p className="text-xs text-slate-400 mt-4 italic">*Menunggu penilaian soal esai oleh trainer</p>
           </div>
 
           <div>
-            <Link 
+            <Link
               to="/tasks"
               className="inline-flex justify-center items-center px-6 py-3 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors"
             >
-              Kembali ke Daftar Tugas
+              Kembali ke Daftar Kuis
             </Link>
           </div>
         </div>
@@ -104,12 +139,9 @@ export default function Quiz() {
         Kembali
       </Link>
 
-      <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 sticky top-20 z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-xl font-bold text-slate-900">{quiz.title}</h1>
-          <p className="text-slate-500 text-sm">{quiz.course}</p>
-        </div>
-        
+      {/* Header */}
+      <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <h1 className="text-xl font-bold text-slate-900">{kuis.judul_kuis}</h1>
         <div className={`flex items-center gap-2 px-4 py-2 rounded-lg font-mono text-lg font-bold ${
           timeLeft < 300 ? 'bg-rose-100 text-rose-700 animate-pulse' : 'bg-slate-100 text-slate-800'
         }`}>
@@ -119,20 +151,20 @@ export default function Quiz() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        {/* Question Navigation */}
+        {/* Navigasi Soal */}
         <div className="md:col-span-1">
           <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
             <h3 className="font-semibold text-slate-900 mb-4">Navigasi Soal</h3>
             <div className="grid grid-cols-4 gap-2">
-              {quiz.questions.map((q, index) => (
+              {pertanyaan.map((_, index) => (
                 <button
-                  key={q.id}
+                  key={index}
                   onClick={() => setCurrentQuestion(index)}
                   className={`w-10 h-10 rounded-lg flex items-center justify-center text-sm font-medium transition-colors ${
-                    currentQuestion === index 
-                      ? 'bg-blue-600 text-white ring-2 ring-blue-600 ring-offset-2' 
-                      : answers[index] 
-                        ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' 
+                    currentQuestion === index
+                      ? 'bg-blue-600 text-white ring-2 ring-blue-600 ring-offset-2'
+                      : answers[index]
+                        ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
                         : 'bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100'
                   }`}
                 >
@@ -140,74 +172,51 @@ export default function Quiz() {
                 </button>
               ))}
             </div>
-            
             <div className="mt-6 pt-6 border-t border-slate-100">
-              <div className="flex items-center gap-2 text-xs text-slate-500 mb-2">
-                <div className="w-3 h-3 rounded bg-emerald-100 border border-emerald-200"></div> Sudah Dijawab
-              </div>
-              <div className="flex items-center gap-2 text-xs text-slate-500 mb-4">
-                <div className="w-3 h-3 rounded bg-slate-50 border border-slate-200"></div> Belum Dijawab
-              </div>
-              
-              <button 
+              <button
                 onClick={handleSubmit}
-                className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
+                disabled={submitting}
+                className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
               >
-                Kumpulkan Kuis
+                {submitting ? 'Mengumpulkan...' : 'Kumpulkan Kuis'}
               </button>
             </div>
           </div>
         </div>
 
-        {/* Current Question */}
+        {/* Soal */}
         <div className="md:col-span-3">
           <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-slate-200 min-h-[400px] flex flex-col">
-            <div className="mb-6 flex items-center justify-between">
+            <div className="mb-6">
               <span className="text-sm font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
-                Soal {currentQuestion + 1} dari {quiz.questions.length}
-              </span>
-              <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">
-                {quiz.questions[currentQuestion].type === 'multiple_choice' ? 'Pilihan Ganda' : 'Esai'}
+                Soal {currentQuestion + 1} dari {pertanyaan.length}
               </span>
             </div>
-            
+
             <h2 className="text-lg md:text-xl font-medium text-slate-900 mb-8 leading-relaxed">
-              {quiz.questions[currentQuestion].question}
+              {pertanyaan[currentQuestion]?.pertanyaan}
             </h2>
 
-            <div className="flex-1">
-              {quiz.questions[currentQuestion].type === 'multiple_choice' ? (
-                <div className="space-y-3">
-                  {quiz.questions[currentQuestion].options?.map((option, index) => (
-                    <label 
-                      key={index} 
-                      className={`flex items-center p-4 border rounded-xl cursor-pointer transition-all ${
-                        answers[currentQuestion] === option 
-                          ? 'border-blue-600 bg-blue-50 ring-1 ring-blue-600' 
-                          : 'border-slate-200 hover:border-blue-300 hover:bg-slate-50'
-                      }`}
-                    >
-                      <input 
-                        type="radio" 
-                        name={`question-${currentQuestion}`} 
-                        value={option}
-                        checked={answers[currentQuestion] === option}
-                        onChange={() => handleAnswer(option)}
-                        className="w-4 h-4 text-blue-600 border-slate-300 focus:ring-blue-600"
-                      />
-                      <span className="ml-3 text-slate-700 font-medium">{option}</span>
-                    </label>
-                  ))}
-                </div>
-              ) : (
-                <textarea
-                  rows={8}
-                  value={answers[currentQuestion] || ''}
-                  onChange={(e) => handleAnswer(e.target.value)}
-                  placeholder="Ketik jawaban Anda di sini..."
-                  className="w-full p-4 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-blue-600 text-slate-700 resize-none"
-                ></textarea>
-              )}
+            <div className="flex-1 space-y-3">
+              {pertanyaan[currentQuestion]?.pilihan.map((pilihan) => (
+                <label
+                  key={pilihan.id_pilihan}
+                  className={`flex items-center p-4 border rounded-xl cursor-pointer transition-all ${
+                    answers[currentQuestion] === pilihan.id_pilihan
+                      ? 'border-blue-600 bg-blue-50 ring-1 ring-blue-600'
+                      : 'border-slate-200 hover:border-blue-300 hover:bg-slate-50'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name={`question-${currentQuestion}`}
+                    checked={answers[currentQuestion] === pilihan.id_pilihan}
+                    onChange={() => handleAnswer(pilihan.id_pilihan)}
+                    className="w-4 h-4 text-blue-600 border-slate-300 focus:ring-blue-600"
+                  />
+                  <span className="ml-3 text-slate-700 font-medium">{pilihan.teks_jawaban}</span>
+                </label>
+              ))}
             </div>
 
             <div className="flex justify-between mt-8 pt-6 border-t border-slate-100">
@@ -218,10 +227,9 @@ export default function Quiz() {
               >
                 Sebelumnya
               </button>
-              
-              {currentQuestion < quiz.questions.length - 1 ? (
+              {currentQuestion < pertanyaan.length - 1 ? (
                 <button
-                  onClick={() => setCurrentQuestion(Math.min(quiz.questions.length - 1, currentQuestion + 1))}
+                  onClick={() => setCurrentQuestion(currentQuestion + 1)}
                   className="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
                 >
                   Selanjutnya
@@ -229,7 +237,8 @@ export default function Quiz() {
               ) : (
                 <button
                   onClick={handleSubmit}
-                  className="px-5 py-2.5 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors flex items-center gap-2"
+                  disabled={submitting}
+                  className="px-5 py-2.5 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
                 >
                   <CheckCircle size={18} /> Selesai
                 </button>

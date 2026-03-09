@@ -36,7 +36,7 @@ class KuisController extends Controller
     // Peserta kerjakan kuis & simpan jawaban
     public function kerjakan(Request $request, $id_kuis)
     {
-        $id_pengguna = $request->id_pengguna;
+        $id_pengguna = $request->user()->id_pengguna;
 
         // Cek apakah kuis ada
         $kuis = DB::table('kuis')->where('id_kuis', $id_kuis)->first();
