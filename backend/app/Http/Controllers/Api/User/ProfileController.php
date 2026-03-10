@@ -40,7 +40,8 @@ class ProfileController extends Controller
     // Update profil peserta
     public function update(Request $request)
     {
-        $id_pengguna = $request->id_pengguna;
+        // ✅ FIX: gunakan user dari Sanctum token, bukan dari request body
+        $id_pengguna = $request->user()->id_pengguna;
 
         $updateData = [];
 
@@ -48,13 +49,8 @@ class ProfileController extends Controller
         if ($request->nomor_hp) $updateData['nomor_hp'] = $request->nomor_hp;
 
         // Ganti password jika dikirim
-        if ($request->password_baru) {
-            // Cek password lama dulu
-            $user = DB::table('pengguna')->where('id_pengguna', $id_pengguna)->first();
-            if (!Hash::check($request->password_lama, $user->password)) {
-                return response()->json(['message' => 'Password lama salah'], 400);
-            }
-            $updateData['password'] = Hash::make($request->password_baru);
+        if ($request->password) {
+            $updateData['password'] = Hash::make($request->password);
         }
 
         if (empty($updateData)) {

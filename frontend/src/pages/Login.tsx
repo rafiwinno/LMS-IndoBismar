@@ -25,7 +25,7 @@ export default function Login() {
       // Simpan user ke localStorage
       saveUser({
         id:    res.user.id_pengguna,
-        name:  res.user.nama,
+        nama:  res.user.nama,
         email: res.user.email,
         role:  'user',
       });

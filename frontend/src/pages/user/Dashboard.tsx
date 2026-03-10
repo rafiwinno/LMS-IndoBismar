@@ -25,10 +25,10 @@ export default function Dashboard() {
   }, []);
 
   const statCards = [
-    { name: 'Total Kursus',   value: stats?.total_kursus ?? 0,    icon: BookOpen,    color: 'text-blue-600',    bg: 'bg-blue-100' },
-    { name: 'Kuis Selesai',   value: stats?.kuis_selesai ?? 0,    icon: CheckCircle, color: 'text-emerald-600', bg: 'bg-emerald-100' },
-    { name: 'Kuis Belum',     value: stats?.kuis_belum ?? 0,      icon: Clock,       color: 'text-amber-600',   bg: 'bg-amber-100' },
-    { name: 'Nilai Rata-rata',value: stats?.nilai_rata_rata ?? 0, icon: Award,       color: 'text-purple-600',  bg: 'bg-purple-100' },
+    { name: 'Total Kursus',    value: stats?.total_kursus ?? 0,    icon: BookOpen,    color: 'text-blue-600',    bg: 'bg-blue-100' },
+    { name: 'Kuis Selesai',    value: stats?.kuis_selesai ?? 0,    icon: CheckCircle, color: 'text-emerald-600', bg: 'bg-emerald-100' },
+    { name: 'Kuis Belum',      value: stats?.kuis_belum ?? 0,      icon: Clock,       color: 'text-amber-600',   bg: 'bg-amber-100' },
+    { name: 'Nilai Rata-rata', value: stats?.nilai_rata_rata ?? 0, icon: Award,       color: 'text-purple-600',  bg: 'bg-purple-100' },
   ];
 
   return (
@@ -36,7 +36,7 @@ export default function Dashboard() {
       {/* Welcome Section */}
       <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-200">
         <h1 className="text-3xl font-bold text-slate-900 mb-3">
-          Selamat datang, {user?.name ?? 'Peserta'}
+          Selamat datang, {user?.nama ?? 'Peserta'} 👋
         </h1>
         <p className="text-lg text-slate-600">Lanjutkan pembelajaran Anda hari ini. Tetap semangat!</p>
       </div>
@@ -68,7 +68,7 @@ export default function Dashboard() {
             <BookOpen className="w-10 h-10 text-blue-600 mx-auto mb-3" />
             <p className="font-semibold text-slate-900">Lihat Kursus</p>
           </Link>
-          <Link to="/tasks/quiz/1" className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 hover:shadow-md transition-shadow text-center">
+          <Link to="/tasks" className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 hover:shadow-md transition-shadow text-center">
             <Clock className="w-10 h-10 text-amber-600 mx-auto mb-3" />
             <p className="font-semibold text-slate-900">Kerjakan Kuis</p>
           </Link>

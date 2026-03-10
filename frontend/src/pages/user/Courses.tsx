@@ -1,17 +1,19 @@
 import { useEffect, useState } from 'react';
 import { Search, BookOpen } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import API from '../../api/api';
 
 interface Kursus {
   id_kursus: number;
   judul_kursus: string;
   deskripsi: string;
+  nama_trainer: string;
 }
 
 export default function Courses() {
   const [courses, setCourses] = useState<Kursus[]>([]);
-  const [search, setSearch] = useState('');
+  const [searchParams] = useSearchParams();
+  const [search, setSearch] = useState(searchParams.get('search') ?? '');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -63,6 +65,7 @@ export default function Courses() {
                   {course.judul_kursus}
                 </h3>
                 <p className="text-sm text-slate-500 line-clamp-2 mb-3">{course.deskripsi}</p>
+                <p className="text-xs text-slate-400 mt-auto">Trainer: {course.nama_trainer ?? '-'}</p>
               </div>
             </Link>
           ))}

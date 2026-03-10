@@ -24,8 +24,8 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
   const navItems = [
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
     { name: 'Courses', path: '/courses', icon: BookOpen },
-    { name: 'Tugas & Kuis', path: '/tasks', icon: CheckSquare },
-    { name: 'Nilai & Progres', path: '/grades', icon: Award },
+    { name: 'Kuis', path: '/tasks', icon: CheckSquare },
+    { name: 'Nilai', path: '/grades', icon: Award },
     { name: 'Profil', path: '/profile', icon: User },
   ];
 

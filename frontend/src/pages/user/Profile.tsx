@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { User, Mail, Phone, Lock, Save } from 'lucide-react';
 import API from '../../api/api';
 
@@ -19,15 +19,21 @@ export default function Profile() {
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
-  useEffect(() => {
-    API.get('/user/profil')
-      .then(res => {
-        setProfil(res.data.data);
-        setForm({ nama: res.data.data.nama, nomor_hp: res.data.data.nomor_hp ?? '' });
-      })
-      .catch(err => console.error(err))
-      .finally(() => setLoading(false));
+  // ✅ FIX: Ekstrak fetchProfil ke fungsi tersendiri agar bisa dipanggil ulang setelah save
+  const fetchProfil = useCallback(async () => {
+    try {
+      const res = await API.get('/user/profil');
+      const data = res.data.data;
+      setProfil(data);
+      setForm({ nama: data.nama, nomor_hp: data.nomor_hp ?? '' });
+    } catch (err) {
+      console.error(err);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchProfil().finally(() => setLoading(false));
+  }, [fetchProfil]);
 
   const handleSaveProfil = async () => {
     setSaving(true);
@@ -35,7 +41,15 @@ export default function Profile() {
     setErrorMsg('');
     try {
       await API.put('/user/profil', { nama: form.nama, nomor_hp: form.nomor_hp });
-      setProfil(prev => prev ? { ...prev, nama: form.nama, nomor_hp: form.nomor_hp } : prev);
+
+      // ✅ FIX: Re-fetch dari API agar Profile Card sinkron dengan data DB terbaru
+      await fetchProfil();
+
+      // Update localStorage dan trigger Header update
+      const currentUser = JSON.parse(localStorage.getItem('lms_user') || '{}');
+      localStorage.setItem('lms_user', JSON.stringify({ ...currentUser, nama: form.nama }));
+      window.dispatchEvent(new Event('lms_user_updated'));
+
       setSuccessMsg('Profil berhasil diperbarui!');
     } catch (err: any) {
       setErrorMsg(err.response?.data?.message || 'Gagal menyimpan profil.');

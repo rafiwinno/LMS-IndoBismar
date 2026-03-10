@@ -1,9 +1,8 @@
-
 export type Role = "user" | "admin" | "trainer" | "superadmin";
 
 export interface User {
   id: number;
-  name: string;
+  nama: string;
   email: string;
   role: Role;
 }
