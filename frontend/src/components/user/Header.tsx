@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Menu, Bell, Search } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Menu, Bell } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { getUser } from '../../pages/types';
 
 interface HeaderProps {
@@ -9,7 +9,6 @@ interface HeaderProps {
 
 export default function Header({ onMenuClick }: HeaderProps) {
   const [user, setUser] = useState(getUser());
-  const navigate = useNavigate();
 
   useEffect(() => {
     const handleStorage = () => setUser(getUser());
@@ -28,32 +27,15 @@ export default function Header({ onMenuClick }: HeaderProps) {
     .join('')
     .toUpperCase() ?? '??';
 
-  const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      const query = (e.target as HTMLInputElement).value.trim();
-      if (query) navigate(`/courses?search=${encodeURIComponent(query)}`);
-    }
-  };
-
   return (
     <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 md:px-6 sticky top-0 z-10">
       <div className="flex items-center gap-4">
-        <button 
+        <button
           onClick={onMenuClick}
           className="lg:hidden p-2 -ml-2 text-slate-500 hover:bg-slate-100 rounded-lg"
         >
           <Menu size={24} />
         </button>
-        
-        <div className="hidden md:flex items-center gap-2 px-3 py-2 bg-slate-100 rounded-lg text-slate-500 focus-within:ring-2 focus-within:ring-blue-500 focus-within:bg-white transition-all w-64">
-          <Search size={18} />
-          <input 
-            type="text" 
-            placeholder="Cari kursus..." 
-            className="bg-transparent border-none outline-none w-full text-sm text-slate-900 placeholder-slate-400"
-            onKeyDown={handleSearch}
-          />
-        </div>
       </div>
 
       <div className="flex items-center gap-3">

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { CheckCircle, AlertCircle, FileText, Clock } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { CheckCircle, AlertCircle, FileText, Clock, Search } from 'lucide-react';
 import API from '../../api/api';
 
 interface Kuis {
@@ -18,6 +18,10 @@ export default function Tasks() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('semua');
   const location = useLocation();
+  const navigate = useNavigate();
+
+  // Baca search query dari URL
+  const searchQuery = new URLSearchParams(location.search).get('search')?.toLowerCase().trim() ?? '';
 
   const fetchKuis = () => {
     setLoading(true);
@@ -29,12 +33,31 @@ export default function Tasks() {
 
   useEffect(() => {
     fetchKuis();
-  }, [location.key]); // refresh setiap kali navigasi ke halaman ini
+  }, [location.key]);
+
+  const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      const query = (e.target as HTMLInputElement).value.trim();
+      if (query) {
+        navigate(`/tasks?search=${encodeURIComponent(query)}`);
+      } else {
+        navigate('/tasks');
+      }
+    }
+  };
 
   const filtered = kuisList.filter(k => {
-    if (filter === 'belum') return k.status_attempt === 'belum';
-    if (filter === 'selesai') return k.status_attempt === 'sudah';
-    return true;
+    const matchSearch = searchQuery
+      ? k.judul_kuis.toLowerCase().includes(searchQuery) ||
+        k.judul_kursus.toLowerCase().includes(searchQuery)
+      : true;
+
+    const matchStatus =
+      filter === 'belum'   ? k.status_attempt === 'belum' :
+      filter === 'selesai' ? k.status_attempt === 'sudah' :
+      true;
+
+    return matchSearch && matchStatus;
   });
 
   return (
@@ -42,9 +65,15 @@ export default function Tasks() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Kuis</h1>
-          <p className="text-slate-500 text-sm mt-1">Kerjakan kuis dari trainer Anda</p>
+          <p className="text-slate-500 text-sm mt-1">
+            {searchQuery
+              ? <>Hasil pencarian: <span className="font-semibold text-blue-600">"{searchQuery}"</span></>
+              : 'Kerjakan kuis dari trainer Anda'}
+          </p>
         </div>
-        <div className="flex gap-2">
+
+        {/* ✅ Filter buttons + Search bar sejajar di kanan */}
+        <div className="flex items-center gap-2 flex-wrap">
           {['semua', 'belum', 'selesai'].map(f => (
             <button
               key={f}
@@ -58,13 +87,29 @@ export default function Tasks() {
               {f === 'semua' ? 'Semua' : f === 'belum' ? 'Belum Selesai' : 'Selesai'}
             </button>
           ))}
+
+          {/* ✅ Search bar di sebelah kanan tombol "Selesai" */}
+          <div className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-500 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-all w-52">
+            <Search size={16} className="flex-shrink-0" />
+            <input
+              type="text"
+              defaultValue={searchQuery}
+              placeholder="Cari kuis..."
+              className="bg-transparent border-none outline-none w-full text-sm text-slate-900 placeholder-slate-400"
+              onKeyDown={handleSearch}
+            />
+          </div>
         </div>
       </div>
 
       {loading ? (
         <div className="text-center text-slate-500 py-12">Memuat kuis...</div>
       ) : filtered.length === 0 ? (
-        <div className="text-center text-slate-500 py-12">Tidak ada kuis ditemukan.</div>
+        <div className="text-center text-slate-500 py-12">
+          {searchQuery
+            ? `Tidak ada kuis yang cocok dengan "${searchQuery}".`
+            : 'Tidak ada kuis ditemukan.'}
+        </div>
       ) : (
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
           <div className="overflow-x-auto">
