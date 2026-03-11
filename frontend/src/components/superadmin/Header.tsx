@@ -149,10 +149,6 @@ export default function SuperAdminLayout() {
           </div>
 
           <div className="flex items-center gap-4">
-            <button className="p-2 text-slate-400 hover:text-slate-600 relative transition-colors rounded-md hover:bg-slate-100">
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
-            </button>
             
             <div className="h-8 w-px bg-slate-200 mx-1"></div>
                 <Link to="/" className="flex items-center gap-3 hover:bg-slate-50 p-1.5 pr-3 rounded-full transition-colors">
