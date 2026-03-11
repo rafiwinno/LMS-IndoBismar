@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Search, FileText, File, Download, Trash2, X, Youtube, ExternalLink, ChevronLeft, Presentation, Link } from 'lucide-react';
-import { api } from '../lib/api';
+import { api } from '../../lib/api';
+import { confirm } from '../../lib/confirm';
 
 interface Materi {
   id_materi: number; judul_materi: string; tipe_materi: string;
@@ -77,7 +78,7 @@ export function Materials() {
 
   const handleDelete = async (id: number, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!confirm('Hapus materi ini?')) return;
+    if (!await confirm('Hapus materi ini?')) return;
     try { await api.deleteMateri(id); fetchMateri(searchTerm); }
     catch (e: any) { alert(e.message); }
   };

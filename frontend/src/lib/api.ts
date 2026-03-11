@@ -1,27 +1,36 @@
-const API_BASE = 'http://127.0.0.1:8000/api';
+const API_BASE = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000/api';
 
 export async function apiFetch(endpoint: string, options: RequestInit = {}) {
-  const token = localStorage.getItem('token');
-
+  const token = sessionStorage.getItem('token');
   const isFormData = options.body instanceof FormData;
 
-  const res = await fetch(`${API_BASE}${endpoint}`, {
-    ...options,
-    headers: {
-      ...(!isFormData ? { 'Content-Type': 'application/json' } : {}),
-      'Accept': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options.headers,
-    },
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}${endpoint}`, {
+      ...options,
+      headers: {
+        ...(!isFormData ? { 'Content-Type': 'application/json' } : {}),
+        'Accept': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...options.headers,
+      },
+    });
+  } catch {
+    throw new Error('Tidak dapat terhubung ke server. Periksa koneksi internet Anda.');
+  }
 
   if (res.status === 401) {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('user');
     window.location.reload();
   }
 
-  const data = await res.json();
+  let data: any;
+  try {
+    data = await res.json();
+  } catch {
+    throw new Error('Respons server tidak valid.');
+  }
 
   if (!res.ok) {
     throw new Error(data.message || 'Request gagal');
@@ -88,6 +97,7 @@ export const api = {
 
   // Trainer
   getTrainer: (params?: string) => apiFetch(`/trainer${params ? '?' + params : ''}`),
+  createTrainer: (data: any) => apiFetch('/trainer', { method: 'POST', body: JSON.stringify(data) }),
   deleteTrainer: (id: number) => apiFetch(`/trainer/${id}`, { method: 'DELETE' }),
   getAllJadwal: (params?: string) => apiFetch(`/trainer/jadwal/all${params ? '?' + params : ''}`),
   createJadwal: (data: any) => apiFetch('/trainer/jadwal', { method: 'POST', body: JSON.stringify(data) }),

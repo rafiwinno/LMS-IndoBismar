@@ -4,7 +4,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   LineChart, Line, Legend,
 } from 'recharts';
-import { api } from '../lib/api';
+import { api } from '../../lib/api';
 
 type TabKey = 'peserta' | 'kursus' | 'kuis' | 'trainer';
 

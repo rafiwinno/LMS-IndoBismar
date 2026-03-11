@@ -3,7 +3,9 @@ import {
   Search, Eye, Award, Plus, Trash2, X, ChevronRight,
   CheckCircle, FileText, Edit3, Save, ArrowLeft, PlusCircle
 } from 'lucide-react';
-import { api } from '../lib/api';
+import { api } from '../../lib/api';
+import { confirm } from '../../lib/confirm';
+import { TimePickerRoll } from '../../components/admin/TimePickerRoll';
 
 interface Kuis {
   id: number; judul: string; kursus: string; id_kursus: number;
@@ -81,6 +83,8 @@ export function Exams() {
     try {
       const res = await api.createKuis({ ...form, pertanyaan: [] });
       setSelectedKuis({ ...res.data, id: res.data.id });
+      setSoalList([emptySoal()]);
+      setActiveSoal(0);
       setModalMode('soal');
       fetchKuis(searchTerm);
     } catch (e: any) { setError(e.message); }
@@ -180,7 +184,7 @@ export function Exams() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Hapus kuis ini?')) return;
+    if (!await confirm('Hapus kuis ini?')) return;
     try { await api.deleteKuis(id); fetchKuis(searchTerm); }
     catch (e: any) { alert(e.message); }
   };
@@ -290,18 +294,27 @@ export function Exams() {
                   {kursus.map(k => <option key={k.id} value={k.id}>{k.judul}</option>)}
                 </select>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Waktu Mulai</label>
-                  <input type="datetime-local" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
-                    value={form.waktu_mulai} onChange={e => setForm(f => ({ ...f, waktu_mulai: e.target.value }))} />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Waktu Selesai</label>
-                  <input type="datetime-local" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
-                    value={form.waktu_selesai} onChange={e => setForm(f => ({ ...f, waktu_selesai: e.target.value }))} />
-                </div>
-              </div>
+              {/* Waktu Mulai & Selesai */}
+              {(['mulai', 'selesai'] as const).map(key => {
+                const field = key === 'mulai' ? 'waktu_mulai' : 'waktu_selesai';
+                const [datePart, timePart] = (form[field] || 'T').split('T');
+                return (
+                  <div key={key}>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Waktu {key === 'mulai' ? 'Mulai' : 'Selesai'}
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input type="date"
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                        value={datePart || ''}
+                        onChange={e => setForm(f => ({ ...f, [field]: e.target.value + 'T' + (f[field].split('T')[1] || '00:00') }))} />
+                      <TimePickerRoll
+                        value={timePart || ''}
+                        onChange={t => setForm(f => ({ ...f, [field]: (f[field].split('T')[0] || '') + 'T' + t }))} />
+                    </div>
+                  </div>
+                );
+              })}
             </div>
             <div className="flex gap-3 p-6 border-t">
               <button onClick={closeModal} className="flex-1 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Batal</button>
@@ -376,7 +389,8 @@ export function Exams() {
                       <label className="block text-sm font-medium text-gray-700 mb-1">Bobot Nilai</label>
                       <input type="number" min="1" max="100"
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-center font-semibold"
-                        value={currentSoal.bobot_nilai}
+                        value={currentSoal.bobot_nilai === 0 ? '' : currentSoal.bobot_nilai}
+                        onFocus={e => e.target.select()}
                         onChange={e => updateSoal(activeSoal, 'bobot_nilai', parseInt(e.target.value) || 0)} />
                     </div>
                   </div>

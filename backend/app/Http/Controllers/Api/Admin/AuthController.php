@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Pengguna;
@@ -144,6 +144,7 @@ class AuthController extends Controller
             'email'    => $user->email,
             'username' => $user->username,
             'role'     => $user->role->nama_role ?? null,
+            'id_role'  => $user->id_role,
             'cabang'   => $user->id_cabang,
             'status'   => $user->status,
         ];

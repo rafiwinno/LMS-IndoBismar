@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Pengguna;
@@ -32,6 +32,33 @@ class TrainerController extends Controller
             $this->formatTrainer($trainer),
             ['jadwal' => $trainer->jadwal->map(fn($j) => $this->formatJadwal($j))]
         ));
+    }
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            'nama'     => 'required|string|max:100',
+            'username' => 'required|string|max:100|unique:pengguna,username',
+            'email'    => 'required|email|unique:pengguna,email',
+            'password' => 'required|string|min:8',
+            'nomor_hp' => 'nullable|string|max:20',
+        ]);
+
+        $trainer = Pengguna::create([
+            'id_role'   => 3,
+            'id_cabang' => $request->user()->id_cabang,
+            'nama'      => $request->nama,
+            'username'  => $request->username,
+            'email'     => $request->email,
+            'password'  => \Illuminate\Support\Facades\Hash::make($request->password),
+            'nomor_hp'  => $request->nomor_hp,
+            'status'    => 'aktif',
+        ]);
+
+        return response()->json([
+            'message' => 'Trainer berhasil ditambahkan.',
+            'data'    => $this->formatTrainer($trainer->load('role', 'kursus')),
+        ], 201);
     }
 
     public function update(Request $request, $id)

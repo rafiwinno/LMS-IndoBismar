@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Mail, BookOpen, Calendar as CalendarIcon, Clock, Plus, Trash2, X, Edit2 } from 'lucide-react';
-import { api } from '../lib/api';
+import { Search, Mail, BookOpen, Calendar as CalendarIcon, Clock, Plus, Trash2, X, Edit2, UserPlus } from 'lucide-react';
+import { api } from '../../lib/api';
+import { toast } from '../../lib/toast';
+import { confirm } from '../../lib/confirm';
 
 interface Trainer {
   id: number; nama: string; email: string; nomor_hp: string;
@@ -26,6 +28,12 @@ export function Trainers() {
   const [form, setForm] = useState({ id_trainer: '', id_kursus: '', tanggal: '', jam_mulai: '', jam_selesai: '', ruangan: '', tipe: 'Online' });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+
+  // Create Trainer
+  const [showCreateTrainer, setShowCreateTrainer] = useState(false);
+  const [trainerForm, setTrainerForm] = useState({ nama: '', username: '', email: '', password: '', nomor_hp: '' });
+  const [trainerError, setTrainerError] = useState('');
+  const [savingTrainer, setSavingTrainer] = useState(false);
 
   const fetchTrainers = async (search = '') => {
     setLoading(true);
@@ -64,7 +72,7 @@ export function Trainers() {
 
   const openEdit = (j: Jadwal) => {
     setEditJadwal(j);
-    const [jam_mulai, jam_selesai] = j.jam.split(' - ').map(s => s.trim());
+    const [jam_mulai, jam_selesai] = (j.jam || ' - ').split(' - ').map(s => s.trim());
     setForm({ id_trainer: String(j.id_trainer), id_kursus: String(j.id_kursus), tanggal: j.tanggal, jam_mulai, jam_selesai, ruangan: j.ruangan || '', tipe: j.tipe });
     setError(''); setShowModal(true);
   };
@@ -84,15 +92,27 @@ export function Trainers() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Hapus jadwal ini?')) return;
-    try { await api.deleteJadwal(id); fetchJadwal(searchTerm); }
-    catch (e: any) { alert(e.message); }
+    if (!await confirm('Hapus jadwal ini?')) return;
+    try { await api.deleteJadwal(id); fetchJadwal(searchTerm); toast.success('Jadwal berhasil dihapus.'); }
+    catch (e: any) { toast.error(e.message); }
   };
 
   const handleDeleteTrainer = async (id: number, nama: string) => {
-    if (!confirm(`Hapus trainer "${nama}"? Aksi ini tidak bisa dibatalkan.`)) return;
-    try { await api.deleteTrainer(id); fetchTrainers(searchTerm); }
-    catch (e: any) { alert(e.message); }
+    if (!await confirm(`Hapus trainer "${nama}"? Aksi ini tidak bisa dibatalkan.`)) return;
+    try { await api.deleteTrainer(id); fetchTrainers(searchTerm); toast.success(`Trainer "${nama}" berhasil dihapus.`); }
+    catch (e: any) { toast.error(e.message); }
+  };
+
+  const handleCreateTrainer = async () => {
+    setSavingTrainer(true); setTrainerError('');
+    try {
+      await api.createTrainer(trainerForm);
+      toast.success('Trainer berhasil ditambahkan.');
+      setShowCreateTrainer(false);
+      setTrainerForm({ nama: '', username: '', email: '', password: '', nomor_hp: '' });
+      fetchTrainers(searchTerm);
+    } catch (e: any) { setTrainerError(e.message); }
+    finally { setSavingTrainer(false); }
   };
 
   const filteredTrainers = trainers.filter(t =>
@@ -124,6 +144,12 @@ export function Trainers() {
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
               value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
           </div>
+          {activeTab === 'list' && (
+            <button onClick={() => { setTrainerError(''); setTrainerForm({ nama: '', username: '', email: '', password: '', nomor_hp: '' }); setShowCreateTrainer(true); }}
+              className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors whitespace-nowrap">
+              <UserPlus className="w-5 h-5" /><span className="hidden sm:inline">Tambah Trainer</span>
+            </button>
+          )}
           {activeTab === 'schedule' && (
             <button onClick={openAdd} className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors whitespace-nowrap">
               <Plus className="w-5 h-5" /><span className="hidden sm:inline">Tambah Jadwal</span>
@@ -314,6 +340,42 @@ export function Trainers() {
               <button onClick={() => setShowModal(false)} className="flex-1 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Batal</button>
               <button onClick={handleSave} disabled={saving} className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50">
                 {saving ? 'Menyimpan...' : 'Simpan'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Tambah Trainer */}
+      {showCreateTrainer && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md">
+            <div className="flex items-center justify-between p-6 border-b">
+              <h3 className="text-lg font-semibold">Tambah Trainer Baru</h3>
+              <button onClick={() => setShowCreateTrainer(false)}><X className="w-5 h-5 text-gray-400" /></button>
+            </div>
+            <div className="p-6 space-y-4">
+              {trainerError && <p className="text-red-500 text-sm bg-red-50 p-2 rounded">{trainerError}</p>}
+              {[
+                { key: 'nama',     label: 'Nama Lengkap', type: 'text',     placeholder: 'Nama trainer' },
+                { key: 'username', label: 'Username',     type: 'text',     placeholder: 'username unik' },
+                { key: 'email',    label: 'Email',        type: 'email',    placeholder: 'email@example.com' },
+                { key: 'password', label: 'Password',     type: 'password', placeholder: 'Min. 8 karakter' },
+                { key: 'nomor_hp', label: 'Nomor HP',     type: 'tel',      placeholder: '08xxxxxxxxxx' },
+              ].map(({ key, label, type, placeholder }) => (
+                <div key={key}>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+                  <input type={type} placeholder={placeholder}
+                    value={(trainerForm as any)[key]}
+                    onChange={e => setTrainerForm(f => ({ ...f, [key]: key === 'nomor_hp' ? e.target.value.replace(/\D/g, '') : e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" />
+                </div>
+              ))}
+            </div>
+            <div className="flex gap-3 p-6 border-t">
+              <button onClick={() => setShowCreateTrainer(false)} className="flex-1 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Batal</button>
+              <button onClick={handleCreateTrainer} disabled={savingTrainer} className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50">
+                {savingTrainer ? 'Menyimpan...' : 'Tambah Trainer'}
               </button>
             </div>
           </div>

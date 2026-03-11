@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Kuis;
@@ -86,11 +86,44 @@ class KuisController extends Controller
 
         $kuis->update($request->only(['judul_kuis', 'waktu_mulai', 'waktu_selesai']));
 
-        // Update pertanyaan — hapus lama, buat baru
+        // Update pertanyaan — preserve yang sudah ada (ada attempt), hapus yang tidak ada di request
         if ($request->has('pertanyaan')) {
-            $kuis->pertanyaan()->each(fn($p) => $p->pilihanJawaban()->delete());
-            $kuis->pertanyaan()->delete();
-            $this->savePertanyaan($kuis, $request->pertanyaan);
+            $incomingIds = collect($request->pertanyaan)->pluck('id')->filter()->values();
+
+            // Hapus pertanyaan yang tidak ada di request (hanya jika tidak punya jawaban aktif)
+            $kuis->pertanyaan()->whereNotIn('id_pertanyaan', $incomingIds)->each(function ($p) {
+                $hasActiveAnswer = $p->jawabanKuis()->exists();
+                if (! $hasActiveAnswer) {
+                    $p->pilihanJawaban()->delete();
+                    $p->delete();
+                }
+            });
+
+            foreach ($request->pertanyaan as $pData) {
+                if (! empty($pData['id'])) {
+                    // Update pertanyaan yang sudah ada
+                    $pertanyaan = $kuis->pertanyaan()->find($pData['id']);
+                    if ($pertanyaan) {
+                        $pertanyaan->update([
+                            'pertanyaan'  => $pData['pertanyaan'],
+                            'tipe'        => $pData['tipe'],
+                            'bobot_nilai' => $pData['bobot_nilai'],
+                        ]);
+                        if ($pData['tipe'] === 'pilihan_ganda' && isset($pData['pilihan'])) {
+                            $pertanyaan->pilihanJawaban()->delete();
+                            foreach ($pData['pilihan'] as $pilihan) {
+                                $pertanyaan->pilihanJawaban()->create([
+                                    'teks_jawaban' => $pilihan['teks_jawaban'],
+                                    'benar'        => $pilihan['benar'] ?? false,
+                                ]);
+                            }
+                        }
+                        continue;
+                    }
+                }
+                // Buat pertanyaan baru jika tidak ada ID atau ID tidak ditemukan
+                $this->savePertanyaan($kuis, [$pData]);
+            }
         }
 
         return response()->json([
@@ -111,7 +144,15 @@ class KuisController extends Controller
     public function start(Request $request, $id)
     {
         $request->validate(['id_pengguna' => 'required|exists:pengguna,id_pengguna']);
-        Kuis::findOrFail($id);
+        $kuis = Kuis::findOrFail($id);
+
+        $now = now();
+        if ($now->lt($kuis->waktu_mulai)) {
+            return response()->json(['message' => 'Kuis belum dibuka. Tunggu hingga waktu mulai.'], 403);
+        }
+        if ($now->gt($kuis->waktu_selesai)) {
+            return response()->json(['message' => 'Kuis sudah berakhir.'], 403);
+        }
 
         $existing = AttemptKuis::where('id_kuis', $id)
             ->where('id_pengguna', $request->id_pengguna)

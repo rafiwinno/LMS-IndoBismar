@@ -1,15 +1,15 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\Api\PesertaController;
-use App\Http\Controllers\Api\KursusController;
-use App\Http\Controllers\Api\MateriController;
-use App\Http\Controllers\Api\TugasController;
-use App\Http\Controllers\Api\KuisController;
-use App\Http\Controllers\Api\TrainerController;
-use App\Http\Controllers\Api\DashboardController;
-use App\Http\Controllers\Api\LaporanController;
+use App\Http\Controllers\Api\Admin\AuthController;
+use App\Http\Controllers\Api\Admin\PesertaController;
+use App\Http\Controllers\Api\Admin\KursusController;
+use App\Http\Controllers\Api\Admin\MateriController;
+use App\Http\Controllers\Api\Admin\TugasController;
+use App\Http\Controllers\Api\Admin\KuisController;
+use App\Http\Controllers\Api\Admin\TrainerController;
+use App\Http\Controllers\Api\Admin\DashboardController;
+use App\Http\Controllers\Api\Admin\LaporanController;
 
 /*
 |--------------------------------------------------------------------------
@@ -24,11 +24,14 @@ Route::prefix('auth')->group(function () {
     Route::post('/register',    [AuthController::class, 'register']);
 });
 
-// ─── Protected Routes ────────────────────────────────────────────────────────
+// ─── Auth Protected (semua role) ─────────────────────────────────────────────
 Route::middleware('auth:sanctum')->group(function () {
-
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::get('/auth/me',      [AuthController::class, 'me']);
+});
+
+// ─── Protected Routes (admin, superadmin, trainer only) ──────────────────────
+Route::middleware(['auth:sanctum', 'admin'])->group(function () {
 
     // ── Dashboard ──────────────────────────────────────────────────────────
     Route::get('/dashboard', [DashboardController::class, 'index']);
@@ -96,6 +99,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // ── Trainer ────────────────────────────────────────────────────────────
     Route::prefix('trainer')->group(function () {
         Route::get('/',        [TrainerController::class, 'index']);
+        Route::post('/',       [TrainerController::class, 'store']);
         // Jadwal routes MUST be before /{id} to avoid wildcard conflict
         Route::get('/jadwal/all',         [TrainerController::class, 'allJadwal']);
         Route::post('/jadwal',            [TrainerController::class, 'storeJadwal']);

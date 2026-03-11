@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Materi;
@@ -17,6 +17,10 @@ class MateriController extends Controller
 
         if ($request->has('id_kursus')) {
             $query->where('id_kursus', $request->id_kursus);
+        }
+
+        if ($request->search) {
+            $query->where('judul_materi', 'like', '%' . $request->search . '%');
         }
 
         $materi = $query->orderBy('urutan')->get();

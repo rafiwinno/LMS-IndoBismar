@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Eye, Mail, MapPin, BookOpen, TrendingUp, Plus, Edit2, Trash2, X, CheckCircle } from 'lucide-react';
-import { api } from '../lib/api';
+import { api } from '../../lib/api';
+import { confirm } from '../../lib/confirm';
 
 interface Peserta {
   id: number;
@@ -8,6 +9,7 @@ interface Peserta {
   email: string;
   nomor_hp: string;
   asal_sekolah: string;
+  jurusan: string;
   enrolled_courses: number;
   progress: number;
   status: string;
@@ -55,7 +57,7 @@ export function Participants() {
   const openAdd = () => { setEditData(null); setForm(emptyForm); setShowModal(true); };
   const openEdit = (p: Peserta) => {
     setEditData(p);
-    setForm({ ...emptyForm, nama: p.nama, email: p.email, nomor_hp: p.nomor_hp || '', asal_sekolah: p.asal_sekolah || '', status: p.status, password: '' });
+    setForm({ ...emptyForm, nama: p.nama, email: p.email, nomor_hp: p.nomor_hp || '', asal_sekolah: p.asal_sekolah || '', jurusan: p.jurusan || '', status: p.status, password: '' });
     setShowModal(true);
   };
 
@@ -80,7 +82,7 @@ export function Participants() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Hapus peserta ini?')) return;
+    if (!await confirm('Hapus peserta ini?')) return;
     try {
       await api.deletePeserta(id);
       fetchPeserta(page, searchTerm);
@@ -304,8 +306,9 @@ export function Participants() {
               {['nama', 'email', 'nomor_hp', 'asal_sekolah'].map(field => (
                 <div key={field}>
                   <label className="block text-sm font-medium text-gray-700 mb-1 capitalize">{field.replace('_', ' ')}</label>
-                  <input className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                    value={(form as any)[field]} onChange={e => setForm(f => ({ ...f, [field]: e.target.value }))} />
+                  <input type={field === 'nomor_hp' ? 'tel' : 'text'}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                    value={(form as any)[field]} onChange={e => setForm(f => ({ ...f, [field]: field === 'nomor_hp' ? e.target.value.replace(/\D/g, '') : e.target.value }))} />
                 </div>
               ))}
               {!editData && (

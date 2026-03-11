@@ -1,12 +1,13 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Pengguna;
 use App\Models\ProgressMateri;
 use App\Models\AttemptKuis;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class PesertaController extends Controller
@@ -162,6 +163,17 @@ class PesertaController extends Controller
     public function destroy($id)
     {
         $peserta = Pengguna::findOrFail($id);
+
+        // Hapus semua data terkait (FK constraints) sebelum hapus pengguna
+        DB::table('progress_materi')->where('id_pengguna', $id)->delete();
+        DB::table('pengumpulan_tugas')->where('id_pengguna', $id)->delete();
+        DB::table('attempt_kuis')->where('id_pengguna', $id)->delete();
+        DB::table('peserta_kursus')->where('id_pengguna', $id)->delete();
+        DB::table('penilaian_pkl')->where('id_pengguna', $id)->delete();
+        DB::table('nilai_non_teknis')->where('id_pengguna', $id)->delete();
+        DB::table('dokumen_verifikasi')->where('id_pengguna', $id)->delete();
+        DB::table('data_peserta_pkl')->where('id_pengguna', $id)->delete();
+
         $peserta->delete();
 
         return response()->json(['message' => 'Peserta berhasil dihapus.']);

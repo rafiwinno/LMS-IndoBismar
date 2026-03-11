@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Sidebar } from './components/Sidebar';
-import Header from './components/Header';
-import { Dashboard } from './components/Dashboard';
-import { Participants } from './components/Participants';
-import { Courses } from './components/Courses';
-import { Materials } from './components/Materials';
-import { Exams } from './components/Exams';
-import { Trainers } from './components/Trainers';
-import { Reports } from './components/Reports';
-import Login from './components/Login';
+import { Sidebar } from './components/admin/Sidebar';
+import Header from './components/admin/Header';
+import { Dashboard } from './pages/admin/Dashboard';
+import { Participants } from './pages/admin/Participants';
+import { Courses } from './pages/admin/Courses';
+import { Materials } from './pages/admin/Materials';
+import { Exams } from './pages/admin/Exams';
+import { Trainers } from './pages/admin/Trainers';
+import { Reports } from './pages/admin/Reports';
+import Login from './pages/admin/Login';
+import { Toaster } from './components/admin/Toaster';
+import { ConfirmDialog } from './components/admin/ConfirmDialog';
 import { api } from './lib/api';
 
 export default function App() {
@@ -18,12 +20,22 @@ export default function App() {
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    const stored = localStorage.getItem('user');
-    const token = localStorage.getItem('token');
-    if (stored && token) {
-      setUser(JSON.parse(stored));
+    const token = sessionStorage.getItem('token');
+    if (!token) {
+      setChecking(false);
+      return;
     }
-    setChecking(false);
+    // Verifikasi token ke server agar session yang expired/invalid tidak lolos
+    api.me()
+      .then((userData: any) => {
+        sessionStorage.setItem('user', JSON.stringify(userData));
+        setUser(userData);
+      })
+      .catch(() => {
+        sessionStorage.removeItem('token');
+        sessionStorage.removeItem('user');
+      })
+      .finally(() => setChecking(false));
   }, []);
 
   const handleLogin = (userData: any) => {
@@ -32,8 +44,8 @@ export default function App() {
 
   const handleLogout = async () => {
     try { await api.logout(); } catch {}
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('user');
     setUser(null);
   };
 
@@ -71,6 +83,8 @@ export default function App() {
 
   return (
     <div className="flex h-screen bg-slate-50 font-sans text-slate-900">
+      <Toaster />
+      <ConfirmDialog />
       <div id="no-print">
         <Sidebar
           activeTab={activeTab}

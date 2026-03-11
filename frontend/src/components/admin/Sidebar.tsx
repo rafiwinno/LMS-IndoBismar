@@ -19,16 +19,20 @@ interface SidebarProps {
   user?: any;
 }
 
+// id_role: 1=superadmin, 2=admin, 3=trainer
+const ALL_MENU_ITEMS = [
+  { id: 'dashboard',    label: 'Dashboard',    icon: LayoutDashboard, roleIds: [1, 2, 3] },
+  { id: 'participants', label: 'Participants',  icon: Users,           roleIds: [1, 2] },
+  { id: 'courses',      label: 'Courses',       icon: BookOpen,        roleIds: [1, 2, 3] },
+  { id: 'materials',    label: 'Materials',     icon: FileText,        roleIds: [1, 2, 3] },
+  { id: 'exams',        label: 'Exams',         icon: GraduationCap,   roleIds: [1, 2, 3] },
+  { id: 'trainers',     label: 'Trainers',      icon: UserSquare2,     roleIds: [1, 2] },
+  { id: 'reports',      label: 'Reports',       icon: BarChart3,       roleIds: [1, 2] },
+];
+
 export function Sidebar({ activeTab, setActiveTab, isOpen, setIsOpen, onLogout, user }: SidebarProps) {
-  const menuItems = [
-    { id: 'dashboard',    label: 'Dashboard',    icon: LayoutDashboard },
-    { id: 'participants', label: 'Participants',  icon: Users },
-    { id: 'courses',      label: 'Courses',       icon: BookOpen },
-    { id: 'materials',    label: 'Materials',     icon: FileText },
-    { id: 'exams',        label: 'Exams',         icon: GraduationCap },
-    { id: 'trainers',     label: 'Trainers',      icon: UserSquare2 },
-    { id: 'reports',      label: 'Reports',       icon: BarChart3 },
-  ];
+  const idRole = user?.id_role ?? null;
+  const menuItems = idRole ? ALL_MENU_ITEMS.filter(item => item.roleIds.includes(idRole)) : ALL_MENU_ITEMS;
 
   return (
     <>

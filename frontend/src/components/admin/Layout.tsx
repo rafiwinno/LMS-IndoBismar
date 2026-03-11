@@ -1,14 +1,13 @@
 import { useState } from 'react';
 import { Sidebar } from './Sidebar';
 import Header from './Header';
-import { Dashboard } from './Dashboard';
-import { Participants } from './Participants';
-import { Courses } from './Courses';
-import { Materials } from './Materials';
-import { Assignments } from './Assignments';
-import { Exams } from './Exams';
-import { Trainers } from './Trainers';
-import { Reports } from './Reports';
+import { Dashboard } from '../../pages/admin/Dashboard';
+import { Participants } from '../../pages/admin/Participants';
+import { Courses } from '../../pages/admin/Courses';
+import { Materials } from '../../pages/admin/Materials';
+import { Exams } from '../../pages/admin/Exams';
+import { Trainers } from '../../pages/admin/Trainers';
+import { Reports } from '../../pages/admin/Reports';
 
 function renderContent(activeTab: string) {
   switch (activeTab) {
@@ -16,7 +15,6 @@ function renderContent(activeTab: string) {
     case 'participants': return <Participants />;
     case 'courses': return <Courses />;
     case 'materials': return <Materials />;
-    case 'assignments': return <Assignments />;
     case 'exams': return <Exams />;
     case 'trainers': return <Trainers />;
     case 'reports': return <Reports />;

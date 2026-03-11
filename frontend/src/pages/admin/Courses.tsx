@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Search, Edit2, Trash2, X } from 'lucide-react';
-import { api } from '../lib/api';
+import { api } from '../../lib/api';
+import { confirm } from '../../lib/confirm';
 
 interface Kursus {
   id: number; judul: string; deskripsi: string;
@@ -74,7 +75,7 @@ export function Courses() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Hapus kursus ini?')) return;
+    if (!await confirm('Hapus kursus ini?')) return;
     try { await api.deleteKursus(id); fetchKursus(page, searchTerm); }
     catch (e: any) { alert(e.message); }
   };

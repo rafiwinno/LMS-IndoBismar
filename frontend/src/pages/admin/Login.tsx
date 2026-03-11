@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { api } from '../lib/api';
+import { api } from '../../lib/api';
 import { User, Shield, UserPlus, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 
 interface LoginProps {
@@ -48,8 +48,8 @@ function UserLoginForm({ onLogin, onSwitchAdmin, onSwitchRegister }: any) {
     setLoading(true); setError('');
     try {
       const data = await api.login(email, password);
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
+      sessionStorage.setItem('token', data.token);
+      sessionStorage.setItem('user', JSON.stringify(data.user));
       onLogin(data.user);
     } catch (err: any) {
       setError(err.message || 'Email atau password salah');
@@ -125,8 +125,8 @@ function AdminLoginForm({ onLogin, onBack }: any) {
     setLoading(true); setError('');
     try {
       const data = await api.loginAdmin(username, password);
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
+      sessionStorage.setItem('token', data.token);
+      sessionStorage.setItem('user', JSON.stringify(data.user));
       onLogin(data.user);
     } catch (err: any) {
       setError(err.message || 'Username atau password salah');
@@ -225,14 +225,14 @@ function RegisterForm({ onBack }: any) {
           { key: 'nama', label: 'Nama Lengkap', type: 'text', placeholder: 'Nama lengkap Anda' },
           { key: 'username', label: 'Username', type: 'text', placeholder: 'username unik' },
           { key: 'email', label: 'Email', type: 'email', placeholder: 'email@example.com' },
-          { key: 'nomor_hp', label: 'Nomor HP', type: 'text', placeholder: '08xxxxxxxxxx' },
+          { key: 'nomor_hp', label: 'Nomor HP', type: 'tel', placeholder: '08xxxxxxxxxx' },
           { key: 'asal_sekolah', label: 'Asal Sekolah', type: 'text', placeholder: 'SMKN 1 ...' },
           { key: 'jurusan', label: 'Jurusan', type: 'text', placeholder: 'Teknik Informatika' },
         ].map(({ key, label, type, placeholder }) => (
           <div key={key}>
             <label className="block text-sm font-medium text-slate-300 mb-1.5">{label}</label>
             <input type={type} placeholder={placeholder} value={(form as any)[key]}
-              onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
+              onChange={e => setForm(f => ({ ...f, [key]: key === 'nomor_hp' ? e.target.value.replace(/\D/g, '') : e.target.value }))}
               className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all" />
           </div>
         ))}
