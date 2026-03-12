@@ -10,26 +10,33 @@ use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
-    public function loginStaff(Request $request)
+    private const ROLE_NAMES = [
+        1 => 'superadmin',
+        2 => 'admin',
+        3 => 'trainer',
+        4 => 'user',
+    ];
+
+    // POST /login — semua role
+    public function login(Request $request)
     {
+        $request->validate([
+            'username' => 'required|string',
+            'password' => 'required|string',
+        ]);
+
+        // Cari user by username ATAU email
         $user = Pengguna::where('username', $request->username)
-                        ->whereIn('id_role', [1, 2, 3])
-                        ->first();
+            ->orWhere('email', $request->username)
+            ->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
-            return response()->json(['message' => 'Username atau password salah'], 401);
+            return response()->json(['message' => 'Username atau password salah.'], 401);
         }
 
         if ($user->status !== 'aktif') {
-            return response()->json(['message' => 'Akun anda tidak aktif.'], 403);
+            return response()->json(['message' => 'Akun kamu tidak aktif. Hubungi administrator.'], 403);
         }
-
-        $roleName = match((int) $user->id_role) {
-            1 => 'superadmin',
-            2 => 'admin',
-            3 => 'trainer',
-            default => 'unknown',
-        };
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
@@ -42,7 +49,7 @@ class AuthController extends Controller
         ]);
 
         return response()->json([
-            'message' => 'Login berhasil',
+            'message' => 'Login berhasil.',
             'token'   => $token,
             'user'    => [
                 'id'        => $user->id,
@@ -50,56 +57,23 @@ class AuthController extends Controller
                 'username'  => $user->username,
                 'email'     => $user->email,
                 'id_role'   => $user->id_role,
-                'role'      => $roleName,
+                'role'      => self::ROLE_NAMES[$user->id_role] ?? 'user',
                 'id_cabang' => $user->id_cabang,
                 'status'    => $user->status,
-            ]
+            ],
         ]);
     }
 
+    // POST /login/staff — tetap ada untuk backward compatibility
+    public function loginStaff(Request $request)
+    {
+        return $this->login($request);
+    }
+
+    // POST /login/peserta — tetap ada untuk backward compatibility
     public function loginPeserta(Request $request)
     {
-        $input = $request->email;
-
-        $user = Pengguna::where(function($q) use ($input) {
-                        $q->where('email', $input)
-                          ->orWhere('username', $input);
-                    })
-                    ->where('id_role', 4)
-                    ->first();
-
-        if (!$user || !Hash::check($request->password, $user->password)) {
-            return response()->json(['message' => 'Email atau password salah'], 401);
-        }
-
-        if ($user->status !== 'aktif') {
-            return response()->json(['message' => 'Akun anda tidak aktif.'], 403);
-        }
-
-        $token = $user->createToken('auth_token')->plainTextToken;
-
-        // Catat login log
-        LoginLog::create([
-            'user_id'      => $user->id,
-            'ip_address'   => $request->ip(),
-            'logged_in_at' => now(),
-            'logged_out_at'=> null,
-        ]);
-
-        return response()->json([
-            'message' => 'Login berhasil',
-            'token'   => $token,
-            'user'    => [
-                'id'        => $user->id,
-                'nama'      => $user->nama,
-                'username'  => $user->username,
-                'email'     => $user->email,
-                'id_role'   => $user->id_role,
-                'role'      => 'user',
-                'id_cabang' => $user->id_cabang,
-                'status'    => $user->status,
-            ]
-        ]);
+        return $this->login($request);
     }
 
     public function register(Request $request)
@@ -126,7 +100,7 @@ class AuthController extends Controller
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
-            'message' => 'Register berhasil',
+            'message' => 'Register berhasil.',
             'token'   => $token,
             'user'    => [
                 'id'        => $user->id,
@@ -137,7 +111,7 @@ class AuthController extends Controller
                 'role'      => 'user',
                 'id_cabang' => $user->id_cabang,
                 'status'    => $user->status,
-            ]
+            ],
         ], 201);
     }
 
@@ -145,7 +119,6 @@ class AuthController extends Controller
     {
         $user = $request->user();
 
-        // Tandai logged_out_at pada sesi login terakhir yang belum logout
         LoginLog::where('user_id', $user->id)
             ->whereNull('logged_out_at')
             ->latest('logged_in_at')

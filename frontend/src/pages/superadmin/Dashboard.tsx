@@ -27,18 +27,22 @@ interface RecapData {
 interface Branch { id: number; nama_cabang: string; kota: string }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-const toInputDate = (d: Date) => d.toISOString().slice(0, 10);
+const toInputDate = (d: Date) => {
+  const y   = d.getFullYear();
+  const m   = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+};
 
 const MONTHS = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
 
-// Custom simple month-year picker state helpers
 const monthStart = (year: number, month: number) =>
   toInputDate(new Date(year, month, 1));
 const monthEnd = (year: number, month: number) =>
   toInputDate(new Date(year, month + 1, 0));
 
 const PRESETS = [
-  { label: '7 Hari',   days: 7 },
+  { label: '7 Hari',    days: 7 },
   { label: 'Bulan Ini', days: 0 },
 ];
 
@@ -80,19 +84,23 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState('');
 
+  // ✅ FIX: Inisialisasi startDate dari tanggal 1 bulan ini, bukan 7 hari lalu
+  const todayDate = new Date();
+  const firstDayOfMonth = new Date(todayDate.getFullYear(), todayDate.getMonth(), 1);
+
   // Recap state
-  const [branches,      setBranches]      = useState<Branch[]>([]);
+  const [branches,       setBranches]      = useState<Branch[]>([]);
   const [selectedCabang, setSelectedCabang] = useState('');
-  const [startDate,     setStartDate]     = useState(() => toInputDate(new Date(Date.now() - 6 * 86400000)));
-  const [endDate,       setEndDate]       = useState(() => toInputDate(new Date()));
-  const [recap,         setRecap]         = useState<RecapData | null>(null);
-  const [recapLoading,  setRecapLoading]  = useState(false);
-  const [recapError,    setRecapError]    = useState('');
-  const [activePreset,  setActivePreset]  = useState<number>(0); // index of PRESETS
+  const [startDate,      setStartDate]     = useState(() => toInputDate(firstDayOfMonth)); // ✅ FIX
+  const [endDate,        setEndDate]       = useState(() => toInputDate(todayDate));
+  const [recap,          setRecap]         = useState<RecapData | null>(null);
+  const [recapLoading,   setRecapLoading]  = useState(false);
+  const [recapError,     setRecapError]    = useState('');
+  const [activePreset,   setActivePreset]  = useState<number>(1); // ✅ FIX: index 1 = "Bulan Ini"
 
   // Simple month-year picker
   const today = new Date();
-  const [startMonth, setStartMonth] = useState(today.getMonth() - 0);
+  const [startMonth, setStartMonth] = useState(today.getMonth());
   const [startYear,  setStartYear]  = useState(today.getFullYear());
   const [endMonth,   setEndMonth]   = useState(today.getMonth());
   const [endYear,    setEndYear]    = useState(today.getFullYear());
@@ -150,8 +158,10 @@ export default function Dashboard() {
     }
   }, []);
 
-  // Load on mount
-  useEffect(() => { fetchRecap(startDate, endDate, selectedCabang); }, []);
+  // ✅ FIX: Load on mount pakai startDate yang sudah benar (1 Maret)
+  useEffect(() => {
+    fetchRecap(toInputDate(firstDayOfMonth), toInputDate(todayDate), '');
+  }, []);
 
   const handleApply = () => {
     setActivePreset(-1);
@@ -164,7 +174,7 @@ export default function Dashboard() {
     const end   = new Date();
     let start: Date;
     if (preset.days === 0) {
-      // Bulan ini
+      // Bulan ini — mulai dari tanggal 1 bulan berjalan
       start = new Date(end.getFullYear(), end.getMonth(), 1);
     } else {
       start = new Date(Date.now() - (preset.days - 1) * 86400000);

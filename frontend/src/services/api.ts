@@ -1,7 +1,6 @@
 import axios from "axios";
 import { User } from "../pages/types";
 
-// Tambah interface response login
 interface AuthResponse {
   token: string;
   user: User;
@@ -21,7 +20,12 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    if (err.response?.status === 401) {
+    // Jangan redirect ke login kalau sedang di halaman login
+    // atau kalau endpoint-nya adalah /login
+    const isLoginEndpoint = err.config?.url?.includes('/login');
+    const isOnLoginPage   = window.location.pathname === '/login';
+
+    if (err.response?.status === 401 && !isLoginEndpoint && !isOnLoginPage) {
       localStorage.removeItem("lms_token");
       localStorage.removeItem("lms_user");
       window.location.href = "/login";
@@ -39,12 +43,12 @@ export const authService = {
   },
 
   loginPeserta: async (emailOrUsername: string, password: string): Promise<AuthResponse> => {
-  const res = await api.post<AuthResponse>("/login/peserta", {
-    email: emailOrUsername,    // backend cek email OR username
-    password,
-  });
-  return res.data;
-},
+    const res = await api.post<AuthResponse>("/login/peserta", {
+      email: emailOrUsername,
+      password,
+    });
+    return res.data;
+  },
 
   logout: async () => {
     await api.post("/logout");

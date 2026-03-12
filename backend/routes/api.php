@@ -12,6 +12,7 @@ Route::get('/test', function () {
 });
 
 // ===== AUTH ROUTES =====
+Route::post('/login',          [AuthController::class, 'login']);
 Route::post('/register',       [AuthController::class, 'register']);
 Route::post('/login/peserta',  [AuthController::class, 'loginPeserta']);
 Route::post('/login/staff',    [AuthController::class, 'loginStaff']);

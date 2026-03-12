@@ -21,10 +21,10 @@ class DashboardController extends Controller
         // Weekly chart 7 hari terakhir (default)
         $weeklyChart = [];
         for ($i = 6; $i >= 0; $i--) {
-            $date  = now()->subDays($i);
+            $date  = now('Asia/Jakarta')->subDays($i);
             $count = LoginLog::whereDate('logged_in_at', $date->toDateString())->count();
             $weeklyChart[] = [
-                'day'          => $date->locale('id')->isoFormat('ddd'),
+                'day'          => $date->format('D'),
                 'date'         => $date->format('d/m'),
                 'active_users' => $count,
             ];
@@ -49,8 +49,8 @@ class DashboardController extends Controller
             'cabang_id' => 'nullable|integer|exists:cabang,id',
         ]);
 
-        $start    = Carbon::parse($request->start)->startOfDay();
-        $end      = Carbon::parse($request->end)->endOfDay();
+        $start    = Carbon::parse($request->start, 'Asia/Jakarta')->startOfDay();
+        $end      = Carbon::parse($request->end, 'Asia/Jakarta')->endOfDay();
         $cabangId = $request->cabang_id;
 
         // ── Per hari dalam periode ─────────────────────────────────────────
@@ -66,7 +66,7 @@ class DashboardController extends Controller
 
             $daily[] = [
                 'date'         => $date->format('d/m/Y'),
-                'day'          => $date->locale('id')->isoFormat('ddd'),
+                'day'          => $date->format('D'),
                 'active_users' => $query->count(),
             ];
         }
@@ -111,7 +111,7 @@ class DashboardController extends Controller
             'period' => [
                 'start' => $start->format('d/m/Y'),
                 'end'   => $end->format('d/m/Y'),
-                'days'  => $start->diffInDays($end) + 1,
+                'days'  => (int) round($start->copy()->startOfDay()->diffInDays($end->copy()->startOfDay())) + 1,
             ],
             'summary' => [
                 'total_logins'  => $totalLogins,
