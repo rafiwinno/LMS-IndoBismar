@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Pengguna;
+use App\Models\Notifikasi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -93,6 +95,8 @@ class AuthController extends Controller
             'id_cabang'    => 'required|exists:cabang,id_cabang',
             'asal_sekolah' => 'nullable|string|max:150',
             'jurusan'      => 'nullable|string|max:100',
+            'surat_siswa'  => 'nullable|file|mimes:pdf|max:5120',
+            'surat_ortu'   => 'nullable|file|mimes:pdf|max:5120',
         ]);
 
         $pengguna = Pengguna::create([
@@ -106,16 +110,48 @@ class AuthController extends Controller
             'status'    => 'pending',
         ]);
 
-        if ($request->asal_sekolah || $request->jurusan) {
-            $pengguna->dataPkl()->create([
-                'asal_sekolah' => $request->asal_sekolah,
-                'jurusan'      => $request->jurusan,
+        $suratSiswaPath = null;
+        $suratOrtuPath  = null;
+
+        if ($request->hasFile('surat_siswa')) {
+            $suratSiswaPath = $request->file('surat_siswa')
+                ->store("surat/{$pengguna->id_pengguna}", 'public');
+        }
+        if ($request->hasFile('surat_ortu')) {
+            $suratOrtuPath = $request->file('surat_ortu')
+                ->store("surat/{$pengguna->id_pengguna}", 'public');
+        }
+
+        $statusDokumen = ($suratSiswaPath && $suratOrtuPath) ? 'menunggu' : 'belum_upload';
+
+        $pengguna->dataPkl()->create([
+            'asal_sekolah'  => $request->asal_sekolah,
+            'jurusan'       => $request->jurusan,
+            'surat_siswa'   => $suratSiswaPath,
+            'surat_ortu'    => $suratOrtuPath,
+            'status_dokumen' => $statusDokumen,
+        ]);
+
+        // Kirim notifikasi ke semua admin cabang yang sama
+        $adminCabang = Pengguna::where('id_cabang', $request->id_cabang)
+            ->whereIn('id_role', [1, 2])
+            ->where('status', 'aktif')
+            ->get();
+
+        foreach ($adminCabang as $admin) {
+            Notifikasi::create([
+                'id_penerima'  => $admin->id_pengguna,
+                'judul'        => 'Pendaftar Baru',
+                'pesan'        => "Peserta baru \"{$pengguna->nama}\" mendaftar dan menunggu verifikasi dokumen.",
+                'tipe'         => 'registrasi_baru',
+                'id_referensi' => $pengguna->id_pengguna,
             ]);
         }
 
         return response()->json([
-            'message' => 'Registrasi berhasil. Tunggu verifikasi dari administrator.',
-            'user'    => [
+            'message'        => 'Registrasi berhasil. Tunggu verifikasi dari administrator.',
+            'status_dokumen' => $statusDokumen,
+            'user'           => [
                 'id'     => $pengguna->id_pengguna,
                 'nama'   => $pengguna->nama,
                 'email'  => $pengguna->email,

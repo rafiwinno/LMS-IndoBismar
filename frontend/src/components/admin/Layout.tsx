@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Sidebar } from './Sidebar';
 import Header from './Header';
+import { ToastProvider } from '../../lib/toast';
 import { Dashboard } from '../../pages/admin/Dashboard';
 import { Participants } from '../../pages/admin/Participants';
 import { Courses } from '../../pages/admin/Courses';
@@ -27,6 +28,7 @@ export default function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
+    <ToastProvider>
     <div className="flex h-screen bg-slate-50 font-sans text-slate-900">
       <Sidebar
         activeTab={activeTab}
@@ -44,5 +46,6 @@ export default function Layout() {
         </main>
       </div>
     </div>
+    </ToastProvider>
   );
 }

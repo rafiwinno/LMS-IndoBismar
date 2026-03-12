@@ -15,7 +15,7 @@ class TugasController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Tugas::with(['kursus', 'pengumpulan']);
+        $query = Tugas::with(['kursus.pesertaKursus', 'pengumpulan']);
 
         if ($request->id_kursus) {
             $query->where('id_kursus', $request->id_kursus);
@@ -138,16 +138,17 @@ class TugasController extends Controller
     public function submit(Request $request, $id)
     {
         $request->validate([
-            'id_pengguna' => 'required|exists:pengguna,id_pengguna',
-            'file_tugas'  => 'required|file|max:51200', // max 50MB
+            'file_tugas'  => 'required|file|max:51200|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,zip,txt',
         ]);
 
         Tugas::findOrFail($id);
 
+        $idPengguna = $request->user()->id_pengguna;
+
         $path = $request->file('file_tugas')->store("tugas/{$id}", 'public');
 
         $submission = PengumpulanTugas::updateOrCreate(
-            ['id_tugas' => $id, 'id_pengguna' => $request->id_pengguna],
+            ['id_tugas' => $id, 'id_pengguna' => $idPengguna],
             ['file_tugas' => $path, 'tanggal_kumpul' => now()]
         );
 
@@ -184,7 +185,7 @@ class TugasController extends Controller
 
     private function formatTugas($t)
     {
-        $total       = $t->kursus ? $t->kursus->pesertaKursus()->count() : 0;
+        $total       = $t->kursus ? $t->kursus->pesertaKursus->count() : 0;
         $submissions = $t->pengumpulan->count();
         $isCompleted = $t->deadline && now()->isAfter($t->deadline);
 

@@ -23,7 +23,7 @@ class MateriController extends Controller
             $query->where('judul_materi', 'like', '%' . $request->search . '%');
         }
 
-        $materi = $query->orderBy('urutan')->get();
+        $materi = $query->with('kursus')->orderBy('urutan')->get();
 
         return response()->json([
             'success' => true,
@@ -37,7 +37,7 @@ class MateriController extends Controller
             'id_kursus'    => 'required|exists:kursus,id_kursus',
             'judul_materi' => 'required|string|max:255',
             'tipe_materi'  => 'required|in:pdf,video,ppt,link_drive,dokumen',
-            'file_materi'  => 'nullable|file|max:5120',
+            'file_materi'  => 'nullable|file|max:5120|mimes:pdf,ppt,pptx,doc,docx,xls,xlsx,zip',
             'youtube_url'  => 'nullable|url',
             'drive_url'    => 'nullable|url',
             'urutan'       => 'nullable|integer',
@@ -113,7 +113,7 @@ class MateriController extends Controller
         $validator = Validator::make($request->all(), [
             'judul_materi' => 'sometimes|string|max:255',
             'tipe_materi'  => 'sometimes|in:pdf,video,ppt,link_drive,dokumen',
-            'file_materi'  => 'nullable|file|max:5120',
+            'file_materi'  => 'nullable|file|max:5120|mimes:pdf,ppt,pptx,doc,docx,xls,xlsx,zip',
             'youtube_url'  => 'nullable|url',
             'drive_url'    => 'nullable|url',
             'urutan'       => 'nullable|integer',

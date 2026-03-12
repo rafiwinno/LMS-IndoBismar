@@ -4,18 +4,20 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Pengguna;
+use App\Models\Notifikasi;
 use App\Models\ProgressMateri;
 use App\Models\AttemptKuis;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 
 class PesertaController extends Controller
 {
     public function index(Request $request)
     {
         $query = Pengguna::with(['role', 'cabang', 'dataPkl', 'pesertaKursus'])
-            ->whereHas('role', fn($q) => $q->where('nama_role', 'peserta'));
+            ->where('id_role', 4);
 
         if ($request->search) {
             $search = $request->search;
@@ -194,6 +196,58 @@ class PesertaController extends Controller
         ]);
     }
 
+    /**
+     * PATCH /api/peserta/{id}/verifikasi-dokumen
+     * Admin cabang menyetujui atau menolak dokumen peserta
+     */
+    public function verifikasiDokumen(Request $request, $id)
+    {
+        $request->validate([
+            'aksi'    => 'required|in:setujui,tolak',
+            'catatan' => 'nullable|string|max:500',
+        ]);
+
+        $peserta = Pengguna::with('dataPkl')->findOrFail($id);
+
+        if (! $peserta->dataPkl) {
+            return response()->json(['message' => 'Data dokumen tidak ditemukan.'], 404);
+        }
+
+        $admin      = $request->user();
+        $disetujui  = $request->aksi === 'setujui';
+        $statusDok  = $disetujui ? 'disetujui' : 'ditolak';
+        $statusUser = $disetujui ? 'aktif' : 'pending';
+
+        $peserta->dataPkl->update([
+            'status_dokumen'  => $statusDok,
+            'catatan_dokumen' => $request->catatan,
+            'diperiksa_oleh'  => $admin->id_pengguna,
+            'diperiksa_pada'  => now(),
+        ]);
+
+        $peserta->update(['status' => $statusUser]);
+
+        // Kirim notifikasi ke peserta (opsional — jika peserta punya akun aktif)
+        $judulNotif = $disetujui ? 'Dokumen Disetujui' : 'Dokumen Ditolak';
+        $pesanNotif = $disetujui
+            ? 'Dokumen Anda telah diverifikasi. Akun Anda sekarang aktif.'
+            : 'Dokumen Anda ditolak. ' . ($request->catatan ?? 'Silakan hubungi admin cabang.');
+
+        Notifikasi::create([
+            'id_penerima'  => $peserta->id_pengguna,
+            'judul'        => $judulNotif,
+            'pesan'        => $pesanNotif,
+            'tipe'         => $disetujui ? 'dokumen_disetujui' : 'dokumen_ditolak',
+            'id_referensi' => $peserta->id_pengguna,
+        ]);
+
+        return response()->json([
+            'message'        => $disetujui ? 'Dokumen disetujui, akun peserta diaktifkan.' : 'Dokumen ditolak.',
+            'status_user'    => $statusUser,
+            'status_dokumen' => $statusDok,
+        ]);
+    }
+
     // ─── Helpers ─────────────────────────────────────────────────────────────
 
     private function formatPeserta($p)
@@ -201,6 +255,9 @@ class PesertaController extends Controller
         $kursusCount = $p->pesertaKursus->count();
         $selesai     = $p->pesertaKursus->where('status', 'selesai')->count();
         $progress    = $kursusCount > 0 ? round(($selesai / $kursusCount) * 100) : 0;
+
+        $suratSiswa = $p->dataPkl->surat_siswa ?? null;
+        $suratOrtu  = $p->dataPkl->surat_ortu  ?? null;
 
         return [
             'id'               => $p->id_pengguna,
@@ -214,6 +271,10 @@ class PesertaController extends Controller
             'status'           => $p->status,
             'cabang'           => $p->cabang->nama_cabang ?? null,
             'join_date'        => $p->dibuat_pada,
+            'status_dokumen'   => $p->dataPkl->status_dokumen   ?? null,
+            'catatan_dokumen'  => $p->dataPkl->catatan_dokumen  ?? null,
+            'surat_siswa_url'  => $suratSiswa ? Storage::disk('public')->url($suratSiswa) : null,
+            'surat_ortu_url'   => $suratOrtu  ? Storage::disk('public')->url($suratOrtu)  : null,
         ];
     }
 

@@ -11,6 +11,7 @@ import { Reports } from './pages/admin/Reports';
 import Login from './pages/admin/Login';
 import { Toaster } from './components/admin/Toaster';
 import { ConfirmDialog } from './components/admin/ConfirmDialog';
+import { ToastProvider } from './lib/toast';
 import { api } from './lib/api';
 
 export default function App() {
@@ -82,6 +83,7 @@ export default function App() {
   };
 
   return (
+    <ToastProvider>
     <div className="flex h-screen bg-slate-50 font-sans text-slate-900">
       <Toaster />
       <ConfirmDialog />
@@ -106,5 +108,6 @@ export default function App() {
         </main>
       </div>
     </div>
+    </ToastProvider>
   );
 }

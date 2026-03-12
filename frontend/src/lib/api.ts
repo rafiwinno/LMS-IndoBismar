@@ -22,7 +22,8 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}) {
   if (res.status === 401) {
     sessionStorage.removeItem('token');
     sessionStorage.removeItem('user');
-    window.location.reload();
+    window.location.href = '/';
+    throw new Error('Sesi telah berakhir. Silakan login kembali.');
   }
 
   let data: any;
@@ -33,6 +34,13 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}) {
   }
 
   if (!res.ok) {
+    // Tangani validation errors (422)
+    if (res.status === 422 && data.errors) {
+      const messages = Object.values(data.errors as Record<string, string[]>)
+        .flat()
+        .join(', ');
+      throw new Error(messages || data.message || 'Validasi gagal');
+    }
     throw new Error(data.message || 'Request gagal');
   }
 
@@ -110,4 +118,16 @@ export const api = {
   getLaporanKursus: () => apiFetch('/laporan/kursus'),
   getLaporanKuis: () => apiFetch('/laporan/kuis'),
   getLaporanTrainer: () => apiFetch('/laporan/trainer'),
+
+  // Verifikasi Dokumen
+  verifikasiDokumen: (id: number, aksi: 'setujui' | 'tolak', catatan?: string) =>
+    apiFetch(`/peserta/${id}/verifikasi-dokumen`, {
+      method: 'PATCH',
+      body: JSON.stringify({ aksi, catatan }),
+    }),
+
+  // Notifikasi
+  getNotifikasi: () => apiFetch('/notifikasi'),
+  bacaNotifikasi: (id: number) => apiFetch(`/notifikasi/${id}/baca`, { method: 'PATCH' }),
+  bacaSemuaNotifikasi: () => apiFetch('/notifikasi/baca-semua', { method: 'PATCH' }),
 };

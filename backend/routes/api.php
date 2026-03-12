@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\Admin\KuisController;
 use App\Http\Controllers\Api\Admin\TrainerController;
 use App\Http\Controllers\Api\Admin\DashboardController;
 use App\Http\Controllers\Api\Admin\LaporanController;
+use App\Http\Controllers\Api\Admin\NotifikasiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -18,7 +19,7 @@ use App\Http\Controllers\Api\Admin\LaporanController;
 */
 
 // ─── AUTH (Public) ───────────────────────────────────────────────────────────
-Route::prefix('auth')->group(function () {
+Route::prefix('auth')->middleware('throttle:10,1')->group(function () {
     Route::post('/login',       [AuthController::class, 'login']);
     Route::post('/login-admin', [AuthController::class, 'loginAdmin']);
     Route::post('/register',    [AuthController::class, 'register']);
@@ -44,6 +45,7 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         Route::put('/{id}',       [PesertaController::class, 'update']);
         Route::delete('/{id}',    [PesertaController::class, 'destroy']);
         Route::patch('/{id}/status', [PesertaController::class, 'updateStatus']);
+        Route::patch('/{id}/verifikasi-dokumen', [PesertaController::class, 'verifikasiDokumen']);
     });
 
     // ── Kursus (Courses) ───────────────────────────────────────────────────
@@ -110,6 +112,13 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         Route::put('/{id}',    [TrainerController::class, 'update']);
         Route::delete('/{id}', [TrainerController::class, 'destroy']);
         Route::patch('/{id}/status', [TrainerController::class, 'updateStatus']);
+    });
+
+    // ── Notifikasi ─────────────────────────────────────────────────────────
+    Route::prefix('notifikasi')->group(function () {
+        Route::get('/',               [NotifikasiController::class, 'index']);
+        Route::patch('/baca-semua',   [NotifikasiController::class, 'markAllRead']);
+        Route::patch('/{id}/baca',    [NotifikasiController::class, 'markRead']);
     });
 
     // ── Laporan (Reports) ──────────────────────────────────────────────────

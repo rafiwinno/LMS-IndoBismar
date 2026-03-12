@@ -22,14 +22,14 @@ class LaporanController extends Controller
         $year   = now()->year;
 
         $data = collect(range(1, 12))->map(function ($month) use ($months, $year) {
-            $peserta = Pengguna::whereHas('role', fn($q) => $q->where('nama_role', 'peserta'))
+            $peserta = Pengguna::where('id_role', 4)
                 ->whereYear('dibuat_pada', $year)
                 ->whereMonth('dibuat_pada', $month)
                 ->count();
 
             $completions = PesertaKursus::where('status', 'selesai')
-                ->whereYear('tanggal_daftar', $year)
-                ->whereMonth('tanggal_daftar', $month)
+                ->whereYear('tanggal_selesai', $year)
+                ->whereMonth('tanggal_selesai', $month)
                 ->count();
 
             return [
@@ -48,7 +48,8 @@ class LaporanController extends Controller
     public function peserta()
     {
         $data = Pengguna::with(['cabang', 'dataPkl', 'pesertaKursus'])
-            ->whereHas('role', fn($q) => $q->where('nama_role', 'peserta'))
+            ->where('id_role', 4)
+            ->limit(500)
             ->get()
             ->map(function ($p) {
                 $kursus  = $p->pesertaKursus->count();
@@ -73,7 +74,7 @@ class LaporanController extends Controller
      */
     public function kursus()
     {
-        $data = Kursus::with(['trainer', 'pesertaKursus'])->get()->map(function ($k) {
+        $data = Kursus::with(['trainer', 'pesertaKursus'])->limit(500)->get()->map(function ($k) {
             $total   = $k->pesertaKursus->count();
             $selesai = $k->pesertaKursus->where('status', 'selesai')->count();
             return [
@@ -102,8 +103,8 @@ class LaporanController extends Controller
                 'k.judul_kuis',
                 'kr.judul_kursus',
                 DB::raw('COUNT(DISTINCT ak.id_attempt) as total_attempts'),
-                DB::raw('COUNT(DISTINCT CASE WHEN ak.status = "selesai" THEN ak.id_attempt END) as selesai'),
-                DB::raw('AVG(CASE WHEN ak.status = "selesai" THEN ak.skor END) as avg_skor')
+                DB::raw("COUNT(DISTINCT CASE WHEN ak.status = 'selesai' THEN ak.id_attempt END) as selesai"),
+                DB::raw("AVG(CASE WHEN ak.status = 'selesai' THEN ak.skor END) as avg_skor")
             )
             ->groupBy('k.id_kuis', 'k.judul_kuis', 'kr.judul_kursus')
             ->get()
