@@ -11,12 +11,6 @@ export function Dashboard() {
     api.dashboard().then(setData).catch(console.error).finally(() => setLoading(false));
   }, []);
 
-  if (loading) return (
-    <div className="flex justify-center items-center py-32">
-      <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"/>
-    </div>
-  );
-
   const stats = data?.stats || {};
   const progressData = data?.progress_data || [];
   const courseData = data?.course_data || [];
@@ -26,11 +20,11 @@ export function Dashboard() {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-        <StatCard title="Total Peserta"    value={String(stats.total_peserta ?? 0)}  icon={Users}         color="bg-blue-500" />
-        <StatCard title="Total Kursus"     value={String(stats.total_kursus ?? 0)}   icon={BookOpen}      color="bg-indigo-500" />
-        <StatCard title="Total Materi"     value={String(stats.total_materi ?? 0)}   icon={FileText}      color="bg-emerald-500" />
-        <StatCard title="Total Tugas"      value={String(stats.total_tugas ?? 0)}    icon={ClipboardList} color="bg-amber-500" />
-        <StatCard title="Rata-rata Nilai"  value={String(stats.average_score ?? 0)}  icon={TrendingUp}    color="bg-purple-500" />
+        <StatCard title="Total Peserta"    value={loading ? null : String(stats.total_peserta ?? 0)}  icon={Users}         color="bg-blue-500" />
+        <StatCard title="Total Kursus"     value={loading ? null : String(stats.total_kursus ?? 0)}   icon={BookOpen}      color="bg-indigo-500" />
+        <StatCard title="Total Materi"     value={loading ? null : String(stats.total_materi ?? 0)}   icon={FileText}      color="bg-emerald-500" />
+        <StatCard title="Total Tugas"      value={loading ? null : String(stats.total_tugas ?? 0)}    icon={ClipboardList} color="bg-amber-500" />
+        <StatCard title="Rata-rata Nilai"  value={loading ? null : String(stats.average_score ?? 0)}  icon={TrendingUp}    color="bg-purple-500" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -118,7 +112,7 @@ export function Dashboard() {
   );
 }
 
-function StatCard({ title, value, icon: Icon, color }: { title: string; value: string; icon: any; color: string }) {
+function StatCard({ title, value, icon: Icon, color }: { title: string; value: string | null; icon: any; color: string }) {
   return (
     <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center space-x-4">
       <div className={`p-3 rounded-xl ${color} flex-shrink-0`}>
@@ -126,7 +120,10 @@ function StatCard({ title, value, icon: Icon, color }: { title: string; value: s
       </div>
       <div>
         <p className="text-xs font-medium text-gray-500">{title}</p>
-        <h4 className="text-xl font-bold text-gray-900">{value}</h4>
+        {value === null
+          ? <div className="h-7 w-12 bg-gray-200 rounded animate-pulse mt-1" />
+          : <h4 className="text-xl font-bold text-gray-900">{value}</h4>
+        }
       </div>
     </div>
   );

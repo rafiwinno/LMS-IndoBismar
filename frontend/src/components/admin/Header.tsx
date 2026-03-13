@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Menu, Bell, CheckCheck, Clock, UserCheck, UserX } from 'lucide-react';
+import { Menu, Bell, CheckCheck, Clock, UserCheck, UserX, FileText } from 'lucide-react';
 import { api } from '../../lib/api';
 import { toast } from '../../lib/toast';
 
@@ -10,6 +10,7 @@ interface HeaderProps {
 
 const TIPE_ICON: Record<string, JSX.Element> = {
   registrasi_baru:   <Clock className="w-4 h-4 text-amber-500" />,
+  dokumen_menunggu:  <FileText className="w-4 h-4 text-blue-500" />,
   dokumen_disetujui: <UserCheck className="w-4 h-4 text-green-500" />,
   dokumen_ditolak:   <UserX className="w-4 h-4 text-red-500" />,
 };
@@ -31,8 +32,16 @@ export default function Header({ onMenuClick, user }: HeaderProps) {
       const newData: any[] = res.data ?? [];
       const newUnread: number = res.unread ?? 0;
 
-      // Tampilkan toast popup untuk notif baru yang belum dibaca
-      if (prevUnread.current !== null && newUnread > prevUnread.current) {
+      if (prevUnread.current === null) {
+        // Load pertama: tampilkan popup jika ada unread
+        if (newUnread > 0) {
+          const newest = newData.find(n => !n.dibaca);
+          if (newest) {
+            toast.info(`🔔 ${newest.judul}: ${newest.pesan}`);
+          }
+        }
+      } else if (newUnread > prevUnread.current) {
+        // Ada notif baru masuk saat halaman sudah terbuka
         const diff = newUnread - prevUnread.current;
         const newest = newData.find(n => !n.dibaca);
         if (newest) {
@@ -49,9 +58,24 @@ export default function Header({ onMenuClick, user }: HeaderProps) {
   };
 
   useEffect(() => {
-    fetchNotif();
-    const interval = setInterval(fetchNotif, 30_000);
-    return () => clearInterval(interval);
+    let isMounted = true;
+    let isLoading = false;
+
+    const safeFetch = async () => {
+      if (isLoading || !isMounted) return;
+      isLoading = true;
+      try { await fetchNotif(); } catch { /* silent */ }
+      finally { isLoading = false; }
+    };
+
+    safeFetch();
+    const interval = setInterval(() => {
+      if (!document.hidden) safeFetch();
+    }, 30_000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
   }, []);
 
   // Close dropdown on outside click
@@ -121,7 +145,7 @@ export default function Header({ onMenuClick, user }: HeaderProps) {
                   <p className="text-center text-sm text-slate-400 py-8">Tidak ada notifikasi</p>
                 ) : (
                   notif.map(n => (
-                    <button key={n.id} onClick={() => markRead(n.id)}
+                    <button key={n.id_notif} onClick={() => markRead(n.id_notif)}
                       className={`w-full text-left px-4 py-3 hover:bg-slate-50 transition-colors flex gap-3 ${!n.dibaca ? 'bg-indigo-50/50' : ''}`}>
                       <div className="mt-0.5 flex-shrink-0">
                         {TIPE_ICON[n.tipe] ?? <Bell className="w-4 h-4 text-slate-400" />}

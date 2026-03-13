@@ -119,12 +119,16 @@ export const api = {
   getLaporanKuis: () => apiFetch('/laporan/kuis'),
   getLaporanTrainer: () => apiFetch('/laporan/trainer'),
 
-  // Verifikasi Dokumen
+  // Verifikasi Dokumen (admin)
   verifikasiDokumen: (id: number, aksi: 'setujui' | 'tolak', catatan?: string) =>
     apiFetch(`/peserta/${id}/verifikasi-dokumen`, {
       method: 'PATCH',
       body: JSON.stringify({ aksi, catatan }),
     }),
+
+  // Upload dokumen oleh peserta (setelah login)
+  uploadDokumen: (formData: FormData) =>
+    apiFetch('/peserta/saya/dokumen', { method: 'POST', body: formData }),
 
   // Notifikasi
   getNotifikasi: () => apiFetch('/notifikasi'),

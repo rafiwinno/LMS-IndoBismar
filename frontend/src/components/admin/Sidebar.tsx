@@ -1,5 +1,5 @@
 import {
-  LayoutDashboard, Users, BookOpen, FileText,
+  LayoutDashboard, Users, BookOpen,
   GraduationCap, UserSquare2,
   BarChart3, X, LogOut,
 } from 'lucide-react';
@@ -24,7 +24,6 @@ const ALL_MENU_ITEMS = [
   { id: 'dashboard',    label: 'Dashboard',    icon: LayoutDashboard, roleIds: [1, 2, 3] },
   { id: 'participants', label: 'Participants',  icon: Users,           roleIds: [1, 2] },
   { id: 'courses',      label: 'Courses',       icon: BookOpen,        roleIds: [1, 2, 3] },
-  { id: 'materials',    label: 'Materials',     icon: FileText,        roleIds: [1, 2, 3] },
   { id: 'exams',        label: 'Exams',         icon: GraduationCap,   roleIds: [1, 2, 3] },
   { id: 'trainers',     label: 'Trainers',      icon: UserSquare2,     roleIds: [1, 2] },
   { id: 'reports',      label: 'Reports',       icon: BarChart3,       roleIds: [1, 2] },

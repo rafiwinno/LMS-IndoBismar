@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { api } from '../../lib/api';
-import { User, Shield, UserPlus, Eye, EyeOff, ArrowLeft, FileText, Upload, CheckCircle2 } from 'lucide-react';
+import { User, Shield, UserPlus, Eye, EyeOff, ArrowLeft, CheckCircle2 } from 'lucide-react';
 
 interface LoginProps {
   onLogin: (user: any) => void;
@@ -176,8 +176,6 @@ function AdminLoginForm({ onLogin, onBack }: any) {
 // ─── Register ─────────────────────────────────────────────────────────────────
 function RegisterForm({ onBack }: any) {
   const [form, setForm] = useState({ nama: '', username: '', email: '', password: '', password_confirmation: '', nomor_hp: '', asal_sekolah: '', jurusan: '', id_cabang: 1 });
-  const [suratSiswa, setSuratSiswa] = useState<File | null>(null);
-  const [suratOrtu, setSuratOrtu] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -187,47 +185,12 @@ function RegisterForm({ onBack }: any) {
     if (form.password !== form.password_confirmation) { setError('Password tidak sama'); return; }
     setLoading(true); setError('');
     try {
-      const fd = new FormData();
-      Object.entries(form).forEach(([k, v]) => fd.append(k, String(v)));
-      if (suratSiswa) fd.append('surat_siswa', suratSiswa);
-      if (suratOrtu)  fd.append('surat_ortu',  suratOrtu);
-      await fetch(`${import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000/api'}/auth/register`, {
-        method: 'POST',
-        headers: { Accept: 'application/json' },
-        body: fd,
-      }).then(async r => {
-        const data = await r.json();
-        if (!r.ok) throw new Error(data.message || 'Registrasi gagal');
-        return data;
-      });
+      await api.register(form);
       setSuccess(true);
     } catch (err: any) {
       setError(err.message || 'Registrasi gagal');
     } finally { setLoading(false); }
   };
-
-  const FileUploadField = ({ label, file, onChange, desc }: { label: string; file: File | null; onChange: (f: File) => void; desc: string }) => (
-    <div>
-      <label className="block text-sm font-medium text-slate-300 mb-1.5">{label} <span className="text-red-400">*</span></label>
-      <label className={`flex items-center gap-3 px-4 py-3 rounded-lg border-2 border-dashed cursor-pointer transition-colors ${file ? 'border-green-500/50 bg-green-500/10' : 'border-slate-600 bg-slate-700/30 hover:border-blue-500/50 hover:bg-blue-500/5'}`}>
-        <input type="file" accept=".pdf" className="hidden" onChange={e => { if (e.target.files?.[0]) onChange(e.target.files[0]); }} />
-        {file ? (
-          <>
-            <CheckCircle2 className="w-5 h-5 text-green-400 shrink-0" />
-            <span className="text-sm text-green-300 truncate">{file.name}</span>
-          </>
-        ) : (
-          <>
-            <Upload className="w-5 h-5 text-slate-400 shrink-0" />
-            <div>
-              <p className="text-sm text-slate-300">{desc}</p>
-              <p className="text-xs text-slate-500">Format PDF, maks 5MB</p>
-            </div>
-          </>
-        )}
-      </label>
-    </div>
-  );
 
   if (success) return (
     <div className="bg-slate-800/80 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-green-600/20 text-center">
@@ -235,8 +198,8 @@ function RegisterForm({ onBack }: any) {
         <CheckCircle2 className="w-8 h-8 text-green-400" />
       </div>
       <h3 className="text-lg font-semibold text-white mb-2">Pendaftaran Berhasil!</h3>
-      <p className="text-slate-400 text-sm mb-2">Akun Anda sedang menunggu verifikasi dokumen oleh admin cabang.</p>
-      <p className="text-slate-500 text-xs mb-6">Anda akan mendapat konfirmasi setelah dokumen disetujui.</p>
+      <p className="text-slate-400 text-sm mb-2">Akun Anda telah terdaftar. Silakan login dan upload dokumen persyaratan PKL Anda.</p>
+      <p className="text-slate-500 text-xs mb-6">Dokumen akan diverifikasi oleh admin cabang setelah diupload.</p>
       <button onClick={onBack} className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors">
         Kembali ke Login
       </button>
@@ -285,29 +248,6 @@ function RegisterForm({ onBack }: any) {
           <input type="password" placeholder="Ulangi password" value={form.password_confirmation} required
             onChange={e => setForm(f => ({ ...f, password_confirmation: e.target.value }))}
             className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all" />
-        </div>
-
-        {/* Upload Surat */}
-        <div className="pt-2 border-t border-slate-700">
-          <div className="flex items-center gap-2 mb-3">
-            <FileText className="w-4 h-4 text-amber-400" />
-            <p className="text-sm font-medium text-slate-300">Dokumen Persyaratan</p>
-          </div>
-          <div className="space-y-3">
-            <FileUploadField
-              label="Surat Pernyataan Siswa PKL"
-              file={suratSiswa}
-              onChange={setSuratSiswa}
-              desc="Upload surat pernyataan siswa PKL"
-            />
-            <FileUploadField
-              label="Surat Pernyataan Orang Tua"
-              file={suratOrtu}
-              onChange={setSuratOrtu}
-              desc="Upload surat pernyataan orang tua"
-            />
-          </div>
-          <p className="text-xs text-slate-500 mt-2">Dokumen dapat diupload sekarang atau dikumpulkan langsung ke admin.</p>
         </div>
 
         <button type="submit" disabled={loading}

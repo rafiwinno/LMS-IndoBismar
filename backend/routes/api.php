@@ -29,6 +29,9 @@ Route::prefix('auth')->middleware('throttle:10,1')->group(function () {
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::get('/auth/me',      [AuthController::class, 'me']);
+
+    // Upload dokumen oleh peserta (setelah login, tidak perlu role admin)
+    Route::post('/peserta/saya/dokumen', [PesertaController::class, 'uploadDokumen']);
 });
 
 // ─── Protected Routes (admin, superadmin, trainer only) ──────────────────────

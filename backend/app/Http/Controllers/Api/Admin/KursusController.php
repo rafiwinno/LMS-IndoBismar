@@ -11,7 +11,7 @@ class KursusController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Kursus::with(['trainer', 'cabang', 'pesertaKursus']);
+        $query = Kursus::with(['trainer', 'cabang'])->withCount('pesertaKursus');
 
         if ($request->search) {
             $search = $request->search;
@@ -61,7 +61,7 @@ class KursusController extends Controller
 
         return response()->json([
             'message' => 'Kursus berhasil dibuat.',
-            'data'    => $this->formatKursus($kursus->load('trainer', 'cabang', 'pesertaKursus')),
+            'data'    => $this->formatKursus($kursus->load(['trainer', 'cabang'])->loadCount('pesertaKursus')),
         ], 201);
     }
 
@@ -89,7 +89,7 @@ class KursusController extends Controller
 
         return response()->json([
             'message' => 'Kursus berhasil diperbarui.',
-            'data'    => $this->formatKursus($kursus->fresh()->load('trainer', 'cabang', 'pesertaKursus')),
+            'data'    => $this->formatKursus($kursus->fresh()->load(['trainer', 'cabang'])->loadCount('pesertaKursus')),
         ]);
     }
 
@@ -190,7 +190,7 @@ class KursusController extends Controller
             'trainer'      => $k->trainer->nama ?? null,
             'id_trainer'   => $k->id_trainer,
             'cabang'       => $k->cabang->nama_cabang ?? null,
-            'participants' => $k->pesertaKursus->count(),
+            'participants' => $k->peserta_kursus_count ?? 0,
             'dibuat_pada'  => $k->dibuat_pada,
         ];
     }

@@ -18,24 +18,30 @@ class LaporanController extends Controller
      */
     public function dashboard()
     {
-        $months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        $year   = now()->year;
+        $startDate = now()->subMonths(11)->startOfMonth();
 
-        $data = collect(range(1, 12))->map(function ($month) use ($months, $year) {
-            $peserta = Pengguna::where('id_role', 4)
-                ->whereYear('dibuat_pada', $year)
-                ->whereMonth('dibuat_pada', $month)
-                ->count();
+        // 2 queries total instead of 24
+        $pesertaByMonth = Pengguna::where('id_role', 4)
+            ->where('dibuat_pada', '>=', $startDate)
+            ->selectRaw('YEAR(dibuat_pada) as yr, MONTH(dibuat_pada) as mo, COUNT(*) as total')
+            ->groupBy('yr', 'mo')
+            ->get()
+            ->keyBy(fn($r) => $r->yr . '-' . $r->mo);
 
-            $completions = PesertaKursus::where('status', 'selesai')
-                ->whereYear('tanggal_selesai', $year)
-                ->whereMonth('tanggal_selesai', $month)
-                ->count();
+        $completionsByMonth = PesertaKursus::where('status', 'selesai')
+            ->where('tanggal_daftar', '>=', $startDate)
+            ->selectRaw('YEAR(tanggal_daftar) as yr, MONTH(tanggal_daftar) as mo, COUNT(*) as total')
+            ->groupBy('yr', 'mo')
+            ->get()
+            ->keyBy(fn($r) => $r->yr . '-' . $r->mo);
 
+        $data = collect(range(11, 0))->map(function ($monthsAgo) use ($pesertaByMonth, $completionsByMonth) {
+            $date = now()->subMonths($monthsAgo);
+            $key  = $date->year . '-' . $date->month;
             return [
-                'name'         => $months[$month - 1],
-                'participants' => $peserta,
-                'completions'  => $completions,
+                'name'         => $date->format('M y'),
+                'participants' => (int) ($pesertaByMonth->get($key)?->total ?? 0),
+                'completions'  => (int) ($completionsByMonth->get($key)?->total ?? 0),
             ];
         });
 

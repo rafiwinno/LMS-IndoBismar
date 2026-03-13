@@ -248,6 +248,66 @@ class PesertaController extends Controller
         ]);
     }
 
+    /**
+     * POST /api/peserta/saya/dokumen
+     * Peserta yang sudah login mengupload dokumen surat-surat PKL
+     */
+    public function uploadDokumen(Request $request)
+    {
+        $request->validate([
+            'surat_siswa' => 'required|file|mimes:pdf|max:5120',
+            'surat_ortu'  => 'required|file|mimes:pdf|max:5120',
+        ]);
+
+        $pengguna = $request->user();
+        $dataPkl  = $pengguna->dataPkl;
+
+        if (! $dataPkl) {
+            return response()->json(['message' => 'Data peserta tidak ditemukan.'], 404);
+        }
+
+        // Hapus file lama jika ada
+        if ($dataPkl->surat_siswa) {
+            Storage::disk('public')->delete($dataPkl->surat_siswa);
+        }
+        if ($dataPkl->surat_ortu) {
+            Storage::disk('public')->delete($dataPkl->surat_ortu);
+        }
+
+        $suratSiswaPath = $request->file('surat_siswa')
+            ->store("surat/{$pengguna->id_pengguna}", 'public');
+        $suratOrtuPath  = $request->file('surat_ortu')
+            ->store("surat/{$pengguna->id_pengguna}", 'public');
+
+        $dataPkl->update([
+            'surat_siswa'     => $suratSiswaPath,
+            'surat_ortu'      => $suratOrtuPath,
+            'status_dokumen'  => 'menunggu',
+            'catatan_dokumen' => null,
+        ]);
+
+        // Notifikasi 2: Dokumen menunggu verifikasi → ke admin cabang
+        $adminCabang = Pengguna::where('id_cabang', $pengguna->id_cabang)
+            ->whereIn('id_role', [1, 2])
+            ->where('status', 'aktif')
+            ->get();
+
+        foreach ($adminCabang as $admin) {
+            Notifikasi::create([
+                'id_penerima'  => $admin->id_pengguna,
+                'judul'        => 'Dokumen Menunggu Verifikasi',
+                'pesan'        => "Peserta \"{$pengguna->nama}\" telah mengupload dokumen PKL dan menunggu verifikasi.",
+                'tipe'         => 'dokumen_menunggu',
+                'id_referensi' => $pengguna->id_pengguna,
+            ]);
+        }
+
+        return response()->json([
+            'message'        => 'Dokumen berhasil diupload. Menunggu verifikasi dari admin cabang.',
+            'status_dokumen' => 'menunggu',
+        ]);
+    }
+
     // ─── Helpers ─────────────────────────────────────────────────────────────
 
     private function formatPeserta($p)

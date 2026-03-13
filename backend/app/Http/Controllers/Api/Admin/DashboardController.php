@@ -15,54 +15,59 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        // ── Stat Cards ───────────────────────────────────────────────────────
-        $totalPeserta  = Pengguna::whereHas('role', fn($q) => $q->where('nama_role', 'peserta'))
-            ->where('status', 'aktif')->count();
+        // ── Stat Cards — 5 simple queries ────────────────────────────────────
+        $totalPeserta = Pengguna::where('id_role', 4)->where('status', 'aktif')->count();
+        $totalKursus  = Kursus::where('status', 'publish')->count();
+        $totalMateri  = Materi::count();
+        $totalTugas   = Tugas::count();
+        $avgScore     = AttemptKuis::where('status', 'selesai')->avg('skor') ?? 0;
 
-        $totalKursus   = Kursus::where('status', 'publish')->count();
-        $totalMateri   = Materi::count();
-        $totalTugas    = Tugas::count();
+        // ── Kuis selesai per minggu — 1 GROUP BY query ───────────────────────
+        $weekStart = now()->subWeeks(5)->startOfWeek();
+        $weeklyCounts = DB::table('attempt_kuis')
+            ->where('status', 'selesai')
+            ->where('waktu_selesai', '>=', $weekStart)
+            ->selectRaw('YEARWEEK(waktu_selesai, 1) as yw, COUNT(*) as total')
+            ->groupBy('yw')
+            ->pluck('total', 'yw');
 
-        $avgScore = AttemptKuis::where('status', 'selesai')->avg('skor') ?? 0;
-
-        // ── Kuis selesai per minggu (6 minggu terakhir) ──────────────────────
-        $progressData = collect(range(5, 0))->map(function ($weekBack) {
-            $start = now()->subWeeks($weekBack)->startOfWeek();
-            $end   = now()->subWeeks($weekBack)->endOfWeek();
-
-            $selesai = AttemptKuis::where('status', 'selesai')
-                ->whereBetween('waktu_selesai', [$start, $end])
-                ->count();
-
+        $progressData = collect(range(5, 0))->map(function ($weekBack) use ($weeklyCounts) {
+            $yw = now()->subWeeks($weekBack)->startOfWeek()->format('oW'); // ISO year+week
             return [
                 'name'     => 'Week ' . (6 - $weekBack),
-                'progress' => $selesai,
+                'progress' => (int) ($weeklyCounts->get((int) $yw, 0)),
             ];
         });
 
-        // ── Completion rate per kursus ───────────────────────────────────────
-        $courseData = Kursus::with('pesertaKursus')
+        // ── Completion rate per kursus — withCount, no row loading ───────────
+        $courseData = Kursus::withCount([
+                'pesertaKursus',
+                'pesertaKursus as selesai_count' => fn($q) => $q->where('status', 'selesai'),
+            ])
             ->where('status', 'publish')
             ->take(5)
             ->get()
-            ->map(function ($k) {
-                $total   = $k->pesertaKursus->count();
-                $selesai = $k->pesertaKursus->where('status', 'selesai')->count();
-                return [
-                    'name'       => $k->judul_kursus,
-                    'completion' => $total > 0 ? round(($selesai / $total) * 100) : 0,
-                ];
-            });
+            ->map(fn($k) => [
+                'name'       => $k->judul_kursus,
+                'completion' => $k->peserta_kursus_count > 0
+                    ? round(($k->selesai_count / $k->peserta_kursus_count) * 100)
+                    : 0,
+            ]);
 
-        // ── Materi dibuka per hari (7 hari terakhir) ─────────────────────────
+        // ── Materi dibuka per hari — 1 query grouped by date ─────────────────
         $days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-        $submissionData = collect(range(6, 0))->map(function ($dayBack) use ($days) {
+        $dayStart    = now()->subDays(6)->startOfDay();
+        $dailyCounts = DB::table('progress_materi')
+            ->where('waktu_update', '>=', $dayStart)
+            ->selectRaw('DATE(waktu_update) as tgl, COUNT(*) as total')
+            ->groupBy('tgl')
+            ->pluck('total', 'tgl');
+
+        $submissionData = collect(range(6, 0))->map(function ($dayBack) use ($days, $dailyCounts) {
             $date = now()->subDays($dayBack)->toDateString();
-            $count = DB::table('progress_materi')
-                ->whereDate('waktu_update', $date)->count();
             return [
                 'name' => $days[now()->subDays($dayBack)->dayOfWeek],
-                'rate' => $count,
+                'rate' => (int) ($dailyCounts->get($date, 0)),
             ];
         });
 

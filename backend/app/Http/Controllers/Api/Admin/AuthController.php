@@ -19,7 +19,7 @@ class AuthController extends Controller
             'password' => 'required|string',
         ]);
 
-        $pengguna = Pengguna::with('role')
+        $pengguna = Pengguna::with(['role', 'dataPkl'])
             ->where('email', $request->email)
             ->first();
 
@@ -29,9 +29,9 @@ class AuthController extends Controller
             ]);
         }
 
-        if ($pengguna->status !== 'aktif') {
+        if ($pengguna->status === 'ditolak') {
             return response()->json([
-                'message' => 'Akun belum diaktifkan. Hubungi administrator.',
+                'message' => 'Akun Anda telah ditolak. Hubungi administrator.',
             ], 403);
         }
 
@@ -95,8 +95,6 @@ class AuthController extends Controller
             'id_cabang'    => 'required|exists:cabang,id_cabang',
             'asal_sekolah' => 'nullable|string|max:150',
             'jurusan'      => 'nullable|string|max:100',
-            'surat_siswa'  => 'nullable|file|mimes:pdf|max:5120',
-            'surat_ortu'   => 'nullable|file|mimes:pdf|max:5120',
         ]);
 
         $pengguna = Pengguna::create([
@@ -110,29 +108,13 @@ class AuthController extends Controller
             'status'    => 'pending',
         ]);
 
-        $suratSiswaPath = null;
-        $suratOrtuPath  = null;
-
-        if ($request->hasFile('surat_siswa')) {
-            $suratSiswaPath = $request->file('surat_siswa')
-                ->store("surat/{$pengguna->id_pengguna}", 'public');
-        }
-        if ($request->hasFile('surat_ortu')) {
-            $suratOrtuPath = $request->file('surat_ortu')
-                ->store("surat/{$pengguna->id_pengguna}", 'public');
-        }
-
-        $statusDokumen = ($suratSiswaPath && $suratOrtuPath) ? 'menunggu' : 'belum_upload';
-
         $pengguna->dataPkl()->create([
-            'asal_sekolah'  => $request->asal_sekolah,
-            'jurusan'       => $request->jurusan,
-            'surat_siswa'   => $suratSiswaPath,
-            'surat_ortu'    => $suratOrtuPath,
-            'status_dokumen' => $statusDokumen,
+            'asal_sekolah'   => $request->asal_sekolah,
+            'jurusan'        => $request->jurusan,
+            'status_dokumen' => 'belum_upload',
         ]);
 
-        // Kirim notifikasi ke semua admin cabang yang sama
+        // Notifikasi 1: Peserta baru mendaftar
         $adminCabang = Pengguna::where('id_cabang', $request->id_cabang)
             ->whereIn('id_role', [1, 2])
             ->where('status', 'aktif')
@@ -141,17 +123,16 @@ class AuthController extends Controller
         foreach ($adminCabang as $admin) {
             Notifikasi::create([
                 'id_penerima'  => $admin->id_pengguna,
-                'judul'        => 'Pendaftar Baru',
-                'pesan'        => "Peserta baru \"{$pengguna->nama}\" mendaftar dan menunggu verifikasi dokumen.",
+                'judul'        => 'Peserta Baru Mendaftar',
+                'pesan'        => "Peserta baru \"{$pengguna->nama}\" telah mendaftar. Menunggu upload dokumen dari peserta.",
                 'tipe'         => 'registrasi_baru',
                 'id_referensi' => $pengguna->id_pengguna,
             ]);
         }
 
         return response()->json([
-            'message'        => 'Registrasi berhasil. Tunggu verifikasi dari administrator.',
-            'status_dokumen' => $statusDokumen,
-            'user'           => [
+            'message' => 'Registrasi berhasil. Silakan login dan upload dokumen Anda.',
+            'user'    => [
                 'id'     => $pengguna->id_pengguna,
                 'nama'   => $pengguna->nama,
                 'email'  => $pengguna->email,
@@ -168,21 +149,23 @@ class AuthController extends Controller
 
     public function me(Request $request)
     {
-        $user = $request->user()->load('role', 'cabang');
+        $user = $request->user()->load('role', 'cabang', 'dataPkl');
         return response()->json($this->formatUser($user));
     }
 
     private function formatUser($user): array
     {
         return [
-            'id'       => $user->id_pengguna,
-            'nama'     => $user->nama,
-            'email'    => $user->email,
-            'username' => $user->username,
-            'role'     => $user->role->nama_role ?? null,
-            'id_role'  => $user->id_role,
-            'cabang'   => $user->id_cabang,
-            'status'   => $user->status,
+            'id'               => $user->id_pengguna,
+            'nama'             => $user->nama,
+            'email'            => $user->email,
+            'username'         => $user->username,
+            'role'             => $user->role->nama_role ?? null,
+            'id_role'          => $user->id_role,
+            'cabang'           => $user->id_cabang,
+            'status'           => $user->status,
+            'status_dokumen'   => $user->dataPkl->status_dokumen   ?? null,
+            'catatan_dokumen'  => $user->dataPkl->catatan_dokumen  ?? null,
         ];
     }
 }
