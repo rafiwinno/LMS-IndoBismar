@@ -22,6 +22,7 @@ import Tasks from './pages/user/Tasks';
 import Quiz from './pages/user/Quiz';
 import Grades from './pages/user/Grades';
 import Profile from './pages/user/Profile';
+import Documents from './pages/user/Documents'; 
 
 // Admin Pages
 import AdminDashboard from './pages/admin/Dashboard';
@@ -32,7 +33,6 @@ import TrainerDashboard from './pages/trainer/Dashboard';
 // Superadmin Pages
 import SuperAdminDashboard from './pages/superadmin/Dashboard';
 
-// Komponen untuk redirect root "/" berdasarkan role yang sedang login
 function RootRedirect() {
   const user = getUser();
   if (!user) return <Navigate to="/login" replace />;
@@ -59,13 +59,14 @@ export default function App() {
             </ProtectedRoute>
           }
         >
-          <Route path="dashboard" element={<UserDashboard />} />
-          <Route path="courses" element={<Courses />} />
+          <Route path="dashboard"   element={<UserDashboard />} />
+          <Route path="courses"     element={<Courses />} />
           <Route path="courses/:id" element={<CourseDetail />} />
-          <Route path="tasks" element={<Tasks />} />
+          <Route path="tasks"       element={<Tasks />} />
           <Route path="tasks/quiz/:id" element={<Quiz />} />
-          <Route path="grades" element={<Grades />} />
-          <Route path="profile" element={<Profile />} />
+          <Route path="grades"      element={<Grades />} />
+          <Route path="documents"   element={<Documents />} /> 
+          <Route path="profile"     element={<Profile />} />
         </Route>
 
         {/* ===== ADMIN ROUTES ===== */}
@@ -98,7 +99,7 @@ export default function App() {
           }
         />
 
-        {/* Halaman unauthorized */}
+        {/* 403 */}
         <Route
           path="/unauthorized"
           element={
@@ -106,15 +107,13 @@ export default function App() {
               <div className="text-center">
                 <h1 className="text-4xl font-bold text-red-500">403</h1>
                 <p className="mt-2 text-slate-600">Anda tidak memiliki akses ke halaman ini.</p>
-                <a href="/login" className="mt-4 inline-block text-blue-600 underline">
-                  Kembali ke Login
-                </a>
+                <a href="/login" className="mt-4 inline-block text-blue-600 underline">Kembali ke Login</a>
               </div>
             </div>
           }
         />
 
-        {/* 404 - halaman tidak ditemukan */}
+        {/* 404 */}
         <Route
           path="*"
           element={
@@ -122,9 +121,7 @@ export default function App() {
               <div className="text-center">
                 <h1 className="text-4xl font-bold text-slate-700">404</h1>
                 <p className="mt-2 text-slate-600">Halaman tidak ditemukan.</p>
-                <a href="/" className="mt-4 inline-block text-blue-600 underline">
-                  Kembali ke Beranda
-                </a>
+                <a href="/" className="mt-4 inline-block text-blue-600 underline">Kembali ke Beranda</a>
               </div>
             </div>
           }

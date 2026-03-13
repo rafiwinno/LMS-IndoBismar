@@ -5,6 +5,7 @@ import {
   CheckSquare, 
   Award, 
   User,
+  FolderOpen,
   X,
   LogOut
 } from 'lucide-react';
@@ -22,11 +23,12 @@ interface SidebarProps {
 
 export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
   const navItems = [
-    { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-    { name: 'Courses', path: '/courses', icon: BookOpen },
-    { name: 'Kuis', path: '/tasks', icon: CheckSquare },
-    { name: 'Nilai', path: '/grades', icon: Award },
-    { name: 'Profil', path: '/profile', icon: User },
+    { name: 'Dashboard',  path: '/dashboard',  icon: LayoutDashboard },
+    { name: 'Courses',    path: '/courses',     icon: BookOpen },
+    { name: 'Kuis',       path: '/tasks',       icon: CheckSquare },
+    { name: 'Nilai',      path: '/grades',      icon: Award },
+    { name: 'Dokumen',    path: '/documents',   icon: FolderOpen },  // ✅ Menu baru
+    { name: 'Profil',     path: '/profile',     icon: User },
   ];
 
   return (

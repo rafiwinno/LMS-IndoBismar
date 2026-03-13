@@ -8,6 +8,8 @@ use App\Http\Controllers\Api\User\KursusController;
 use App\Http\Controllers\Api\User\KuisController;
 use App\Http\Controllers\Api\User\NilaiController;
 use App\Http\Controllers\Api\User\ProfileController;
+use App\Http\Controllers\Api\User\DocumentController;
+
 
 // Test API
 Route::get('/test', function () {
@@ -26,6 +28,10 @@ Route::middleware('auth:sanctum')->prefix('user')->group(function () {
 
     // Dashboard
     Route::get('/dashboard',   [DashboardController::class, 'stats']);
+
+    // Dokumen
+    Route::get('/dokumen', [DocumentController::class, 'index']);
+    Route::post('/dokumen/{jenis}', [DocumentController::class, 'upload']);
 
     // Kursus
     Route::get('/kursus',                          [KursusController::class, 'index']);
