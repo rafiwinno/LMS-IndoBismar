@@ -3,6 +3,7 @@ import { BookOpen, CheckCircle, Award, Clock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import API from '../../api/api';
 import { getUser } from '../types';
+import { DashboardSkeleton } from '../../components/ui/Skeleton';
 
 interface DashboardStats {
   total_kursus: number;
@@ -31,6 +32,9 @@ export default function Dashboard() {
     { name: 'Nilai Rata-rata', value: stats?.nilai_rata_rata ?? 0, icon: Award,       color: 'text-purple-600',  bg: 'bg-purple-100' },
   ];
 
+  // ✅ Skeleton saat loading
+  if (loading) return <DashboardSkeleton />;
+
   return (
     <div className="space-y-8">
       {/* Welcome Section */}
@@ -42,23 +46,19 @@ export default function Dashboard() {
       </div>
 
       {/* Stats Grid */}
-      {loading ? (
-        <div className="text-center text-slate-500 py-8">Memuat data...</div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {statCards.map((stat) => (
-            <div key={stat.name} className="bg-white rounded-2xl p-7 shadow-sm border border-slate-200 flex items-center gap-5">
-              <div className={`w-16 h-16 rounded-2xl flex items-center justify-center ${stat.bg} ${stat.color}`}>
-                <stat.icon size={32} />
-              </div>
-              <div>
-                <p className="text-base font-medium text-slate-500">{stat.name}</p>
-                <p className="text-4xl font-bold text-slate-900">{stat.value}</p>
-              </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {statCards.map((stat) => (
+          <div key={stat.name} className="bg-white rounded-2xl p-7 shadow-sm border border-slate-200 flex items-center gap-5">
+            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center ${stat.bg} ${stat.color}`}>
+              <stat.icon size={32} />
             </div>
-          ))}
-        </div>
-      )}
+            <div>
+              <p className="text-base font-medium text-slate-500">{stat.name}</p>
+              <p className="text-4xl font-bold text-slate-900">{stat.value}</p>
+            </div>
+          </div>
+        ))}
+      </div>
 
       {/* Quick Links */}
       <div>

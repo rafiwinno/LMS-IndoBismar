@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Award, TrendingUp, BookOpen, CheckCircle, Clock } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import API from '../../api/api';
+import { GradesSkeleton } from '../../components/ui/Skeleton';
 
 interface NilaiPkl {
   nilai_teknis: number;
@@ -10,13 +11,6 @@ interface NilaiPkl {
   catatan: string;
   nama_penilai: string;
   tanggal_penilaian: string;
-}
-
-interface NilaiNonTeknis {
-  id_nilai: number;
-  id_keahlian: number;
-  nilai: number;
-  catatan: string;
 }
 
 interface RiwayatKuis {
@@ -51,7 +45,8 @@ export default function Grades() {
     nilai: k.skor,
   }));
 
-  if (loading) return <div className="text-center text-slate-500 py-12">Memuat nilai...</div>;
+  // ✅ Skeleton saat loading
+  if (loading) return <GradesSkeleton />;
 
   return (
     <div className="space-y-6">
@@ -133,7 +128,6 @@ export default function Grades() {
             Riwayat Kuis
           </h2>
         </div>
-
         {riwayatKuis.length === 0 ? (
           <div className="p-8 text-center text-slate-500">Belum ada kuis yang dikerjakan.</div>
         ) : (

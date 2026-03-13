@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { FileText, UploadCloud, CheckCircle, AlertCircle, Loader2, ShieldCheck, Clock } from 'lucide-react';
 import API from '../../api/api';
+import { DocumentsSkeleton } from '../../components/ui/Skeleton';
 
 interface Dokumen {
   surat_siswa: string | null;
@@ -94,7 +95,8 @@ export default function Documents() {
 
   const badge = dokumen?.status ? statusBadge[dokumen.status] ?? statusBadge['pending'] : null;
 
-  if (loading) return <div className="text-center text-slate-500 py-12">Memuat dokumen...</div>;
+  // Skeleton saat loading
+  if (loading) return <DocumentsSkeleton />;
 
   return (
     <div className="space-y-6 max-w-3xl mx-auto">
@@ -103,7 +105,6 @@ export default function Documents() {
         <p className="text-slate-500 text-sm mt-1">Upload dokumen persyaratan PKL Anda</p>
       </div>
 
-      {/* Status verifikasi */}
       {badge && (
         <div className={`flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-medium ${badge.className}`}>
           {badge.icon}
@@ -137,7 +138,6 @@ export default function Documents() {
           return (
             <div key={jenis} className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
               <div className="flex items-start justify-between gap-4">
-                {/* Info */}
                 <div className="flex items-start gap-4">
                   <div className={`p-3 rounded-xl ${uploaded ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'}`}>
                     <FileText size={24} />
@@ -159,10 +159,10 @@ export default function Documents() {
                   </div>
                 </div>
 
-                {/* Upload button */}
-                <label className={`flex-shrink-0 flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors cursor-pointer
+                {/* Upload button dengan spinner saat uploading */}
+                <label className={`flex-shrink-0 flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors cursor-pointer select-none
                   ${isUploading
-                    ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                    ? 'bg-slate-100 text-slate-400 cursor-not-allowed pointer-events-none'
                     : uploaded
                       ? 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                       : 'bg-blue-600 text-white hover:bg-blue-700'

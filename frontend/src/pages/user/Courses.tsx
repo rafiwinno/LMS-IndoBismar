@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Search, BookOpen } from 'lucide-react';
+import { BookOpen } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import API from '../../api/api';
+import { CoursesSkeleton } from '../../components/ui/Skeleton';
 
 interface Kursus {
   id_kursus: number;
@@ -13,8 +14,10 @@ interface Kursus {
 export default function Courses() {
   const [courses, setCourses] = useState<Kursus[]>([]);
   const [searchParams] = useSearchParams();
-  const [search, setSearch] = useState(searchParams.get('search') ?? '');
   const [loading, setLoading] = useState(true);
+
+  // Baca search dari URL (diketik di header search bar)
+  const search = searchParams.get('search') ?? '';
 
   useEffect(() => {
     API.get('/user/kursus')
@@ -27,28 +30,26 @@ export default function Courses() {
     c.judul_kursus.toLowerCase().includes(search.toLowerCase())
   );
 
+  // ✅ Skeleton saat loading
+  if (loading) return <CoursesSkeleton />;
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h1 className="text-2xl font-bold text-slate-900">Daftar Kursus</h1>
-        <div className="relative w-full sm:w-64">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Search className="h-4 w-4 text-slate-400" />
-          </div>
-          <input
-            type="text"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="block w-full pl-9 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-blue-600 sm:text-sm"
-            placeholder="Cari kursus..."
-          />
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Daftar Kursus</h1>
+          {search && (
+            <p className="text-slate-500 text-sm mt-1">
+              Hasil pencarian: <span className="font-semibold text-blue-600">"{search}"</span>
+            </p>
+          )}
         </div>
       </div>
 
-      {loading ? (
-        <div className="text-center text-slate-500 py-12">Memuat kursus...</div>
-      ) : filtered.length === 0 ? (
-        <div className="text-center text-slate-500 py-12">Tidak ada kursus ditemukan.</div>
+      {filtered.length === 0 ? (
+        <div className="text-center text-slate-500 py-12">
+          {search ? `Tidak ada kursus yang cocok dengan "${search}".` : 'Tidak ada kursus ditemukan.'}
+        </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filtered.map((course) => (

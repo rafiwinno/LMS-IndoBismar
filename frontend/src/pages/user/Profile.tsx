@@ -1,6 +1,8 @@
 import { useEffect, useState, useCallback } from 'react';
 import { User, Mail, Phone, Lock, Save } from 'lucide-react';
 import API from '../../api/api';
+import { ProfileSkeleton } from '../../components/ui/Skeleton';
+import Spinner from '../../components/ui/Spinner';
 
 interface Profil {
   nama: string;
@@ -19,7 +21,6 @@ export default function Profile() {
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
-  // ✅ FIX: Ekstrak fetchProfil ke fungsi tersendiri agar bisa dipanggil ulang setelah save
   const fetchProfil = useCallback(async () => {
     try {
       const res = await API.get('/user/profil');
@@ -41,15 +42,10 @@ export default function Profile() {
     setErrorMsg('');
     try {
       await API.put('/user/profil', { nama: form.nama, nomor_hp: form.nomor_hp });
-
-      // ✅ FIX: Re-fetch dari API agar Profile Card sinkron dengan data DB terbaru
       await fetchProfil();
-
-      // Update localStorage dan trigger Header update
       const currentUser = JSON.parse(localStorage.getItem('lms_user') || '{}');
       localStorage.setItem('lms_user', JSON.stringify({ ...currentUser, nama: form.nama }));
       window.dispatchEvent(new Event('lms_user_updated'));
-
       setSuccessMsg('Profil berhasil diperbarui!');
     } catch (err: any) {
       setErrorMsg(err.response?.data?.message || 'Gagal menyimpan profil.');
@@ -79,7 +75,8 @@ export default function Profile() {
 
   const initials = profil?.nama?.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase() ?? '??';
 
-  if (loading) return <div className="text-center text-slate-500 py-12">Memuat profil...</div>;
+  // Skeleton saat loading
+  if (loading) return <ProfileSkeleton />;
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
@@ -116,7 +113,6 @@ export default function Profile() {
           </div>
         </div>
 
-        {/* Info & Password */}
         <div className="md:col-span-2 space-y-6">
           {/* Informasi Pribadi */}
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
@@ -161,8 +157,11 @@ export default function Profile() {
                   disabled={saving}
                   className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors disabled:opacity-50"
                 >
-                  <Save size={16} />
-                  {saving ? 'Menyimpan...' : 'Simpan Perubahan'}
+                  {/* Spinner saat menyimpan */}
+                  {saving
+                    ? <><Spinner size="sm" /> Menyimpan...</>
+                    : <><Save size={16} /> Simpan Perubahan</>
+                  }
                 </button>
               </div>
             </div>
@@ -203,8 +202,10 @@ export default function Profile() {
                   disabled={saving || !passwordForm.password_baru}
                   className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors disabled:opacity-50"
                 >
-                  <Save size={16} />
-                  {saving ? 'Menyimpan...' : 'Simpan Password'}
+                  {saving
+                    ? <><Spinner size="sm" /> Menyimpan...</>
+                    : <><Save size={16} /> Simpan Password</>
+                  }
                 </button>
               </div>
             </div>
