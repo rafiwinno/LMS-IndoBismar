@@ -19,7 +19,8 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}) {
     throw new Error('Tidak dapat terhubung ke server. Periksa koneksi internet Anda.');
   }
 
-  if (res.status === 401) {
+  const isLoginEndpoint = endpoint === '/auth/login' || endpoint === '/auth/login-admin';
+  if (res.status === 401 && !isLoginEndpoint) {
     sessionStorage.removeItem('token');
     sessionStorage.removeItem('user');
     window.location.href = '/';
@@ -34,6 +35,12 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}) {
   }
 
   if (!res.ok) {
+    if (res.status === 429) {
+      const retryAfter = parseInt(res.headers.get('Retry-After') ?? '60', 10);
+      const err = new Error('Terlalu banyak percobaan. Coba lagi dalam beberapa saat.');
+      (err as any).retryAfter = retryAfter;
+      throw err;
+    }
     // Tangani validation errors (422)
     if (res.status === 422 && data.errors) {
       const messages = Object.values(data.errors as Record<string, string[]>)

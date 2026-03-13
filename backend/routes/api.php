@@ -19,10 +19,10 @@ use App\Http\Controllers\Api\Admin\NotifikasiController;
 */
 
 // ─── AUTH (Public) ───────────────────────────────────────────────────────────
-Route::prefix('auth')->middleware('throttle:10,1')->group(function () {
-    Route::post('/login',       [AuthController::class, 'login']);
-    Route::post('/login-admin', [AuthController::class, 'loginAdmin']);
-    Route::post('/register',    [AuthController::class, 'register']);
+Route::prefix('auth')->group(function () {
+    Route::post('/login',       [AuthController::class, 'login'])->middleware('throttle:10,1');
+    Route::post('/login-admin', [AuthController::class, 'loginAdmin'])->middleware('throttle:5,1');
+    Route::post('/register',    [AuthController::class, 'register'])->middleware('throttle:10,1');
 });
 
 // ─── Auth Protected (semua role) ─────────────────────────────────────────────

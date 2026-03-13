@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../../lib/api';
 import { User, Shield, UserPlus, Eye, EyeOff, ArrowLeft, CheckCircle2 } from 'lucide-react';
 
@@ -42,6 +42,27 @@ function UserLoginForm({ onLogin, onSwitchAdmin, onSwitchRegister }: any) {
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [countdown, setCountdown] = useState(0);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, []);
+
+  const startCountdown = (seconds: number) => {
+    setCountdown(seconds);
+    timerRef.current = setInterval(() => {
+      setCountdown(prev => {
+        if (prev <= 1) {
+          clearInterval(timerRef.current!);
+          timerRef.current = null;
+          setError('');
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,8 +74,12 @@ function UserLoginForm({ onLogin, onSwitchAdmin, onSwitchRegister }: any) {
       onLogin(data.user);
     } catch (err: any) {
       setError(err.message || 'Email atau password salah');
+      setPassword('');
+      if (err.retryAfter) startCountdown(err.retryAfter);
     } finally { setLoading(false); }
   };
+
+  const isLocked = countdown > 0;
 
   return (
     <div className="bg-slate-800/80 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-slate-700/50">
@@ -66,27 +91,32 @@ function UserLoginForm({ onLogin, onSwitchAdmin, onSwitchRegister }: any) {
         </div>
       </div>
 
-      {error && <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm">{error}</div>}
+      {error && (
+        <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm">
+          {error}
+          {isLocked && <span className="font-semibold"> ({countdown}s)</span>}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-slate-300 mb-1.5">Email</label>
-          <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="email@sekolah.com" required
-            className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all" />
+          <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="email@sekolah.com" required disabled={isLocked}
+            className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all disabled:opacity-50" />
         </div>
         <div>
           <label className="block text-sm font-medium text-slate-300 mb-1.5">Password</label>
           <div className="relative">
-            <input type={showPass ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" required
-              className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all pr-10" />
+            <input type={showPass ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" required disabled={isLocked}
+              className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all pr-10 disabled:opacity-50" />
             <button type="button" onClick={() => setShowPass(s => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200">
               {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
           </div>
         </div>
-        <button type="submit" disabled={loading}
+        <button type="submit" disabled={loading || isLocked}
           className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-semibold rounded-lg transition-colors">
-          {loading ? 'Masuk...' : 'Masuk'}
+          {loading ? 'Masuk...' : isLocked ? `Tunggu ${countdown} detik...` : 'Masuk'}
         </button>
       </form>
 
@@ -119,6 +149,27 @@ function AdminLoginForm({ onLogin, onBack }: any) {
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [countdown, setCountdown] = useState(0);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, []);
+
+  const startCountdown = (seconds: number) => {
+    setCountdown(seconds);
+    timerRef.current = setInterval(() => {
+      setCountdown(prev => {
+        if (prev <= 1) {
+          clearInterval(timerRef.current!);
+          timerRef.current = null;
+          setError('');
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -130,8 +181,13 @@ function AdminLoginForm({ onLogin, onBack }: any) {
       onLogin(data.user);
     } catch (err: any) {
       setError(err.message || 'Username atau password salah');
+      setUsername('');
+      setPassword('');
+      if (err.retryAfter) startCountdown(err.retryAfter);
     } finally { setLoading(false); }
   };
+
+  const isLocked = countdown > 0;
 
   return (
     <div className="bg-slate-800/80 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-amber-600/20">
@@ -146,27 +202,32 @@ function AdminLoginForm({ onLogin, onBack }: any) {
         </div>
       </div>
 
-      {error && <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm">{error}</div>}
+      {error && (
+        <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm">
+          {error}
+          {isLocked && <span className="font-semibold"> ({countdown}s)</span>}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-slate-300 mb-1.5">Username</label>
-          <input type="text" value={username} onChange={e => setUsername(e.target.value)} placeholder="username admin" required
-            className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all" />
+          <input type="text" value={username} onChange={e => setUsername(e.target.value)} placeholder="username admin" required disabled={isLocked}
+            className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all disabled:opacity-50" />
         </div>
         <div>
           <label className="block text-sm font-medium text-slate-300 mb-1.5">Password</label>
           <div className="relative">
-            <input type={showPass ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" required
-              className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all pr-10" />
+            <input type={showPass ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" required disabled={isLocked}
+              className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all pr-10 disabled:opacity-50" />
             <button type="button" onClick={() => setShowPass(s => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200">
               {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
           </div>
         </div>
-        <button type="submit" disabled={loading}
+        <button type="submit" disabled={loading || isLocked}
           className="w-full py-2.5 bg-amber-600 hover:bg-amber-700 disabled:opacity-60 text-white font-semibold rounded-lg transition-colors">
-          {loading ? 'Masuk...' : 'Masuk sebagai Admin'}
+          {loading ? 'Masuk...' : isLocked ? `Tunggu ${countdown} detik...` : 'Masuk sebagai Admin'}
         </button>
       </form>
     </div>
