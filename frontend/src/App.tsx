@@ -3,39 +3,53 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { getUser, getDashboardPath } from './pages/types';
-import ProtectedRoute from './components/ProtectedRoute';
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { getUser, getDashboardPath } from "./pages/types";
+import ProtectedRoute from "./components/ProtectedRoute";
 
-// Layout
-import Layout from './components/user/Layout';
+// USER LAYOUT
+import Layout from "./components/user/Layout";
 
-// Auth Pages
-import Login from './pages/Login';
-import Register from './pages/Register';
+// TRAINER LAYOUT
+import TrainerLayout from "./components/trainer/Layout";
 
-// User Pages
-import UserDashboard from './pages/user/Dashboard';
-import Courses from './pages/user/Courses';
-import CourseDetail from './pages/user/CourseDetail';
-import Tasks from './pages/user/Tasks';
-import Quiz from './pages/user/Quiz';
-import Grades from './pages/user/Grades';
-import Profile from './pages/user/Profile';
+// AUTH
+import Login from "./pages/Login";
+import Register from "./pages/Register";
 
-// Admin Pages
-import AdminDashboard from './pages/admin/Dashboard';
+// USER PAGES
+import UserDashboard from "./pages/user/Dashboard";
+import Courses from "./pages/user/Courses";
+import CourseDetail from "./pages/user/CourseDetail";
+import Tasks from "./pages/user/Tasks";
+import Quiz from "./pages/user/Quiz";
+import Grades from "./pages/user/Grades";
+import Profile from "./pages/user/Profile";
 
-// Trainer Pages
-import TrainerDashboard from './pages/trainer/Dashboard';
+// TRAINER PAGES
+import TrainerDashboard from "./pages/trainer/Dashboard";
+import TrainerCourses from "./pages/trainer/Course";
+import TrainerMaterials from "./pages/trainer/Materials";
+import TrainerAssignments from "./pages/trainer/Assignment";
+import TrainerProgress from "./pages/trainer/Progress";
+import TrainerFeedback from "./pages/trainer/Feedback";
 
-// Superadmin Pages
-import SuperAdminDashboard from './pages/superadmin/Dashboard';
 
-// Komponen untuk redirect root "/" berdasarkan role yang sedang login
+// ADMIN
+import AdminDashboard from "./pages/admin/Dashboard";
+
+// SUPERADMIN
+import SuperAdminDashboard from "./pages/superadmin/Dashboard";
+
+
+// Redirect root sesuai role login
 function RootRedirect() {
   const user = getUser();
-  if (!user) return <Navigate to="/login" replace />;
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
   return <Navigate to={getDashboardPath(user.role)} replace />;
 }
 
@@ -43,18 +57,19 @@ export default function App() {
   return (
     <Router>
       <Routes>
-        {/* Auth */}
+
+        {/* AUTH */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
-        {/* Root: redirect sesuai role */}
+        {/* ROOT */}
         <Route path="/" element={<RootRedirect />} />
 
-        {/* ===== USER ROUTES ===== */}
+        {/* ================= USER ================= */}
         <Route
           path="/"
           element={
-            <ProtectedRoute allowedRoles={['user']}>
+            <ProtectedRoute allowedRoles={["user"]}>
               <Layout />
             </ProtectedRoute>
           }
@@ -68,44 +83,53 @@ export default function App() {
           <Route path="profile" element={<Profile />} />
         </Route>
 
-        {/* ===== ADMIN ROUTES ===== */}
+        {/* ================= TRAINER ================= */}
+        <Route
+          path="/trainer"
+          element={
+            <ProtectedRoute allowedRoles={["trainer"]}>
+              <TrainerLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route path="dashboard" element={<TrainerDashboard />} />
+          <Route path="courses" element={<TrainerCourses />} />
+          <Route path="courses/:id/materials" element={<TrainerMaterials />} />
+          <Route path="assignments"  element={<TrainerAssignments />} />
+          <Route path="progress"     element={<TrainerProgress />} />
+          <Route path="feedback"     element={<TrainerFeedback />} />
+        </Route>
+
+        {/* ================= ADMIN ================= */}
         <Route
           path="/admin/dashboard"
           element={
-            <ProtectedRoute allowedRoles={['admin']}>
+            <ProtectedRoute allowedRoles={["admin"]}>
               <AdminDashboard />
             </ProtectedRoute>
           }
         />
 
-        {/* ===== TRAINER ROUTES ===== */}
-        <Route
-          path="/trainer/dashboard"
-          element={
-            <ProtectedRoute allowedRoles={['trainer']}>
-              <TrainerDashboard />
-            </ProtectedRoute>
-          }
-        />
-
-        {/* ===== SUPERADMIN ROUTES ===== */}
+        {/* ================= SUPERADMIN ================= */}
         <Route
           path="/superadmin/dashboard"
           element={
-            <ProtectedRoute allowedRoles={['superadmin']}>
+            <ProtectedRoute allowedRoles={["superadmin"]}>
               <SuperAdminDashboard />
             </ProtectedRoute>
           }
         />
 
-        {/* Halaman unauthorized */}
+        {/* ================= UNAUTHORIZED ================= */}
         <Route
           path="/unauthorized"
           element={
             <div className="min-h-screen flex items-center justify-center bg-slate-50">
               <div className="text-center">
                 <h1 className="text-4xl font-bold text-red-500">403</h1>
-                <p className="mt-2 text-slate-600">Anda tidak memiliki akses ke halaman ini.</p>
+                <p className="mt-2 text-slate-600">
+                  Anda tidak memiliki akses ke halaman ini.
+                </p>
                 <a href="/login" className="mt-4 inline-block text-blue-600 underline">
                   Kembali ke Login
                 </a>
@@ -114,7 +138,7 @@ export default function App() {
           }
         />
 
-        {/* 404 - halaman tidak ditemukan */}
+        {/* ================= 404 ================= */}
         <Route
           path="*"
           element={
@@ -129,6 +153,7 @@ export default function App() {
             </div>
           }
         />
+
       </Routes>
     </Router>
   );
