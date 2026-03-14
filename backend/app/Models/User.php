@@ -4,17 +4,15 @@ namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Laravel\Sanctum\HasApiTokens;
-use Illuminate\Support\Facades\Hash;
 use App\Models\Trainer\Course;
 
 class User extends Authenticatable
 {
     use HasApiTokens;
 
-    protected $table = 'pengguna';
+    protected $table      = 'pengguna';
     protected $primaryKey = 'id_pengguna';
-
-    public $timestamps = false;
+    public $timestamps    = false;
 
     protected $fillable = [
         'nama',
@@ -23,21 +21,18 @@ class User extends Authenticatable
         'password',
         'nomor_hp',
         'id_role',
-        'id_cabang'
+        'id_cabang',
+        'status',
     ];
 
     protected $hidden = [
         'password',
-        'remember_token'
+        'remember_token',
     ];
 
-    public function setPasswordAttribute($value)
-    {
-        $this->attributes['password'] = Hash::make($value);
-    }
-
+    // FIX: ganti id_pengguna → id_trainer
     public function courses()
     {
-        return $this->hasMany(Course::class,'id_pengguna');
+        return $this->hasMany(Course::class, 'id_trainer', 'id_pengguna');
     }
 }
