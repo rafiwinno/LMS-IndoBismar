@@ -30,7 +30,7 @@ import Profile from "./pages/user/Profile";
 import TrainerDashboard from "./pages/trainer/Dashboard";
 import TrainerCourses from "./pages/trainer/Course";
 import TrainerMaterials from "./pages/trainer/Materials";
-import TrainerAssignments from "./pages/trainer/Assignment";
+import TrainerAssignments from "./pages/trainer/Assignments";
 import TrainerProgress from "./pages/trainer/Progress";
 import TrainerFeedback from "./pages/trainer/Feedback";
 

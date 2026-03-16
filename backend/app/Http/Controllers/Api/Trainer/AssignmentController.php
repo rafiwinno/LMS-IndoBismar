@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Trainer\Assignment;
 use App\Models\Trainer\Course;
-
+use Illuminate\Support\Facades\Storage;
 class AssignmentController extends Controller
 {
     // LIST TUGAS PER COURSE (dengan cek kepemilikan)
@@ -26,6 +26,7 @@ class AssignmentController extends Controller
         ]);
     }
 
+
     // CREATE TUGAS
     public function store(Request $request)
     {
@@ -35,6 +36,7 @@ class AssignmentController extends Controller
             'deskripsi'      => 'nullable|string',
             'deadline'       => 'nullable|date|after:now',
             'nilai_maksimal' => 'nullable|integer|min:1|max:1000',
+            'file_tugas'     => 'nullable|file|mimes:pdf|max:10240',
         ]);
 
         // FIX: cek kepemilikan course
@@ -43,10 +45,17 @@ class AssignmentController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
+        $filePath = null;
+         if ($request->hasFile('file_tugas')) {
+        $filePath = $request->file('file_tugas')->store('tugas', 'public');
+        }
+
+
         $assignment = Assignment::create([
             'id_kursus'      => $request->id_kursus,
             'judul_tugas'    => $request->judul_tugas,
             'deskripsi'      => $request->deskripsi,
+            'file_tugas'     => $filePath,
             'deadline'       => $request->deadline,
             'nilai_maksimal' => $request->nilai_maksimal ?? 100,
         ]);
@@ -56,38 +65,43 @@ class AssignmentController extends Controller
             'data'    => $assignment,
         ], 201);
     }
+public function update(Request $request, $id)
+{
+    $assignment = Assignment::findOrFail($id);
 
-    // UPDATE TUGAS (FIX: tambah validasi + cek kepemilikan)
-    public function update(Request $request, $id)
-    {
-        $assignment = Assignment::findOrFail($id);
-
-        // FIX: cek kepemilikan lewat course
-        $course = Course::findOrFail($assignment->id_kursus);
-        if ($course->id_trainer !== $request->user()->id_pengguna) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
-
-        // FIX: validasi yang sebelumnya tidak ada
-        $request->validate([
-            'judul_tugas'    => 'sometimes|required|string|max:200',
-            'deskripsi'      => 'nullable|string',
-            'deadline'       => 'nullable|date',
-            'nilai_maksimal' => 'nullable|integer|min:1|max:1000',
-        ]);
-
-        $assignment->update([
-            'judul_tugas'    => $request->judul_tugas    ?? $assignment->judul_tugas,
-            'deskripsi'      => $request->deskripsi      ?? $assignment->deskripsi,
-            'deadline'       => $request->deadline       ?? $assignment->deadline,
-            'nilai_maksimal' => $request->nilai_maksimal ?? $assignment->nilai_maksimal,
-        ]);
-
-        return response()->json([
-            'message' => 'Tugas berhasil diupdate',
-            'data'    => $assignment,
-        ]);
+    $course = Course::findOrFail($assignment->id_kursus);
+    if ($course->id_trainer !== $request->user()->id_pengguna) {
+        return response()->json(['message' => 'Unauthorized'], 403);
     }
+
+    $request->validate([
+        'judul_tugas'    => 'sometimes|required|string|max:200',
+        'deskripsi'      => 'nullable|string',
+        'deadline'       => 'nullable|date',
+        'nilai_maksimal' => 'nullable|integer|min:1|max:1000',
+        'file_tugas'     => 'nullable|file|mimes:pdf|max:10240', // tambah ini
+    ]);
+
+    // Handle upload file baru
+    if ($request->hasFile('file_tugas')) {
+        // Hapus file lama jika ada
+        if ($assignment->file_tugas) {
+            Storage::disk('public')->delete($assignment->file_tugas);
+        }
+        $assignment->file_tugas = $request->file('file_tugas')->store('tugas', 'public');
+    }
+
+    $assignment->judul_tugas    = $request->judul_tugas    ?? $assignment->judul_tugas;
+    $assignment->deskripsi      = $request->deskripsi      ?? $assignment->deskripsi;
+    $assignment->deadline       = $request->deadline       ?? $assignment->deadline;
+    $assignment->nilai_maksimal = $request->nilai_maksimal ?? $assignment->nilai_maksimal;
+    $assignment->save();
+
+    return response()->json([
+        'message' => 'Tugas berhasil diupdate',
+        'data'    => $assignment,
+    ]);
+}
 
     // DELETE TUGAS (dengan cek kepemilikan)
     public function destroy(Request $request, $id)

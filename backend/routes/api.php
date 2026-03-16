@@ -7,6 +7,8 @@ use App\Http\Controllers\Api\Trainer\AssignmentController; // FIX: import yang s
 use App\Http\Controllers\Api\User\AuthController;
 use App\Http\Controllers\Api\Trainer\FeedbackController;
 use App\Http\Controllers\Api\Trainer\ProgressController;
+use App\Http\Controllers\Api\Trainer\QuizController;
+use App\Http\Controllers\Api\Trainer\SubmissionController;
 
 // tambahkan di dalam group prefix('trainer')
 Route::get('/feedback',          [FeedbackController::class, 'index']);
@@ -62,5 +64,18 @@ Route::middleware('auth:sanctum')->group(function () {
                 ->get();
             return response()->json(['data' => $peserta]);
         });
+
+        Route::get('/courses/{id}/quizzes',          [QuizController::class, 'index']);
+        Route::post('/quizzes',                      [QuizController::class, 'store']);
+        Route::get('/quizzes/{id}',                  [QuizController::class, 'show']);
+        Route::put('/quizzes/{id}',                  [QuizController::class, 'update']);
+        Route::delete('/quizzes/{id}',               [QuizController::class, 'destroy']);
+        Route::post('/quizzes/{id}/questions',       [QuizController::class, 'storeQuestion']);
+        Route::delete('/questions/{id}',             [QuizController::class, 'destroyQuestion']);
+
+        Route::get('/assignments/{id}/submissions',  [SubmissionController::class, 'index']);
+        Route::put('/submissions/{id}/grade',        [SubmissionController::class, 'grade']);
+
+
     });
 });

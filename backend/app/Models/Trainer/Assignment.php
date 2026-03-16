@@ -13,6 +13,7 @@ class Assignment extends Model
     protected $fillable = [
         'id_kursus',
         'judul_tugas',
+        'file_tugas',
         'deskripsi',
         'deadline',
         'nilai_maksimal',
