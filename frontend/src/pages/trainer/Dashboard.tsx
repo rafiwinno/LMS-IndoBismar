@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { BookOpen, FileText, ClipboardList, Globe, Plus } from 'lucide-react';
+import { BookOpen, FileText, Globe, Plus, ArrowRight } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getCourses } from '../../api/courseApi';
 import { getUser } from '../types';
@@ -18,143 +18,117 @@ export default function TrainerDashboard() {
   }, []);
 
   const published = courses.filter((c) => c.status === 'publish').length;
-  const draft     = courses.filter((c) => c.status === 'draft').length;
-
-  const stats = [
-    {
-      label: 'Total Course',
-      value: courses.length,
-      icon: BookOpen,
-      color: 'bg-blue-50 text-blue-600',
-      border: 'border-blue-100',
-    },
-    {
-      label: 'Published',
-      value: published,
-      icon: Globe,
-      color: 'bg-green-50 text-green-600',
-      border: 'border-green-100',
-    },
-    {
-      label: 'Draft',
-      value: draft,
-      icon: FileText,
-      color: 'bg-amber-50 text-amber-600',
-      border: 'border-amber-100',
-    },
-  ];
+  const draft = courses.filter((c) => c.status === 'draft').length;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
 
-      {/* Greeting */}
-      <div className="flex items-start justify-between">
+      {/* Page heading */}
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">
-            Selamat datang, {user?.nama ?? 'Trainer'} 👋
-          </h1>
-          <p className="text-slate-500 mt-1 text-sm">
-            Kelola course dan materi pelatihan Anda dari sini.
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+            {user?.nama ?? 'Trainer'}
+          </h2>
+          <p className="text-sm text-gray-400 dark:text-gray-500 mt-0.5">
+            PT Indo Bismar &middot; Trainer
           </p>
         </div>
         <button
           onClick={() => navigate('/trainer/courses')}
-          className="hidden md:flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2.5 rounded-lg transition-colors"
+          className="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
         >
-          <Plus size={18} />
+          <Plus size={16} />
           Buat Course
         </button>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {stats.map((s) => (
+      <div className="grid grid-cols-3 gap-4">
+        {[
+          { label: 'Total Course', value: courses.length, icon: BookOpen,  color: 'text-red-500',     bg: 'bg-red-500/10 dark:bg-red-500/10' },
+          { label: 'Published',    value: published,      icon: Globe,     color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+          { label: 'Draft',        value: draft,          icon: FileText,  color: 'text-amber-500',   bg: 'bg-amber-500/10' },
+        ].map((s) => (
           <div
             key={s.label}
-            className={`bg-white rounded-xl border ${s.border} p-5 flex items-center gap-4`}
+            className="bg-white dark:bg-[#161b22] border border-gray-200 dark:border-white/8 rounded-xl p-5 flex items-center gap-4"
           >
-            <div className={`p-3 rounded-xl ${s.color}`}>
-              <s.icon size={22} />
+            <div className={`w-10 h-10 rounded-lg ${s.bg} flex items-center justify-center shrink-0`}>
+              <s.icon size={18} className={s.color} />
             </div>
             <div>
-              <p className="text-2xl font-bold text-slate-900">{s.value}</p>
-              <p className="text-sm text-slate-500">{s.label}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white leading-none">{s.value}</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{s.label}</p>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Course List */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-slate-800">Course Saya</h2>
+      {/* Course list */}
+      <div className="bg-white dark:bg-[#161b22] border border-gray-200 dark:border-white/8 rounded-xl">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-white/6">
+          <h3 className="font-semibold text-gray-900 dark:text-white text-sm">Course Saya</h3>
           <Link
             to="/trainer/courses"
-            className="text-sm text-blue-600 hover:underline font-medium"
+            className="flex items-center gap-1 text-xs text-red-600 hover:text-red-500 font-medium transition-colors"
           >
-            Kelola semua →
+            Kelola semua <ArrowRight size={13} />
           </Link>
         </div>
 
         {loading ? (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="p-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {[...Array(3)].map((_, i) => (
-              <div key={i} className="bg-white rounded-xl border border-slate-200 p-5 animate-pulse">
-                <div className="h-3 bg-slate-200 rounded w-1/3 mb-4" />
-                <div className="h-4 bg-slate-200 rounded w-3/4 mb-2" />
-                <div className="h-3 bg-slate-200 rounded w-full" />
+              <div key={i} className="border border-gray-100 dark:border-white/6 rounded-lg p-4 animate-pulse space-y-3">
+                <div className="h-3 bg-gray-200 dark:bg-white/8 rounded w-1/4" />
+                <div className="h-4 bg-gray-200 dark:bg-white/8 rounded w-3/4" />
+                <div className="h-3 bg-gray-200 dark:bg-white/8 rounded w-full" />
               </div>
             ))}
           </div>
         ) : courses.length === 0 ? (
-          <div className="bg-white rounded-xl border border-slate-200 p-16 text-center">
-            <BookOpen size={40} className="mx-auto mb-3 text-slate-300" />
-            <p className="text-slate-500 font-medium">Belum ada course</p>
-            <p className="text-slate-400 text-sm mt-1">Mulai buat course pertama Anda</p>
+          <div className="py-16 text-center">
+            <div className="w-12 h-12 bg-gray-100 dark:bg-white/6 rounded-xl flex items-center justify-center mx-auto mb-3">
+              <BookOpen size={22} className="text-gray-400" />
+            </div>
+            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Belum ada course</p>
             <button
               onClick={() => navigate('/trainer/courses')}
-              className="mt-4 inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2.5 rounded-lg transition-colors"
+              className="mt-4 inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
             >
-              <Plus size={16} />
+              <Plus size={15} />
               Buat Course
             </button>
           </div>
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="p-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {courses.map((c: any) => (
               <div
                 key={c.id_kursus}
-                className="bg-white rounded-xl border border-slate-200 p-5 hover:shadow-md hover:border-blue-200 transition-all group"
+                className="border border-gray-100 dark:border-white/6 rounded-lg p-4 hover:border-red-300 dark:hover:border-red-800/60 transition-colors group"
               >
-                {/* Status badge */}
-                <div className="flex items-center justify-between mb-3">
-                  <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-                    c.status === 'publish'
-                      ? 'bg-green-100 text-green-700'
-                      : 'bg-amber-100 text-amber-700'
-                  }`}>
-                    {c.status === 'publish' ? '● Published' : '● Draft'}
+                <div className="flex items-center gap-2 mb-3">
+                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${c.status === 'publish' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                  <span className={`text-xs font-medium ${c.status === 'publish' ? 'text-emerald-500' : 'text-amber-500'}`}>
+                    {c.status === 'publish' ? 'Published' : 'Draft'}
                   </span>
                 </div>
-
-                <h3 className="font-semibold text-slate-800 group-hover:text-blue-600 transition-colors line-clamp-2 mb-1">
+                <p className="font-semibold text-sm text-gray-800 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors line-clamp-1 mb-1">
                   {c.judul_kursus}
-                </h3>
-                <p className="text-sm text-slate-500 line-clamp-2 mb-4">
-                  {c.deskripsi || 'Tidak ada deskripsi.'}
                 </p>
-
-                {/* Actions */}
-                <div className="flex gap-2 pt-3 border-t border-slate-100">
+                <p className="text-xs text-gray-400 line-clamp-1 mb-4">
+                  {c.deskripsi || '—'}
+                </p>
+                <div className="flex gap-2 pt-3 border-t border-gray-100 dark:border-white/6">
                   <Link
                     to={`/trainer/courses/${c.id_kursus}/materials`}
-                    className="flex-1 text-center text-xs font-semibold text-blue-600 hover:bg-blue-50 py-2 rounded-lg transition-colors"
+                    className="flex-1 text-center text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 py-1.5 rounded-md transition-colors"
                   >
                     Materi
                   </Link>
                   <Link
                     to="/trainer/courses"
-                    className="flex-1 text-center text-xs font-semibold text-slate-600 hover:bg-slate-50 py-2 rounded-lg transition-colors"
+                    className="flex-1 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/6 py-1.5 rounded-md transition-colors"
                   >
                     Kelola
                   </Link>

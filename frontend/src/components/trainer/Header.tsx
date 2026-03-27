@@ -1,6 +1,14 @@
-import { Menu, Bell, Search } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Menu, Bell } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 import { getUser } from '../../pages/types';
+
+const pageTitles: Record<string, string> = {
+  '/trainer/dashboard':   'Dashboard',
+  '/trainer/courses':     'Courses',
+  '/trainer/assignments': 'Tugas & Kuis',
+  '/trainer/progress':    'Progres Peserta',
+  '/trainer/feedback':    'Feedback',
+};
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -8,54 +16,53 @@ interface HeaderProps {
 
 export default function TrainerHeader({ onMenuClick }: HeaderProps) {
   const user = getUser();
+  const { pathname } = useLocation();
 
-  // Buat inisial dari nama
   const initials = user?.nama
-    ? user.nama.split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase()
+    ? user.nama.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase()
     : 'TR';
 
+  // match juga path dengan param seperti /trainer/courses/:id/materials
+  const title =
+    pageTitles[pathname] ??
+    (pathname.includes('/materials') ? 'Materi Course' : 'Trainer Panel');
+
   return (
-    <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 md:px-6 sticky top-0 z-10">
-      <div className="flex items-center gap-4">
+    <header className="h-16 bg-white dark:bg-[#0f1117] border-b border-gray-200 dark:border-white/8 flex items-center justify-between px-5 sticky top-0 z-10 transition-colors duration-200 shrink-0">
+
+      {/* Left: mobile menu + page title */}
+      <div className="flex items-center gap-3">
         <button
           onClick={onMenuClick}
-          className="lg:hidden p-2 -ml-2 text-slate-500 hover:bg-slate-100 rounded-lg"
+          className="lg:hidden p-2 -ml-1 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/8 transition-colors"
         >
-          <Menu size={24} />
+          <Menu size={20} />
         </button>
-
-        <div className="hidden md:flex items-center gap-2 px-3 py-2 bg-slate-100 rounded-lg text-slate-500 focus-within:ring-2 focus-within:ring-blue-500 focus-within:bg-white transition-all w-64">
-          <Search size={18} />
-          <input
-            type="text"
-            placeholder="Cari course, materi..."
-            className="bg-transparent border-none outline-none w-full text-sm text-slate-900 placeholder-slate-400"
-          />
-        </div>
+        <h1 className="text-[17px] font-bold text-gray-900 dark:text-white tracking-tight">
+          {title}
+        </h1>
       </div>
 
-      <div className="flex items-center gap-3">
-        <button className="p-2 text-slate-500 hover:bg-slate-100 rounded-full relative">
-          <Bell size={20} />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
+      {/* Right: bell + user */}
+      <div className="flex items-center gap-2">
+        <button className="relative p-2 rounded-xl text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/8 transition-colors">
+          <Bell size={19} />
+          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-600 rounded-full border-2 border-white dark:border-[#0f1117]" />
         </button>
 
-        <div className="h-8 w-px bg-slate-200 mx-1" />
+        <div className="w-px h-6 bg-gray-200 dark:bg-white/10 mx-1" />
 
-        <Link
-          to="/trainer/profile"
-          className="flex items-center gap-3 hover:bg-slate-50 p-1.5 pr-3 rounded-full transition-colors"
-        >
-          <div className="w-8 h-8 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center font-bold text-sm">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 bg-red-600 text-white rounded-full flex items-center justify-center font-bold text-xs shrink-0 select-none">
             {initials}
           </div>
-          <div className="hidden md:block text-left">
-            <p className="text-sm font-semibold text-slate-700 leading-tight">
+          <div className="hidden md:block text-left leading-tight">
+            <p className="text-[13px] font-semibold text-gray-800 dark:text-white">
               {user?.nama ?? 'Trainer'}
             </p>
-            <p className="text-xs text-slate-500">Trainer</p>
+            <p className="text-[11px] text-gray-400 dark:text-gray-500">Trainer</p>
           </div>
-        </Link>
+        </div>
       </div>
     </header>
   );
