@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\Trainer\FeedbackController;
 use App\Http\Controllers\Api\Trainer\ProgressController;
 use App\Http\Controllers\Api\Trainer\QuizController;
 use App\Http\Controllers\Api\Trainer\SubmissionController;
+use App\Http\Controllers\Api\Trainer\NotificationController;
 
 // tambahkan di dalam group prefix('trainer')
 Route::get('/feedback',          [FeedbackController::class, 'index']);
@@ -75,6 +76,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
         Route::get('/assignments/{id}/submissions',  [SubmissionController::class, 'index']);
         Route::put('/submissions/{id}/grade',        [SubmissionController::class, 'grade']);
+
+        Route::get('/notifications', [NotificationController::class, 'index']);
 
 
     });
