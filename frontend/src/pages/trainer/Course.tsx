@@ -1,33 +1,25 @@
-// ============================================================
-// FILE: src/pages/trainer/Course.tsx
-// LOKASI: frontend/src/pages/trainer/Course.tsx
-// ============================================================
-// FIX yang diterapkan:
-// 1. Ganti any[] dengan interface Course yang proper
-// 2. Tambah error handling di load(), handleDelete(), handlePublish()
-// 3. Tambah loading state untuk tombol hapus & publish
-//    agar tidak bisa diklik ganda
-// ============================================================
-
 import { useEffect, useState } from 'react';
-import { Plus, Pencil, Trash2, Globe, BookOpen, X, Check, Loader2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Globe, BookOpen, Check, Loader2 } from 'lucide-react';
 import { getCourses, createCourse, updateCourse, deleteCourse, publishCourse } from '../../api/courseApi';
 import { Link } from 'react-router-dom';
-import type { Course } from '../types/trainer'; // FIX: import interface
+import type { Course } from '../types/trainer';
+import Modal from '../../components/ui/Modal';
+import { inputCls, cardCls, thCls, trCls } from '../../lib/styles';
+
+const labelCls = 'block text-sm font-medium text-gray-800 dark:text-gray-200 mb-1.5';
 
 export default function TrainerCourses() {
-  const [courses, setCourses]       = useState<Course[]>([]); // FIX: bukan any[]
-  const [showModal, setShowModal]   = useState(false);
-  const [editTarget, setEditTarget] = useState<Course | null>(null);
-  const [form, setForm]             = useState({ judul_kursus: '', deskripsi: '' });
-  const [loading, setLoading]       = useState(false);
-  const [pageLoading, setPageLoading] = useState(true); // FIX: loading awal halaman
-  const [actionId, setActionId]     = useState<number | null>(null); // FIX: track tombol mana yang loading
-  const [error, setError]           = useState('');
-  const [pageError, setPageError]   = useState(''); // FIX: error level halaman
+  const [courses, setCourses]         = useState<Course[]>([]);
+  const [showModal, setShowModal]     = useState(false);
+  const [editTarget, setEditTarget]   = useState<Course | null>(null);
+  const [form, setForm]               = useState({ judul_kursus: '', deskripsi: '' });
+  const [loading, setLoading]         = useState(false);
+  const [pageLoading, setPageLoading] = useState(true);
+  const [actionId, setActionId]       = useState<number | null>(null);
+  const [error, setError]             = useState('');
+  const [pageError, setPageError]     = useState('');
 
   const load = async () => {
-    // FIX: tambah try-catch — sebelumnya tidak ada sama sekali
     try {
       setPageError('');
       const res = await getCourses();
@@ -76,7 +68,6 @@ export default function TrainerCourses() {
 
   const handleDelete = async (id: number) => {
     if (!confirm('Hapus course ini? Tindakan tidak bisa dibatalkan.')) return;
-    // FIX: tambah try-catch dan loading state per baris
     setActionId(id);
     try {
       await deleteCourse(id);
@@ -89,7 +80,6 @@ export default function TrainerCourses() {
   };
 
   const handlePublish = async (id: number) => {
-    // FIX: tambah try-catch dan loading state per baris
     setActionId(id);
     try {
       await publishCourse(id);
@@ -103,83 +93,79 @@ export default function TrainerCourses() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Kelola Course</h1>
-          <p className="text-slate-500 text-sm mt-1">{courses.length} course ditemukan</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Kelola Course</h1>
+          <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">{courses.length} course ditemukan</p>
         </div>
         <button
           onClick={openCreate}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2.5 rounded-lg transition-colors"
+          className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold px-4 py-2.5 rounded-lg transition-colors"
         >
           <Plus size={18} />
           Tambah Course
         </button>
       </div>
 
-      {/* FIX: Tampilkan error halaman */}
       {pageError && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/30 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg text-sm">
           {pageError}
         </div>
       )}
 
-      {/* Table */}
       {pageLoading ? (
-        <div className="bg-white rounded-xl border border-slate-200 p-16 text-center text-slate-400">
+        <div className={`${cardCls} p-16 text-center text-gray-400 dark:text-gray-500`}>
           <Loader2 size={28} className="mx-auto mb-2 animate-spin opacity-40" />
           <p>Memuat course...</p>
         </div>
       ) : courses.length === 0 ? (
-        <div className="bg-white rounded-xl border border-slate-200 p-16 text-center">
-          <BookOpen size={40} className="mx-auto mb-3 text-slate-300" />
-          <p className="text-slate-500">Belum ada course. Buat yang pertama!</p>
+        <div className={`${cardCls} p-16 text-center`}>
+          <BookOpen size={40} className="mx-auto mb-3 text-gray-400 dark:text-gray-500" />
+          <p className="text-gray-500 dark:text-gray-400">Belum ada course. Buat yang pertama!</p>
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <div className={`${cardCls} overflow-hidden`}>
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 border-b border-slate-200">
+            <thead className="bg-gray-50 dark:bg-white/4 border-b border-gray-200 dark:border-white/8">
               <tr>
-                <th className="text-left px-5 py-3.5 font-semibold text-slate-600">Judul</th>
-                <th className="text-left px-5 py-3.5 font-semibold text-slate-600 hidden md:table-cell">Deskripsi</th>
-                <th className="text-left px-5 py-3.5 font-semibold text-slate-600">Status</th>
-                <th className="px-5 py-3.5 font-semibold text-slate-600 text-right">Aksi</th>
+                <th className={thCls}>Judul</th>
+                <th className={`${thCls} hidden md:table-cell`}>Deskripsi</th>
+                <th className={thCls}>Status</th>
+                <th className="px-5 py-3.5 font-semibold text-gray-500 dark:text-gray-400 text-right">Aksi</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-gray-100 dark:divide-white/6">
               {courses.map((c) => (
-                <tr key={c.id_kursus} className="hover:bg-slate-50/50 transition-colors">
+                <tr key={c.id_kursus} className={trCls}>
                   <td className="px-5 py-4">
                     <Link
                       to={`/trainer/courses/${c.id_kursus}/materials`}
-                      className="font-medium text-slate-800 hover:text-blue-600 transition-colors"
+                      className="font-medium text-gray-800 dark:text-gray-100 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                     >
                       {c.judul_kursus}
                     </Link>
                   </td>
-                  <td className="px-5 py-4 text-slate-500 hidden md:table-cell max-w-xs truncate">
+                  <td className="px-5 py-4 text-gray-500 dark:text-gray-400 hidden md:table-cell max-w-xs truncate">
                     {c.deskripsi ?? '—'}
                   </td>
                   <td className="px-5 py-4">
                     <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${
                       c.status === 'publish'
-                        ? 'bg-green-100 text-green-700'
-                        : 'bg-amber-100 text-amber-700'
+                        ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                        : 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
                     }`}>
-                      {c.status === 'publish' ? <Check size={12} /> : null}
+                      {c.status === 'publish' && <Check size={12} />}
                       {c.status === 'publish' ? 'Published' : 'Draft'}
                     </span>
                   </td>
                   <td className="px-5 py-4">
-                    {/* FIX: disable tombol saat sedang proses + tampilkan spinner */}
                     <div className="flex items-center justify-end gap-1">
                       {c.status !== 'publish' && (
                         <button
                           onClick={() => handlePublish(c.id_kursus)}
                           disabled={actionId === c.id_kursus}
                           title="Publish"
-                          className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors disabled:opacity-50"
+                          className="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors disabled:opacity-50"
                         >
                           {actionId === c.id_kursus
                             ? <Loader2 size={16} className="animate-spin" />
@@ -189,14 +175,14 @@ export default function TrainerCourses() {
                       <button
                         onClick={() => openEdit(c)}
                         disabled={actionId === c.id_kursus}
-                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50"
+                        className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-50"
                       >
                         <Pencil size={16} />
                       </button>
                       <button
                         onClick={() => handleDelete(c.id_kursus)}
                         disabled={actionId === c.id_kursus}
-                        className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                        className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-50"
                       >
                         {actionId === c.id_kursus
                           ? <Loader2 size={16} className="animate-spin" />
@@ -211,61 +197,53 @@ export default function TrainerCourses() {
         </div>
       )}
 
-      {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="text-lg font-bold text-slate-800">
-                {editTarget ? 'Edit Course' : 'Tambah Course Baru'}
-              </h2>
-              <button onClick={() => setShowModal(false)} className="p-1.5 hover:bg-slate-100 rounded-lg">
-                <X size={18} />
+        <Modal
+          title={editTarget ? 'Edit Course' : 'Tambah Course Baru'}
+          onClose={() => setShowModal(false)}
+        >
+          <div className="space-y-4">
+            <div>
+              <label className={labelCls}>Judul Course</label>
+              <input
+                value={form.judul_kursus}
+                onChange={(e) => setForm({ ...form, judul_kursus: e.target.value })}
+                placeholder="Masukkan judul course"
+                className={inputCls}
+              />
+            </div>
+            <div>
+              <label className={labelCls}>Deskripsi</label>
+              <textarea
+                value={form.deskripsi}
+                onChange={(e) => setForm({ ...form, deskripsi: e.target.value })}
+                placeholder="Deskripsi course..."
+                rows={3}
+                className={`${inputCls} resize-none`}
+              />
+            </div>
+            {error && (
+              <p className="text-sm text-red-600 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/30 px-3 py-2 rounded-lg">
+                {error}
+              </p>
+            )}
+            <div className="flex gap-3 pt-1">
+              <button
+                onClick={() => setShowModal(false)}
+                className="flex-1 py-2.5 border border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300 text-sm font-semibold rounded-lg hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+              >
+                Batal
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={loading}
+                className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white text-sm font-semibold rounded-lg transition-colors"
+              >
+                {loading ? 'Menyimpan...' : 'Simpan'}
               </button>
             </div>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Judul Course</label>
-                <input
-                  value={form.judul_kursus}
-                  onChange={(e) => setForm({ ...form, judul_kursus: e.target.value })}
-                  placeholder="Masukkan judul course"
-                  className="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Deskripsi</label>
-                <textarea
-                  value={form.deskripsi}
-                  onChange={(e) => setForm({ ...form, deskripsi: e.target.value })}
-                  placeholder="Deskripsi course..."
-                  rows={3}
-                  className="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                />
-              </div>
-              {error && (
-                <p className="text-sm text-red-600 bg-red-50 border border-red-200 px-3 py-2 rounded-lg">
-                  {error}
-                </p>
-              )}
-              <div className="flex gap-3 pt-1">
-                <button
-                  onClick={() => setShowModal(false)}
-                  className="flex-1 py-2.5 border border-slate-300 text-slate-700 text-sm font-semibold rounded-lg hover:bg-slate-50"
-                >
-                  Batal
-                </button>
-                <button
-                  onClick={handleSave}
-                  disabled={loading}
-                  className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white text-sm font-semibold rounded-lg"
-                >
-                  {loading ? 'Menyimpan...' : 'Simpan'}
-                </button>
-              </div>
-            </div>
           </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

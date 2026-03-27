@@ -1,6 +1,8 @@
 // FILE: src/pages/trainer/Assignments.tsx
 
 import { useEffect, useState } from 'react';
+
+const API_URL = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000';
 import {
   Plus, Pencil, Trash2, X, ChevronDown, ChevronRight,
   Users, Star, Loader2, AlertCircle, Clock, Award,
@@ -32,10 +34,10 @@ interface Quiz {
 function CoursePills({ courses, selected, onSelect }: { courses: Course[]; selected: number | null; onSelect: (id: number) => void; }) {
   return (
     <div className="flex items-center gap-2 flex-wrap">
-      <span className="text-xs font-semibold text-slate-400 uppercase tracking-widest">Course</span>
+      <span className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Course</span>
       {courses.map((c) => (
         <button key={c.id_kursus} onClick={() => onSelect(c.id_kursus)}
-          className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-all duration-150 ${selected === c.id_kursus ? 'bg-slate-900 text-white border-slate-900 shadow-md' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-400 hover:text-slate-700'}`}>
+          className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-all duration-150 ${selected === c.id_kursus ? 'bg-red-600 text-white border-red-600 shadow-md' : 'bg-white dark:bg-[#161b22] text-gray-500 dark:text-gray-400 border-gray-200 dark:border-white/8 hover:border-gray-400 dark:hover:border-white/20 hover:text-gray-700 dark:hover:text-gray-200'}`}>
           {c.judul_kursus}
         </button>
       ))}
@@ -46,23 +48,23 @@ function CoursePills({ courses, selected, onSelect }: { courses: Course[]; selec
 function EmptyState({ icon: Icon, message, sub }: { icon: any; message: string; sub?: string; }) {
   return (
     <div className="flex flex-col items-center justify-center py-20">
-      <div className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center mb-4">
-        <Icon size={26} className="text-slate-300" />
+      <div className="w-14 h-14 rounded-2xl bg-gray-100 dark:bg-white/6 flex items-center justify-center mb-4">
+        <Icon size={26} className="text-gray-300 dark:text-gray-600" />
       </div>
-      <p className="text-slate-500 font-semibold text-sm">{message}</p>
-      {sub && <p className="text-slate-400 text-xs mt-1">{sub}</p>}
+      <p className="text-gray-500 dark:text-gray-400 font-semibold text-sm">{message}</p>
+      {sub && <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">{sub}</p>}
     </div>
   );
 }
 
 function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode; }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden">
-        <div className="flex items-center justify-between px-7 py-5 border-b border-slate-100">
-          <h2 className="text-base font-bold text-slate-900">{title}</h2>
-          <button onClick={onClose} className="p-1.5 hover:bg-slate-100 rounded-xl transition-colors">
-            <X size={18} className="text-slate-400" />
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/60 backdrop-blur-sm p-4">
+      <div className="bg-white dark:bg-[#1c2333] rounded-3xl shadow-2xl w-full max-w-md overflow-hidden">
+        <div className="flex items-center justify-between px-7 py-5 border-b border-gray-100 dark:border-white/8">
+          <h2 className="text-base font-bold text-gray-900 dark:text-white">{title}</h2>
+          <button onClick={onClose} className="p-1.5 hover:bg-gray-100 dark:hover:bg-white/8 rounded-xl transition-colors">
+            <X size={18} className="text-gray-400 dark:text-gray-500" />
           </button>
         </div>
         <div className="px-7 py-6">{children}</div>
@@ -74,15 +76,15 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
 function Field({ label, children }: { label: string; children: React.ReactNode; }) {
   return (
     <div>
-      <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2">{label}</label>
+      <label className="block text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-2">{label}</label>
       {children}
     </div>
   );
 }
 
-const inputCls = "w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all";
-const btnPrimary = "flex-1 py-3 bg-slate-900 hover:bg-slate-700 disabled:bg-slate-200 disabled:text-slate-400 text-white text-sm font-semibold rounded-xl transition-colors";
-const btnSecondary = "flex-1 py-3 border border-slate-200 text-slate-600 text-sm font-semibold rounded-xl hover:bg-slate-50 transition-colors";
+const inputCls = "w-full px-4 py-3 bg-gray-50 dark:bg-[#161b22] border border-gray-200 dark:border-white/10 rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all";
+const btnPrimary = "flex-1 py-3 bg-red-600 hover:bg-red-700 disabled:bg-red-400 disabled:text-white/70 text-white text-sm font-semibold rounded-xl transition-colors";
+const btnSecondary = "flex-1 py-3 border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 text-sm font-semibold rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 transition-colors";
 
 export default function TrainerAssignments() {
   const [activeTab, setActiveTab] = useState<'tugas' | 'kuis'>('tugas');
@@ -93,14 +95,14 @@ export default function TrainerAssignments() {
   return (
     <div className="space-y-7">
       <div>
-        <p className="text-xs font-bold tracking-widest text-blue-500 uppercase mb-1">Trainer</p>
-        <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Tugas & Kuis</h1>
-        <p className="text-slate-400 mt-1 text-sm">Kelola penilaian dan evaluasi peserta</p>
+        <p className="text-xs font-bold tracking-widest text-red-600 dark:text-red-400 uppercase mb-1">Trainer</p>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">Tugas & Kuis</h1>
+        <p className="text-gray-400 dark:text-gray-500 mt-1 text-sm">Kelola penilaian dan evaluasi peserta</p>
       </div>
-      <div className="inline-flex bg-slate-100 p-1 rounded-2xl gap-1 shadow-inner">
+      <div className="inline-flex bg-gray-100 dark:bg-white/6 p-1 rounded-2xl gap-1 shadow-inner">
         {tabs.map(({ key, label, icon: Icon }) => (
           <button key={key} onClick={() => setActiveTab(key)}
-            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${activeTab === key ? 'bg-white text-slate-900 shadow-md shadow-slate-200' : 'text-slate-400 hover:text-slate-600'}`}>
+            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${activeTab === key ? 'bg-white dark:bg-[#1c2333] text-gray-900 dark:text-white shadow-md shadow-gray-200/60 dark:shadow-black/30' : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'}`}>
             <Icon size={15} />{label}
           </button>
         ))}
@@ -142,8 +144,10 @@ function TugasTab() {
   }, [selectedCourse]);
 
   const reload = async () => {
-    const res = await api.get(`/trainer/courses/${selectedCourse}/assignments`);
-    setAssignments(res.data.data ?? []);
+    try {
+      const res = await api.get(`/trainer/courses/${selectedCourse}/assignments`);
+      setAssignments(res.data.data ?? []);
+    } catch { /* keep existing list on refetch failure */ }
   };
 
   const loadSubmissions = async (id: number) => {
@@ -173,7 +177,7 @@ function TugasTab() {
       setShowModal(false);
       setFileTugas(null);
       await reload();
-    } catch (e: any) { setError(e.response?.data?.message || 'Gagal menyimpan'); }
+    } catch (e: unknown) { const err = e as { response?: { data?: { message?: string } } }; setError(err.response?.data?.message || 'Gagal menyimpan'); }
     finally { setLoading(false); }
   };
 
@@ -192,7 +196,7 @@ function TugasTab() {
       await api.put(`/trainer/submissions/${gradeTarget.id_pengumpulan}/grade`, gradeForm);
       setGradeTarget(null);
       if (expandedId) { const res = await api.get(`/trainer/assignments/${expandedId}/submissions`); setSubmissions(res.data.data ?? []); }
-    } catch (e: any) { alert(e.response?.data?.message || 'Gagal'); }
+    } catch (e: unknown) { const err = e as { response?: { data?: { message?: string } } }; alert(err.response?.data?.message || 'Gagal'); }
     finally { setLoading(false); }
   };
 
@@ -214,12 +218,10 @@ function TugasTab() {
     setShowModal(true);
   };
 
-  const API_URL = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000';
-
   return (
     <div className="space-y-5">
       {pageError && (
-        <div className="flex gap-2 items-center bg-red-50 border border-red-100 text-red-600 px-4 py-3 rounded-2xl text-sm">
+        <div className="flex gap-2 items-center bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/30 text-red-600 dark:text-red-400 px-4 py-3 rounded-2xl text-sm">
           <AlertCircle size={15} />{pageError}
         </div>
       )}
@@ -227,7 +229,7 @@ function TugasTab() {
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <CoursePills courses={courses} selected={selectedCourse} onSelect={setSelectedCourse} />
         <button onClick={openCreate} disabled={!selectedCourse}
-          className="flex items-center gap-2 bg-slate-900 hover:bg-slate-700 disabled:bg-slate-100 disabled:text-slate-400 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-all shadow-lg shadow-slate-900/20">
+          className="flex items-center gap-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-100 dark:disabled:bg-white/6 disabled:text-gray-400 dark:disabled:text-gray-500 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-all shadow-lg shadow-red-600/20">
           <Plus size={15} /> Tambah Tugas
         </button>
       </div>
@@ -235,89 +237,89 @@ function TugasTab() {
       {assignments.length > 0 && (
         <div className="grid grid-cols-3 gap-3">
           {[
-            { label: 'Total', value: assignments.length, bg: 'bg-blue-50', text: 'text-blue-600', icon: FileCheck },
-            { label: 'Aktif', value: assignments.filter(a => !isExpired(a.deadline)).length, bg: 'bg-emerald-50', text: 'text-emerald-600', icon: CheckCircle2 },
-            { label: 'Berakhir', value: assignments.filter(a => isExpired(a.deadline)).length, bg: 'bg-amber-50', text: 'text-amber-600', icon: Clock },
+            { label: 'Total', value: assignments.length, bg: 'bg-red-50 dark:bg-red-900/20', text: 'text-red-600 dark:text-red-400', icon: FileCheck },
+            { label: 'Aktif', value: assignments.filter(a => !isExpired(a.deadline)).length, bg: 'bg-emerald-50 dark:bg-emerald-900/20', text: 'text-emerald-600 dark:text-emerald-400', icon: CheckCircle2 },
+            { label: 'Berakhir', value: assignments.filter(a => isExpired(a.deadline)).length, bg: 'bg-amber-50 dark:bg-amber-900/20', text: 'text-amber-600 dark:text-amber-400', icon: Clock },
           ].map((s) => (
-            <div key={s.label} className="bg-white rounded-2xl border border-slate-100 px-5 py-4 flex items-center gap-3">
+            <div key={s.label} className="bg-white dark:bg-[#161b22] rounded-2xl border border-gray-100 dark:border-white/8 px-5 py-4 flex items-center gap-3">
               <div className={`p-2.5 rounded-xl ${s.bg}`}><s.icon size={17} className={s.text} /></div>
-              <div><p className="text-xl font-bold text-slate-900">{s.value}</p><p className="text-xs text-slate-400">{s.label}</p></div>
+              <div><p className="text-xl font-bold text-gray-900 dark:text-white">{s.value}</p><p className="text-xs text-gray-400 dark:text-gray-500">{s.label}</p></div>
             </div>
           ))}
         </div>
       )}
 
       {assignments.length === 0 ? (
-        <div className="bg-white rounded-3xl border border-slate-100">
+        <div className="bg-white dark:bg-[#161b22] rounded-3xl border border-gray-100 dark:border-white/8">
           <EmptyState icon={FileCheck} message="Belum ada tugas" sub="Pilih course lalu buat tugas pertama" />
         </div>
       ) : (
         <div className="space-y-3">
           {assignments.map((a) => (
-            <div key={a.id_tugas} className="bg-white rounded-2xl border border-slate-100 overflow-hidden hover:shadow-md hover:shadow-slate-100 transition-shadow">
+            <div key={a.id_tugas} className="bg-white dark:bg-[#161b22] rounded-2xl border border-gray-100 dark:border-white/8 overflow-hidden hover:shadow-md hover:shadow-gray-100/60 dark:hover:shadow-black/20 transition-shadow">
               <div className="flex items-center gap-4 px-6 py-5">
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${isExpired(a.deadline) ? 'bg-slate-100' : 'bg-blue-50'}`}>
-                  <FileCheck size={17} className={isExpired(a.deadline) ? 'text-slate-300' : 'text-blue-500'} />
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${isExpired(a.deadline) ? 'bg-gray-100 dark:bg-white/6' : 'bg-red-50 dark:bg-red-900/20'}`}>
+                  <FileCheck size={17} className={isExpired(a.deadline) ? 'text-gray-300 dark:text-gray-600' : 'text-red-500 dark:text-red-400'} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <p className="font-semibold text-slate-900 truncate">{a.judul_tugas}</p>
-                    {isExpired(a.deadline) && <span className="text-xs px-2 py-0.5 bg-slate-100 text-slate-400 rounded-full font-medium flex-shrink-0">Berakhir</span>}
+                    <p className="font-semibold text-gray-900 dark:text-white truncate">{a.judul_tugas}</p>
+                    {isExpired(a.deadline) && <span className="text-xs px-2 py-0.5 bg-gray-100 dark:bg-white/8 text-gray-400 dark:text-gray-500 rounded-full font-medium flex-shrink-0">Berakhir</span>}
                   </div>
-                  <div className="flex flex-wrap gap-3 mt-1 text-xs text-slate-400">
+                  <div className="flex flex-wrap gap-3 mt-1 text-xs text-gray-400 dark:text-gray-500">
                     {a.deadline && (
-                      <span className={`flex items-center gap-1 ${isExpired(a.deadline) ? 'text-red-400' : ''}`}>
+                      <span className={`flex items-center gap-1 ${isExpired(a.deadline) ? 'text-red-400 dark:text-red-500' : ''}`}>
                         <Clock size={11} />{new Date(a.deadline).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
                       </span>
                     )}
                     <span className="flex items-center gap-1"><Award size={11} />Maks {a.nilai_maksimal}</span>
                     {a.file_tugas && (
                       <a href={`${API_URL}/storage/${a.file_tugas}`} target="_blank" rel="noreferrer"
-                        className="flex items-center gap-1 text-blue-500 hover:underline">
-                        📎 Lihat file tugas
+                        className="flex items-center gap-1 text-red-600 dark:text-red-400 hover:underline">
+                        Lihat file tugas
                       </a>
                     )}
                   </div>
                 </div>
                 <div className="flex items-center gap-1">
                   <button onClick={() => loadSubmissions(a.id_tugas)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors ${expandedId === a.id_tugas ? 'bg-blue-600 text-white' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}>
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors ${expandedId === a.id_tugas ? 'bg-red-600 text-white' : 'bg-gray-50 dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/8'}`}>
                     <Users size={13} />Pengumpulan
                     {expandedId === a.id_tugas ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
                   </button>
-                  <button onClick={() => openEdit(a)} className="p-2 text-slate-300 hover:text-blue-500 hover:bg-blue-50 rounded-xl transition-colors"><Pencil size={15} /></button>
-                  <button onClick={() => handleDelete(a.id_tugas)} disabled={deletingId === a.id_tugas} className="p-2 text-slate-300 hover:text-red-400 hover:bg-red-50 rounded-xl transition-colors disabled:opacity-40">
+                  <button onClick={() => openEdit(a)} className="p-2 text-gray-300 dark:text-gray-600 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"><Pencil size={15} /></button>
+                  <button onClick={() => handleDelete(a.id_tugas)} disabled={deletingId === a.id_tugas} className="p-2 text-gray-300 dark:text-gray-600 hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors disabled:opacity-40">
                     {deletingId === a.id_tugas ? <Loader2 size={15} className="animate-spin" /> : <Trash2 size={15} />}
                   </button>
                 </div>
               </div>
 
               {expandedId === a.id_tugas && (
-                <div className="border-t border-slate-50 bg-slate-50/60 px-6 py-5">
-                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Pengumpulan · {submissions.length} peserta</p>
+                <div className="border-t border-gray-50 dark:border-white/6 bg-gray-50/60 dark:bg-white/2 px-6 py-5">
+                  <p className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-4">Pengumpulan · {submissions.length} peserta</p>
                   {submissions.length === 0 ? (
-                    <p className="text-sm text-slate-400 text-center py-8">Belum ada yang mengumpulkan.</p>
+                    <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-8">Belum ada yang mengumpulkan.</p>
                   ) : (
                     <div className="space-y-2">
                       {submissions.map((s) => (
-                        <div key={s.id_pengumpulan} className="flex items-center gap-3 bg-white rounded-xl px-4 py-3 border border-slate-100">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                        <div key={s.id_pengumpulan} className="flex items-center gap-3 bg-white dark:bg-[#161b22] rounded-xl px-4 py-3 border border-gray-100 dark:border-white/8">
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-red-400 to-red-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
                             {s.peserta?.nama?.charAt(0).toUpperCase()}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-slate-800 truncate">{s.peserta?.nama}</p>
-                            <p className="text-xs text-slate-400">{new Date(s.tanggal_kumpul).toLocaleDateString('id-ID')}</p>
+                            <p className="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">{s.peserta?.nama}</p>
+                            <p className="text-xs text-gray-400 dark:text-gray-500">{new Date(s.tanggal_kumpul).toLocaleDateString('id-ID')}</p>
                           </div>
                           {s.file_tugas && (
                             <a href={`${API_URL}/storage/${s.file_tugas}`} target="_blank" rel="noreferrer"
-                              className="text-xs text-blue-500 hover:underline font-medium">Lihat file</a>
+                              className="text-xs text-red-600 dark:text-red-400 hover:underline font-medium">Lihat file</a>
                           )}
                           <div className="flex items-center gap-2 flex-shrink-0">
                             {s.nilai !== null
-                              ? <span className="text-sm font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full">{s.nilai}</span>
-                              : <span className="text-xs text-amber-500 font-medium bg-amber-50 px-3 py-1 rounded-full">Belum dinilai</span>}
+                              ? <span className="text-sm font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1 rounded-full">{s.nilai}</span>
+                              : <span className="text-xs text-amber-500 font-medium bg-amber-50 dark:bg-amber-900/20 px-3 py-1 rounded-full">Belum dinilai</span>}
                             <button onClick={() => { setGradeTarget(s); setGradeForm({ nilai: s.nilai ?? 0, feedback: s.feedback ?? '' }); }}
-                              className="flex items-center gap-1 px-3 py-1.5 bg-slate-900 hover:bg-slate-700 text-white text-xs font-semibold rounded-xl transition-colors">
+                              className="flex items-center gap-1 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-xl transition-colors">
                               <Star size={11} />Nilai
                             </button>
                           </div>
@@ -346,14 +348,14 @@ function TugasTab() {
                 type="file"
                 accept=".pdf"
                 onChange={(e) => setFileTugas(e.target.files?.[0] ?? null)}
-                className="w-full text-sm text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200"
+                className="w-full text-sm text-gray-500 dark:text-gray-400 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100"
               />
               {editTarget?.file_tugas && !fileTugas && (
                 <a
                   href={`${API_URL}/storage/${editTarget.file_tugas}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="text-xs text-blue-500 hover:underline mt-1 block"
+                  className="text-xs text-red-600 dark:text-red-400 hover:underline mt-1 block"
                 >
                   File saat ini: lihat PDF
                 </a>
@@ -367,7 +369,7 @@ function TugasTab() {
                 <input type="number" value={form.nilai_maksimal} min={1} max={1000} onChange={(e) => setForm({ ...form, nilai_maksimal: Number(e.target.value) })} className={inputCls} />
               </Field>
             </div>
-            {error && <p className="text-xs text-red-500 bg-red-50 px-4 py-2.5 rounded-xl">{error}</p>}
+            {error && <p className="text-xs text-red-500 bg-red-50 dark:bg-red-900/20 px-4 py-2.5 rounded-xl">{error}</p>}
             <div className="flex gap-3 pt-1">
               <button onClick={() => setShowModal(false)} className={btnSecondary}>Batal</button>
               <button onClick={handleSave} disabled={loading} className={btnPrimary}>{loading ? 'Menyimpan...' : 'Simpan'}</button>
@@ -447,7 +449,7 @@ function KuisTab() {
         ? await api.put(`/trainer/quizzes/${editQuiz.id_kuis}`, quizForm)
         : await api.post('/trainer/quizzes', { ...quizForm, id_kursus: selectedCourse });
       setShowQuizModal(false); await reloadQuizzes();
-    } catch (e: any) { setError(e.response?.data?.message || 'Gagal'); }
+    } catch (e: unknown) { const err = e as { response?: { data?: { message?: string } } }; setError(err.response?.data?.message || 'Gagal'); }
     finally { setLoading(false); }
   };
 
@@ -474,7 +476,7 @@ function KuisTab() {
       setShowQModal(false);
       const res = await api.get(`/trainer/quizzes/${selectedQuiz?.id_kuis}`);
       setQuestions(res.data.data?.pertanyaan ?? []);
-    } catch (e: any) { setError(e.response?.data?.message || 'Gagal'); }
+    } catch (e: unknown) { const err = e as { response?: { data?: { message?: string } } }; setError(err.response?.data?.message || 'Gagal'); }
     finally { setLoading(false); }
   };
 
@@ -498,84 +500,84 @@ function KuisTab() {
         <button
           onClick={() => { setEditQuiz(null); setQuizForm({ judul_kuis: '', waktu_mulai: '', waktu_selesai: '' }); setError(''); setShowQuizModal(true); }}
           disabled={!selectedCourse}
-          className="flex items-center gap-2 bg-slate-900 hover:bg-slate-700 disabled:bg-slate-100 disabled:text-slate-400 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-all shadow-lg shadow-slate-900/20">
+          className="flex items-center gap-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-100 dark:disabled:bg-white/6 disabled:text-gray-400 dark:disabled:text-gray-500 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-all shadow-lg shadow-red-600/20">
           <Plus size={15} /> Tambah Kuis
         </button>
       </div>
 
       {quizzes.length === 0 ? (
-        <div className="bg-white rounded-3xl border border-slate-100">
+        <div className="bg-white dark:bg-[#161b22] rounded-3xl border border-gray-100 dark:border-white/8">
           <EmptyState icon={HelpCircle} message="Belum ada kuis" sub="Buat kuis pertama untuk course ini" />
         </div>
       ) : (
         <div className="space-y-3">
           {quizzes.map((q) => (
-            <div key={q.id_kuis} className="bg-white rounded-2xl border border-slate-100 overflow-hidden hover:shadow-md hover:shadow-slate-100 transition-shadow">
+            <div key={q.id_kuis} className="bg-white dark:bg-[#161b22] rounded-2xl border border-gray-100 dark:border-white/8 overflow-hidden hover:shadow-md hover:shadow-gray-100/60 dark:hover:shadow-black/20 transition-shadow">
               <div className="flex items-center gap-4 px-6 py-5">
-                <div className="w-10 h-10 rounded-xl bg-violet-50 flex items-center justify-center flex-shrink-0">
-                  <HelpCircle size={17} className="text-violet-500" />
+                <div className="w-10 h-10 rounded-xl bg-violet-50 dark:bg-violet-900/20 flex items-center justify-center flex-shrink-0">
+                  <HelpCircle size={17} className="text-violet-500 dark:text-violet-400" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-slate-900">{q.judul_kuis}</p>
-                  <div className="flex gap-4 mt-1 text-xs text-slate-400">
+                  <p className="font-semibold text-gray-900 dark:text-white">{q.judul_kuis}</p>
+                  <div className="flex gap-4 mt-1 text-xs text-gray-400 dark:text-gray-500">
                     <span className="flex items-center gap-1"><BookOpen size={11} />{q.pertanyaan_count ?? 0} soal</span>
                     {q.waktu_mulai && <span className="flex items-center gap-1"><Clock size={11} />{new Date(q.waktu_mulai).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</span>}
                   </div>
                 </div>
                 <div className="flex items-center gap-1">
                   <button onClick={() => loadQuestions(q)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors ${selectedQuiz?.id_kuis === q.id_kuis ? 'bg-violet-600 text-white' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}>
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors ${selectedQuiz?.id_kuis === q.id_kuis ? 'bg-violet-600 text-white' : 'bg-gray-50 dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/8'}`}>
                     <BookOpen size={13} />Soal
                     {selectedQuiz?.id_kuis === q.id_kuis ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
                   </button>
                   <button onClick={() => { setEditQuiz(q); setQuizForm({ judul_kuis: q.judul_kuis, waktu_mulai: q.waktu_mulai?.slice(0, 16) ?? '', waktu_selesai: q.waktu_selesai?.slice(0, 16) ?? '' }); setError(''); setShowQuizModal(true); }}
-                    className="p-2 text-slate-300 hover:text-blue-500 hover:bg-blue-50 rounded-xl transition-colors"><Pencil size={15} /></button>
-                  <button onClick={() => handleDeleteQuiz(q.id_kuis)} disabled={deletingId === q.id_kuis} className="p-2 text-slate-300 hover:text-red-400 hover:bg-red-50 rounded-xl transition-colors disabled:opacity-40">
+                    className="p-2 text-gray-300 dark:text-gray-600 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"><Pencil size={15} /></button>
+                  <button onClick={() => handleDeleteQuiz(q.id_kuis)} disabled={deletingId === q.id_kuis} className="p-2 text-gray-300 dark:text-gray-600 hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors disabled:opacity-40">
                     {deletingId === q.id_kuis ? <Loader2 size={15} className="animate-spin" /> : <Trash2 size={15} />}
                   </button>
                 </div>
               </div>
 
               {selectedQuiz?.id_kuis === q.id_kuis && (
-                <div className="border-t border-slate-50 bg-slate-50/60 px-6 py-5">
+                <div className="border-t border-gray-50 dark:border-white/6 bg-gray-50/60 dark:bg-white/2 px-6 py-5">
                   <div className="flex items-center justify-between mb-4">
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Soal · {questions.length}</p>
+                    <p className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Soal · {questions.length}</p>
                     <button
                       onClick={() => { setQForm({ pertanyaan: '', tipe: 'pilihan_ganda', bobot_nilai: 10, pilihan: Array(4).fill(null).map(() => ({ teks_jawaban: '', benar: false })) }); setError(''); setShowQModal(true); }}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-700 text-white text-xs font-semibold rounded-xl transition-colors">
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-xl transition-colors">
                       <Plus size={13} />Tambah Soal
                     </button>
                   </div>
                   {questions.length === 0 ? (
-                    <p className="text-sm text-slate-400 text-center py-8">Belum ada soal.</p>
+                    <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-8">Belum ada soal.</p>
                   ) : (
                     <div className="space-y-2">
                       {questions.map((qt, idx) => (
-                        <div key={qt.id_pertanyaan} className="bg-white rounded-xl border border-slate-100 p-4">
+                        <div key={qt.id_pertanyaan} className="bg-white dark:bg-[#161b22] rounded-xl border border-gray-100 dark:border-white/8 p-4">
                           <div className="flex items-start justify-between gap-3">
                             <div className="flex-1">
                               <div className="flex items-start gap-2 mb-2">
-                                <span className="w-6 h-6 rounded-lg bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-500 flex-shrink-0 mt-0.5">{idx + 1}</span>
-                                <p className="text-sm font-medium text-slate-800">{qt.pertanyaan}</p>
+                                <span className="w-6 h-6 rounded-lg bg-gray-100 dark:bg-white/8 flex items-center justify-center text-xs font-bold text-gray-500 dark:text-gray-400 flex-shrink-0 mt-0.5">{idx + 1}</span>
+                                <p className="text-sm font-medium text-gray-800 dark:text-gray-100">{qt.pertanyaan}</p>
                               </div>
                               <div className="flex gap-2 ml-8">
-                                <span className={`text-xs px-2.5 py-1 rounded-full font-semibold ${qt.tipe === 'pilihan_ganda' ? 'bg-blue-50 text-blue-600' : 'bg-violet-50 text-violet-600'}`}>
+                                <span className={`text-xs px-2.5 py-1 rounded-full font-semibold ${qt.tipe === 'pilihan_ganda' ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400' : 'bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-400'}`}>
                                   {qt.tipe === 'pilihan_ganda' ? 'Pilihan Ganda' : 'Essay'}
                                 </span>
-                                <span className="text-xs text-slate-400 flex items-center gap-1"><Award size={11} />{qt.bobot_nilai} poin</span>
+                                <span className="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1"><Award size={11} />{qt.bobot_nilai} poin</span>
                               </div>
                               {qt.tipe === 'pilihan_ganda' && qt.pilihan && (
                                 <div className="mt-3 ml-8 grid grid-cols-2 gap-1.5">
                                   {qt.pilihan.map((p, pi) => (
-                                    <div key={pi} className={`flex items-center gap-2 text-xs px-3 py-1.5 rounded-lg ${p.benar ? 'bg-emerald-50 text-emerald-700 font-semibold' : 'bg-slate-50 text-slate-500'}`}>
-                                      {p.benar ? <CheckCircle2 size={12} className="text-emerald-500 flex-shrink-0" /> : <Circle size={12} className="text-slate-300 flex-shrink-0" />}
+                                    <div key={pi} className={`flex items-center gap-2 text-xs px-3 py-1.5 rounded-lg ${p.benar ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 font-semibold' : 'bg-gray-50 dark:bg-white/4 text-gray-500 dark:text-gray-400'}`}>
+                                      {p.benar ? <CheckCircle2 size={12} className="text-emerald-500 flex-shrink-0" /> : <Circle size={12} className="text-gray-300 dark:text-gray-600 flex-shrink-0" />}
                                       <span className="truncate">{p.teks_jawaban}</span>
                                     </div>
                                   ))}
                                 </div>
                               )}
                             </div>
-                            <button onClick={() => handleDeleteQuestion(qt.id_pertanyaan!)} className="p-1.5 text-slate-300 hover:text-red-400 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0">
+                            <button onClick={() => handleDeleteQuestion(qt.id_pertanyaan!)} className="p-1.5 text-gray-300 dark:text-gray-600 hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors flex-shrink-0">
                               <Trash2 size={14} />
                             </button>
                           </div>
@@ -604,7 +606,7 @@ function KuisTab() {
                 <input type="datetime-local" value={quizForm.waktu_selesai} onChange={(e) => setQuizForm({ ...quizForm, waktu_selesai: e.target.value })} className={inputCls} />
               </Field>
             </div>
-            {error && <p className="text-xs text-red-500 bg-red-50 px-4 py-2.5 rounded-xl">{error}</p>}
+            {error && <p className="text-xs text-red-500 bg-red-50 dark:bg-red-900/20 px-4 py-2.5 rounded-xl">{error}</p>}
             <div className="flex gap-3 pt-1">
               <button onClick={() => setShowQuizModal(false)} className={btnSecondary}>Batal</button>
               <button onClick={handleSaveQuiz} disabled={loading} className={btnPrimary}>{loading ? 'Menyimpan...' : 'Simpan'}</button>
@@ -614,11 +616,11 @@ function KuisTab() {
       )}
 
       {showQModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden max-h-[90vh] flex flex-col">
-            <div className="flex items-center justify-between px-7 py-5 border-b border-slate-100 flex-shrink-0">
-              <h2 className="text-base font-bold text-slate-900">Tambah Soal</h2>
-              <button onClick={() => setShowQModal(false)} className="p-1.5 hover:bg-slate-100 rounded-xl"><X size={18} className="text-slate-400" /></button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/60 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-[#1c2333] rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between px-7 py-5 border-b border-gray-100 dark:border-white/8 flex-shrink-0">
+              <h2 className="text-base font-bold text-gray-900 dark:text-white">Tambah Soal</h2>
+              <button onClick={() => setShowQModal(false)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-white/8 rounded-xl"><X size={18} className="text-gray-400 dark:text-gray-500" /></button>
             </div>
             <div className="px-7 py-6 overflow-y-auto space-y-4">
               <Field label="Pertanyaan">
@@ -639,19 +641,19 @@ function KuisTab() {
                 <Field label="Pilihan Jawaban — klik lingkaran = jawaban benar">
                   <div className="space-y-2">
                     {qForm.pilihan?.map((p, idx) => (
-                      <div key={idx} className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${p.benar ? 'border-emerald-300 bg-emerald-50' : 'border-slate-200 bg-slate-50 hover:border-slate-300'}`}>
+                      <div key={idx} className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${p.benar ? 'border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-900/20' : 'border-gray-200 dark:border-white/8 bg-gray-50 dark:bg-white/4 hover:border-gray-300 dark:hover:border-white/15'}`}>
                         <button type="button" onClick={() => updatePilihan(idx, 'benar', true)} className="flex-shrink-0">
-                          {p.benar ? <CheckCircle2 size={20} className="text-emerald-500" /> : <Circle size={20} className="text-slate-300 hover:text-slate-400" />}
+                          {p.benar ? <CheckCircle2 size={20} className="text-emerald-500" /> : <Circle size={20} className="text-gray-300 dark:text-gray-600 hover:text-gray-400" />}
                         </button>
-                        <span className="text-xs font-bold text-slate-400 w-4">{String.fromCharCode(65 + idx)}</span>
+                        <span className="text-xs font-bold text-gray-400 dark:text-gray-500 w-4">{String.fromCharCode(65 + idx)}</span>
                         <input value={p.teks_jawaban} onChange={(e) => updatePilihan(idx, 'teks_jawaban', e.target.value)} placeholder={`Pilihan ${String.fromCharCode(65 + idx)}`}
-                          className="flex-1 bg-transparent text-sm text-slate-800 placeholder-slate-400 focus:outline-none" />
+                          className="flex-1 bg-transparent text-sm text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none" />
                       </div>
                     ))}
                   </div>
                 </Field>
               )}
-              {error && <p className="text-xs text-red-500 bg-red-50 px-4 py-2.5 rounded-xl">{error}</p>}
+              {error && <p className="text-xs text-red-500 bg-red-50 dark:bg-red-900/20 px-4 py-2.5 rounded-xl">{error}</p>}
               <div className="flex gap-3 pt-1">
                 <button onClick={() => setShowQModal(false)} className={btnSecondary}>Batal</button>
                 <button onClick={handleSaveQuestion} disabled={loading} className={btnPrimary}>{loading ? 'Menyimpan...' : 'Simpan Soal'}</button>
