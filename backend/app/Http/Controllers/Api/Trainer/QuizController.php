@@ -155,7 +155,6 @@ class QuizController extends Controller
         ], 201);
     }
 
-    // HAPUS PERTANYAAN
     public function destroyQuestion(Request $request, $questionId)
     {
         $question = Question::findOrFail($questionId);
