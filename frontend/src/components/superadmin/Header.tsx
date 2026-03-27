@@ -1,173 +1,419 @@
-import { Outlet, NavLink, Link, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, Building2, LogOut, Menu, Bell, X } from 'lucide-react';
-import { useState } from 'react';
+import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
+import {
+  LayoutDashboard, Users, Building2, LogOut,
+  Menu, X, Search, Sun, Moon, Bell,
+} from 'lucide-react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { authService } from '../../services/api';
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
+import { getUser } from '../../pages/types';
 
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
+// ─── Dark mode — default: light ───────────────────────────────────────────────
+function useDarkMode() {
+  const [dark, setDark] = useState(() => {
+    const stored = localStorage.getItem('lms_dark');
+    if (stored !== null) return stored === 'true';
+    return false; // default: light mode
+  });
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', dark);
+    localStorage.setItem('lms_dark', String(dark));
+  }, [dark]);
+
+  return [dark, setDark] as const;
 }
 
-export default function SuperAdminLayout() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [isMobileOpen, setIsMobileOpen] = useState(false);
-  const navigate = useNavigate();
+// ─── Nav config ───────────────────────────────────────────────────────────────
+const NAV_ITEMS = [
+  {
+    group: 'Menu Utama',
+    items: [
+      { name: 'Dashboard',         href: '/superadmin/dashboard', icon: LayoutDashboard, desc: 'Statistik & rekap login' },
+    ],
+  },
+  {
+    group: 'Manajemen',
+    items: [
+      { name: 'User Management',   href: '/superadmin/users',     icon: Users,     desc: 'Kelola pengguna & role' },
+      { name: 'Branch Management', href: '/superadmin/branches',  icon: Building2, desc: 'Kelola cabang & kota'   },
+    ],
+  },
+];
 
-  const navigation = [
-    { name: 'National Dashboard', href: '/superadmin/dashboard', icon: LayoutDashboard },
-    { name: 'User Management', href: '/superadmin/users', icon: Users },
-    { name: 'Branch Management', href: '/superadmin/branches', icon: Building2 },
-  ];
+const ALL_PAGES = NAV_ITEMS.flatMap(g => g.items);
 
-  const handleLogout = async () => {
-  try {
-    await authService.logout();
-  } catch {
-    // tetap logout meski request gagal
-    localStorage.removeItem('lms_token');
-    localStorage.removeItem('lms_user');
-  } finally {
-    navigate('/');
-  }
+const BREADCRUMB: Record<string, string> = {
+  '/superadmin/dashboard': 'Dashboard',
+  '/superadmin/users':     'User Management',
+  '/superadmin/branches':  'Branch Management',
 };
 
+const getInitials = (name: string) =>
+  name.trim().split(' ').slice(0, 2).map(w => w[0]?.toUpperCase()).join('');
+
+// ─── Command Palette ──────────────────────────────────────────────────────────
+function CommandPalette({ onClose }: { onClose: () => void }) {
+  const [query, setQuery]       = useState('');
+  const navigate                = useNavigate();
+  const inputRef                = useRef<HTMLInputElement>(null);
+  const [selected, setSelected] = useState(0);
+
+  const results = query.trim()
+    ? ALL_PAGES.filter(p =>
+        p.name.toLowerCase().includes(query.toLowerCase()) ||
+        p.desc.toLowerCase().includes(query.toLowerCase())
+      )
+    : ALL_PAGES;
+
+  useEffect(() => { inputRef.current?.focus(); }, []);
+  useEffect(() => { setSelected(0); }, [query]);
+
+  const go = useCallback((href: string) => { navigate(href); onClose(); }, [navigate, onClose]);
+
+  const handleKey = (e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowDown') { e.preventDefault(); setSelected(s => Math.min(s + 1, results.length - 1)); }
+    if (e.key === 'ArrowUp')   { e.preventDefault(); setSelected(s => Math.max(s - 1, 0)); }
+    if (e.key === 'Enter' && results[selected]) go(results[selected].href);
+    if (e.key === 'Escape') onClose();
+  };
+
   return (
-    <div className="min-h-screen bg-slate-50 flex">
+    <div
+      className="fixed inset-0 z-[100] flex items-start justify-center pt-[15vh] px-4 bg-slate-900/40 backdrop-blur-sm"
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div
+        className="w-full max-w-md bg-card rounded-2xl shadow-2xl border border-theme overflow-hidden"
+        style={{ animation: 'cmdIn .18s cubic-bezier(.34,1.56,.64,1)' }}
+      >
+        <div className="flex items-center gap-3 px-4 py-3.5 border-b border-theme">
+          <Search size={16} className="text-muted shrink-0" />
+          <input
+            ref={inputRef}
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            onKeyDown={handleKey}
+            placeholder="Cari halaman..."
+            className="flex-1 text-sm outline-none bg-transparent"
+          />
+          <kbd className="text-[10px] font-bold text-muted bg-muted px-1.5 py-0.5 rounded border border-theme">ESC</kbd>
+        </div>
+        <div className="py-2 max-h-72 overflow-y-auto">
+          {results.length === 0 ? (
+            <p className="text-sm text-muted text-center py-6">Tidak ditemukan</p>
+          ) : results.map((p, i) => (
+            <button
+              key={p.href}
+              onClick={() => go(p.href)}
+              className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors
+                ${i === selected ? 'bg-red-50 dark:bg-red-500/10' : 'hover:bg-muted'}`}
+            >
+              <p.icon size={15} className={i === selected ? 'text-red-600' : 'text-muted'} />
+              <div>
+                <p className={`text-sm font-semibold ${i === selected ? 'text-red-700 dark:text-red-400' : 'text-primary'}`}>
+                  {p.name}
+                </p>
+                <p className="text-[11px] text-muted">{p.desc}</p>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── NavItem ──────────────────────────────────────────────────────────────────
+function NavItem({ item, collapsed }: { item: typeof ALL_PAGES[0]; collapsed: boolean }) {
+  const [showTip, setShowTip] = useState(false);
+
+  return (
+    <div
+      className="relative"
+      onMouseEnter={() => collapsed && setShowTip(true)}
+      onMouseLeave={() => setShowTip(false)}
+    >
+      <NavLink
+        to={item.href}
+        className={({ isActive }) =>
+          `relative flex items-center gap-3 py-[10px] text-[13.5px] font-medium transition-all group
+          ${collapsed ? 'justify-center px-0' : 'px-5'}
+          ${isActive
+            ? 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/10'
+            : 'text-label hover:bg-muted hover:text-primary'
+          }`
+        }
+      >
+        {({ isActive }) => (
+          <>
+            {/* Left bar aktif — flush ke tepi, full tinggi */}
+            {isActive && (
+              <span
+                className="absolute left-0 top-0 bottom-0 w-[3px] bg-red-600 dark:bg-red-500"
+                style={{ animation: 'barIn .18s ease' }}
+              />
+            )}
+            <item.icon
+              size={18}
+              className={`shrink-0 transition-colors ${
+                isActive ? 'text-red-600 dark:text-red-400' : 'text-muted group-hover:text-secondary'
+              }`}
+            />
+            {!collapsed && <span className="truncate">{item.name}</span>}
+          </>
+        )}
+      </NavLink>
+
+      {/* Tooltip saat collapsed */}
+      {collapsed && showTip && (
+        <div className="absolute left-full top-1/2 -translate-y-1/2 ml-3 z-50 pointer-events-none">
+          <div
+            className="bg-slate-900 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow-xl whitespace-nowrap border border-slate-700"
+            style={{ animation: 'tipIn .15s ease' }}
+          >
+            {item.name}
+            <p className="text-slate-400 text-[10px] font-normal mt-0.5">{item.desc}</p>
+          </div>
+          <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1 w-2 h-2 bg-slate-900 rotate-45 border-l border-b border-slate-700" />
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Main Layout ──────────────────────────────────────────────────────────────
+export default function SuperAdminLayout() {
+  const [collapsed,  setCollapsed]  = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
+  const [cmdOpen,    setCmdOpen]    = useState(false);
+  const [dark,       setDark]       = useDarkMode();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const user     = getUser();
+
+  useEffect(() => { setMobileOpen(false); }, [location.pathname]);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); setCmdOpen(o => !o); }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
+
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    try { await authService.logout(); } catch {
+      localStorage.removeItem('lms_token');
+      localStorage.removeItem('lms_user');
+    } finally { navigate('/login', { replace: true }); }
+  };
+
+  // ── Sidebar content ────────────────────────────────────────────────────────
+  const SidebarContent = ({ isMobile = false }: { isMobile?: boolean }) => (
+    <div className="flex flex-col h-full bg-sidebar">
+
+      {/* Brand */}
+      <div
+        className={`flex items-center gap-3 px-5 h-16 shrink-0 border-b border-theme
+          ${collapsed && !isMobile ? 'justify-center px-0' : ''}`}
+      >
+        <img
+          src="/src/assets/logo.png"
+          alt="PT Indo Bismar"
+          className={`shrink-0 object-contain rounded-full transition-all duration-300
+            ${collapsed && !isMobile ? 'w-9 h-9' : 'w-10 h-10'}`}
+        />
+        {(!collapsed || isMobile) && (
+          <div style={{ animation: 'fadeSlide .2s ease' }}>
+            <p className="font-bold text-sm leading-tight text-primary">Indo Bismar</p>
+            <p className="text-[11px] text-muted">Learning Management</p>
+          </div>
+        )}
+      </div>
+
+      {/* Nav */}
+      <nav className="flex-1 overflow-y-auto pt-5 pb-3">
+        {NAV_ITEMS.map(group => (
+          <div key={group.group} className="mb-4">
+            {(!collapsed || isMobile) && (
+              <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-muted px-5 mb-1">
+                {group.group}
+              </p>
+            )}
+            {collapsed && !isMobile && (
+              <div className="border-t border-theme mx-3 mb-2" />
+            )}
+            <div className="space-y-0.5">
+              {group.items.map(item => (
+                <NavItem key={item.href} item={item} collapsed={collapsed && !isMobile} />
+              ))}
+            </div>
+          </div>
+        ))}
+      </nav>
+
+      {/* User + Dark Mode + Logout */}
+      <div className="shrink-0 border-t border-theme pt-3 pb-3 space-y-0.5">
+
+        {/* User card */}
+        {user && (
+          <div
+            className={`flex items-center gap-3 mx-3 px-3 py-2.5 rounded-xl bg-muted border border-theme mb-2
+              ${collapsed && !isMobile ? 'justify-center px-2 mx-2' : ''}`}
+          >
+            <div className="w-9 h-9 rounded-full bg-red-500 flex items-center justify-center text-xs font-bold text-white shrink-0">
+              {getInitials(user.nama)}
+            </div>
+            {(!collapsed || isMobile) && (
+              <div className="overflow-hidden flex-1 min-w-0">
+                <p className="text-[13px] font-semibold truncate leading-tight text-primary">{user.nama}</p>
+                <p className="text-[11px] truncate text-muted">Superadmin</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Dark mode toggle */}
+        {(!collapsed || isMobile) ? (
+          <button
+            onClick={() => setDark(d => !d)}
+            className="flex items-center justify-between w-full px-5 py-2.5 text-[13px] text-label hover:bg-muted transition-all"
+          >
+            <div className="flex items-center gap-3">
+              {dark
+                ? <Sun  size={16} className="shrink-0 text-muted" />
+                : <Moon size={16} className="shrink-0 text-muted" />}
+              <span>{dark ? 'Light Mode' : 'Dark Mode'}</span>
+            </div>
+            {/* Pill — abu seperti foto */}
+            <div className={`w-10 h-[22px] rounded-full relative shrink-0 transition-colors duration-200 ${dark ? 'bg-slate-600' : 'bg-slate-300'}`}>
+              <div className={`absolute top-[3px] w-4 h-4 rounded-full bg-white shadow-sm transition-all duration-200 ${dark ? 'left-[22px]' : 'left-[3px]'}`} />
+            </div>
+          </button>
+        ) : (
+          <button
+            onClick={() => setDark(d => !d)}
+            className="flex items-center justify-center w-full py-2.5 text-muted hover:bg-muted transition-all"
+            title={dark ? 'Light Mode' : 'Dark Mode'}
+          >
+            {dark ? <Sun size={16} /> : <Moon size={16} />}
+          </button>
+        )}
+
+        {/* Keluar */}
+        <button
+          onClick={handleLogout}
+          disabled={loggingOut}
+          className={`flex items-center gap-3 w-full px-5 py-2.5 text-[13px] text-label
+            hover:bg-red-50 dark:hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400
+            disabled:opacity-50 transition-all
+            ${collapsed && !isMobile ? 'justify-center px-0' : ''}`}
+          title={collapsed && !isMobile ? 'Keluar' : undefined}
+        >
+          <LogOut size={16} className="shrink-0" />
+          {(!collapsed || isMobile) && <span>{loggingOut ? 'Keluar...' : 'Keluar'}</span>}
+        </button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-page flex transition-colors duration-200">
+
+      {cmdOpen && <CommandPalette onClose={() => setCmdOpen(false)} />}
 
       {/* Mobile overlay */}
-      {isMobileOpen && (
+      {mobileOpen && (
         <div
-          className="fixed inset-0 z-20 bg-slate-900/50 lg:hidden"
-          onClick={() => setIsMobileOpen(false)}
+          className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm lg:hidden"
+          onClick={() => setMobileOpen(false)}
+          style={{ animation: 'fadeInBg .2s ease' }}
         />
       )}
 
-      {/* Sidebar */}
-      <aside className={cn(
-        "fixed inset-y-0 left-0 z-30 bg-slate-900 text-slate-300 transition-all duration-300 ease-in-out flex flex-col",
-        isSidebarOpen ? "lg:w-64" : "lg:w-20",
-        "w-64 lg:static lg:translate-x-0",
-        isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
-      )}>
-
-        {/* Logo */}
-        <div className="flex items-center justify-between h-16 px-4 bg-slate-950/50 shrink-0">
-          <div className={cn("flex items-center gap-3 overflow-hidden", !isSidebarOpen && "lg:justify-center lg:w-full")}>
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center font-bold text-white">
-              IB
-            </div>
-            <span className={cn(
-              "text-base font-bold text-white tracking-tight whitespace-nowrap transition-all duration-300",
-              !isSidebarOpen && "lg:hidden"
-            )}>
-              Bismar Education
-            </span>
-          </div>
-          {/* Mobile close button */}
-          <button
-            onClick={() => setIsMobileOpen(false)}
-            className="lg:hidden p-1 rounded-md hover:bg-slate-800 text-slate-400 hover:text-white"
-          >
-            <X size={20} />
-          </button>
-        </div>
-
-        {/* Nav */}
-        <nav className="flex-1 px-3 py-6 space-y-1 overflow-y-auto">
-          {navigation.map((item) => (
-            <NavLink
-              key={item.name}
-              to={item.href}
-              onClick={() => setIsMobileOpen(false)}
-              className={({ isActive }) => cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-medium text-sm",
-                !isSidebarOpen && "lg:justify-center",
-                isActive
-                  ? "bg-blue-600/10 text-blue-400"
-                  : "hover:bg-slate-800/50 hover:text-white"
-              )}
-              title={!isSidebarOpen ? item.name : undefined}
-            >
-              {({ isActive }) => (
-                <>
-                  <item.icon
-                    size={20}
-                    className={cn("shrink-0", isActive ? "text-blue-400" : "text-slate-400")}
-                  />
-                  <span className={cn(
-                    "whitespace-nowrap transition-all duration-300",
-                    !isSidebarOpen && "lg:hidden"
-                  )}>
-                    {item.name}
-                  </span>
-                </>
-              )}
-            </NavLink>
-          ))}
-        </nav>
-
-        {/* Logout */}
-        <div className="p-4 border-t border-slate-800 shrink-0">
-          <button
-            onClick={handleLogout}
-            className={cn(
-              "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-medium text-sm",
-              "text-slate-400 hover:bg-slate-800/50 hover:text-white w-full",
-              !isSidebarOpen && "lg:justify-center"
-            )}
-          >
-            <LogOut size={20} className="shrink-0" />
-            <span className={cn("whitespace-nowrap", !isSidebarOpen && "lg:hidden")}>
-              Logout
-            </span>
-          </button>
-        </div>
+      {/* Mobile sidebar */}
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-sidebar flex flex-col lg:hidden border-r border-theme
+          transition-transform duration-300 ease-out ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}
+      >
+        <button
+          onClick={() => setMobileOpen(false)}
+          className="absolute top-4 right-3 p-1.5 rounded-lg text-muted hover:bg-muted transition-colors"
+        >
+          <X size={16} />
+        </button>
+        <SidebarContent isMobile />
       </aside>
 
-      {/* Main Content */}
+      {/* Desktop sidebar */}
+      <aside
+        className={`hidden lg:flex flex-col bg-sidebar shrink-0 border-r border-theme
+          transition-all duration-300 ease-in-out ${collapsed ? 'w-[68px]' : 'w-[220px]'}`}
+      >
+        <SidebarContent />
+      </aside>
+
+      {/* Main */}
       <div className="flex-1 flex flex-col min-w-0">
 
-        {/* Header */}
-        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-6 lg:px-8 shrink-0">
-          <div className="flex items-center gap-4">
-            {/* Desktop toggle */}
+        {/* Topbar */}
+        <header
+          className="h-16 bg-topbar border-b border-theme flex items-center justify-between px-6 shrink-0 transition-colors duration-200"
+          style={{ boxShadow: 'var(--shadow-topbar)' }}
+        >
+          {/* Kiri: collapse / hamburger */}
+          <div className="flex items-center gap-2">
             <button
-              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="hidden lg:flex p-2 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+              onClick={() => setCollapsed(c => !c)}
+              className="hidden lg:flex p-1.5 rounded-lg text-muted hover:text-secondary hover:bg-muted transition-colors"
             >
-              <Menu className="w-5 h-5" />
+              <Menu size={18} />
             </button>
-            {/* Mobile toggle */}
             <button
-              onClick={() => setIsMobileOpen(true)}
-              className="lg:hidden p-2 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+              onClick={() => setMobileOpen(true)}
+              className="lg:hidden p-1.5 rounded-lg text-muted hover:text-secondary hover:bg-muted transition-colors"
             >
-              <Menu className="w-5 h-5" />
+              <Menu size={18} />
             </button>
-            <h1 className="text-xl font-semibold text-slate-800">SuperAdmin Portal</h1>
           </div>
 
-          <div className="flex items-center gap-4">
-            
-            <div className="h-8 w-px bg-slate-200 mx-1"></div>
-                <Link to="/" className="flex items-center gap-3 hover:bg-slate-50 p-1.5 pr-3 rounded-full transition-colors">
-                      <div className="w-8 h-8 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center font-bold text-sm">
-                        SA
-                      </div>
-                      <div className="hidden md:block text-left">
-                        <p className="text-sm font-semibold text-slate-700 leading-tight">Super Admin</p>
-                        <p className="text-xs text-slate-500">System Administrator</p>
-                      </div>
-                </Link>        
+          {/* Kanan: Bell + divider + nama + role + avatar */}
+          <div className="flex items-center gap-3">
+
+            <div className="w-px h-6 border-r border-theme" />
+
+            {user && (
+              <div className="flex items-center gap-2.5">
+                <div className="text-right leading-tight">
+                  <p className="text-[13px] font-semibold text-primary">{user.nama}</p>
+                  <p className="text-[11px] text-muted">Superadmin</p>
+                </div>
+                <div className="w-9 h-9 rounded-full bg-red-500 flex items-center justify-center text-[12px] font-bold text-white shrink-0 select-none">
+                  {getInitials(user.nama)}
+                </div>
+              </div>
+            )}
           </div>
         </header>
 
-        {/* Page Content */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-auto">
-          <Outlet />
+        {/* Page content */}
+        <main className="flex-1 overflow-auto p-6 sm:p-8">
+          <div style={{ animation: 'pageIn .2s ease' }}>
+            <Outlet />
+          </div>
         </main>
       </div>
+
+      <style>{`
+        @keyframes fadeInBg  { from { opacity:0 } to { opacity:1 } }
+        @keyframes fadeSlide { from { opacity:0; transform:translateX(-6px) } to { opacity:1; transform:translateX(0) } }
+        @keyframes barIn     { from { opacity:0 } to { opacity:1 } }
+        @keyframes tipIn     { from { opacity:0; transform:translateX(-4px) } to { opacity:1; transform:translateX(0) } }
+        @keyframes pageIn    { from { opacity:0; transform:translateY(4px) } to { opacity:1; transform:translateY(0) } }
+        @keyframes cmdIn     { from { opacity:0; transform:scale(.97) translateY(-6px) } to { opacity:1; transform:scale(1) translateY(0) } }
+      `}</style>
     </div>
   );
 }
