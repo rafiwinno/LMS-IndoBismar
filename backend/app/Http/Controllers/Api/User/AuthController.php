@@ -12,12 +12,14 @@ class AuthController extends Controller
     // REGISTER PESERTA
     public function register(Request $request)
     {
-        $request->validate([
+        $request->validate([    
             'nama'     => 'required',
             'username' => 'required|unique:pengguna',
             'email'    => 'required|email|unique:pengguna',
             'password' => 'required|min:6',
-            'nomor_hp' => 'required'
+            'nomor_hp' => 'required',
+            'asal_sekolah' => 'nullable|string',
+            'jurusan'=> 'nullable|string'
         ]);
 
         $user = User::create([
@@ -26,13 +28,21 @@ class AuthController extends Controller
             'email'    => $request->email,
             'password' => $request->password,
             'nomor_hp' => $request->nomor_hp,
-            'id_role'  => 4
+            'id_role'  => 4,
+            'status'   => 'pending',
+        ]);
+
+        DB::table('data_peserta_pkl')->insert([
+            'id_pengguna' => $user->id_pengguna,
+            'asal_sekolah' => $request->asal_sekolah ?? null,
+            'jurusan' => $request->jurusan ?? null,
+            'periode_mulai' => null,
+            'periode_selesai' => null,
         ]);
 
         return response()->json([
-            'message' => 'Register berhasil',
-            'data'    => $user
-        ]);
+            'message' => 'Register berhasil. Silahkan Login',
+        ], 201);
     }
 
     // LOGIN PESERTA (EMAIL)
