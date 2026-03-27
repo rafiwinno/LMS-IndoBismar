@@ -106,10 +106,10 @@ export function Reports() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h2 className="text-lg font-semibold text-gray-800">Branch Analytics & Reports</h2>
+        <h2 className="text-lg font-semibold text-gray-800 dark:text-white">Branch Analytics & Reports</h2>
         <div className="flex space-x-3">
           <button onClick={handleExportExcel}
-            className="flex items-center space-x-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg transition-colors">
+            className="flex items-center space-x-2 bg-white dark:bg-[#161b22] border border-gray-300 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg transition-colors">
             <FileSpreadsheet className="w-4 h-4 text-green-600" />
             <span className="text-sm font-medium">Export Excel</span>
           </button>
@@ -123,8 +123,8 @@ export function Reports() {
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Enrollment vs Completion</h3>
+        <div className="bg-white dark:bg-[#161b22] p-6 rounded-xl shadow-sm border border-gray-100 dark:border-white/8">
+          <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">Enrollment vs Completion</h3>
           <div className="h-72">
             {loadingChart
               ? <Spinner />
@@ -145,8 +145,8 @@ export function Reports() {
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Growth Trend</h3>
+        <div className="bg-white dark:bg-[#161b22] p-6 rounded-xl shadow-sm border border-gray-100 dark:border-white/8">
+          <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">Growth Trend</h3>
           <div className="h-72">
             {loadingChart
               ? <Spinner />
@@ -168,12 +168,12 @@ export function Reports() {
       </div>
 
       {/* Report Tables */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-4 border-b border-gray-200">
-          <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
+      <div className="bg-white dark:bg-[#161b22] rounded-xl shadow-sm border border-gray-200 dark:border-white/10 overflow-hidden">
+        <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-4 border-b border-gray-200 dark:border-white/10">
+          <div className="flex space-x-1 bg-gray-100 dark:bg-white/10 p-1 rounded-lg">
             {TABS.map(t => (
               <button key={t.key} onClick={() => setActiveTab(t.key)}
-                className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${activeTab === t.key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+                className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${activeTab === t.key ? 'bg-white dark:bg-[#161b22] text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'}`}>
                 {t.label}
               </button>
             ))}
@@ -234,22 +234,22 @@ function EmptyRow({ cols }: { cols: number }) {
 }
 
 function Th({ children }: { children: React.ReactNode }) {
-  return <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">{children}</th>;
+  return <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">{children}</th>;
 }
 
 function Td({ children, className = '' }: { children: React.ReactNode; className?: string }) {
-  return <td className={`px-6 py-4 text-sm text-gray-700 ${className}`}>{children}</td>;
+  return <td className={`px-6 py-4 text-sm text-gray-700 dark:text-gray-300 ${className}`}>{children}</td>;
 }
 
 function PesertaTable({ data }: { data: any[] }) {
   return (
     <table className="w-full text-left">
-      <thead className="bg-gray-50 border-b border-gray-200">
+      <thead className="bg-gray-50 dark:bg-[#161b22] border-b border-gray-200 dark:border-white/10">
         <tr><Th>Nama</Th><Th>Email</Th><Th>Asal Sekolah</Th><Th>Cabang</Th><Th>Enrolled</Th><Th>Selesai</Th><Th>Progress</Th><Th>Status</Th></tr>
       </thead>
-      <tbody className="divide-y divide-gray-100">
+      <tbody className="divide-y divide-gray-100 dark:divide-white/5">
         {data.length === 0 ? <EmptyRow cols={8} /> : data.map((r, i) => (
-          <tr key={i} className="hover:bg-gray-50 transition-colors">
+          <tr key={i} className="hover:bg-gray-50 dark:hover:bg-white/3 transition-colors">
             <Td className="font-medium text-gray-900">{r.nama}</Td>
             <Td>{r.email}</Td>
             <Td>{r.asal_sekolah}</Td>
@@ -258,7 +258,7 @@ function PesertaTable({ data }: { data: any[] }) {
             <Td>{r.completed}</Td>
             <Td>
               <div className="flex items-center gap-2">
-                <div className="w-20 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                <div className="w-20 h-1.5 bg-gray-200 dark:bg-white/10 rounded-full overflow-hidden">
                   <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${r.progress}%` }} />
                 </div>
                 <span className="text-xs text-gray-500">{r.progress}%</span>
@@ -275,12 +275,12 @@ function PesertaTable({ data }: { data: any[] }) {
 function KursusTable({ data }: { data: any[] }) {
   return (
     <table className="w-full text-left">
-      <thead className="bg-gray-50 border-b border-gray-200">
+      <thead className="bg-gray-50 dark:bg-[#161b22] border-b border-gray-200 dark:border-white/10">
         <tr><Th>Judul Kursus</Th><Th>Trainer</Th><Th>Status</Th><Th>Total Peserta</Th><Th>Selesai</Th><Th>Completion Rate</Th></tr>
       </thead>
-      <tbody className="divide-y divide-gray-100">
+      <tbody className="divide-y divide-gray-100 dark:divide-white/5">
         {data.length === 0 ? <EmptyRow cols={6} /> : data.map((r, i) => (
-          <tr key={i} className="hover:bg-gray-50 transition-colors">
+          <tr key={i} className="hover:bg-gray-50 dark:hover:bg-white/3 transition-colors">
             <Td className="font-medium text-gray-900">{r.judul}</Td>
             <Td>{r.trainer}</Td>
             <Td><StatusBadge status={r.status} /></Td>
@@ -288,7 +288,7 @@ function KursusTable({ data }: { data: any[] }) {
             <Td>{r.completed}</Td>
             <Td>
               <div className="flex items-center gap-2">
-                <div className="w-20 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                <div className="w-20 h-1.5 bg-gray-200 dark:bg-white/10 rounded-full overflow-hidden">
                   <div className="h-full bg-green-500 rounded-full" style={{ width: `${r.completion_rate}%` }} />
                 </div>
                 <span className="text-xs text-gray-500">{r.completion_rate}%</span>
@@ -304,12 +304,12 @@ function KursusTable({ data }: { data: any[] }) {
 function KuisTable({ data }: { data: any[] }) {
   return (
     <table className="w-full text-left">
-      <thead className="bg-gray-50 border-b border-gray-200">
+      <thead className="bg-gray-50 dark:bg-[#161b22] border-b border-gray-200 dark:border-white/10">
         <tr><Th>Judul Kuis</Th><Th>Kursus</Th><Th>Total Attempts</Th><Th>Selesai</Th><Th>Rata-rata Skor</Th></tr>
       </thead>
-      <tbody className="divide-y divide-gray-100">
+      <tbody className="divide-y divide-gray-100 dark:divide-white/5">
         {data.length === 0 ? <EmptyRow cols={5} /> : data.map((r, i) => (
-          <tr key={i} className="hover:bg-gray-50 transition-colors">
+          <tr key={i} className="hover:bg-gray-50 dark:hover:bg-white/3 transition-colors">
             <Td className="font-medium text-gray-900">{r.judul}</Td>
             <Td>{r.kursus}</Td>
             <Td>{r.total_attempts}</Td>
@@ -330,12 +330,12 @@ function KuisTable({ data }: { data: any[] }) {
 function TrainerTable({ data }: { data: any[] }) {
   return (
     <table className="w-full text-left">
-      <thead className="bg-gray-50 border-b border-gray-200">
+      <thead className="bg-gray-50 dark:bg-[#161b22] border-b border-gray-200 dark:border-white/10">
         <tr><Th>Nama</Th><Th>Email</Th><Th>Total Kursus</Th><Th>Total Peserta</Th><Th>Status</Th></tr>
       </thead>
-      <tbody className="divide-y divide-gray-100">
+      <tbody className="divide-y divide-gray-100 dark:divide-white/5">
         {data.length === 0 ? <EmptyRow cols={5} /> : data.map((r, i) => (
-          <tr key={i} className="hover:bg-gray-50 transition-colors">
+          <tr key={i} className="hover:bg-gray-50 dark:hover:bg-white/3 transition-colors">
             <Td className="font-medium text-gray-900">{r.nama}</Td>
             <Td>{r.email}</Td>
             <Td>{r.total_kursus}</Td>

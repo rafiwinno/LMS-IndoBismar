@@ -213,14 +213,14 @@ export function Courses() {
         </div>
 
         {/* Course Info Card */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="bg-white dark:bg-[#161b22] rounded-xl shadow-sm border border-gray-200 dark:border-white/10 p-6">
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
             <div className="flex items-start gap-4">
               <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center flex-shrink-0">
                 <BookOpen className="w-6 h-6 text-indigo-600" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-gray-900">{selectedCourse.judul}</h2>
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">{selectedCourse.judul}</h2>
                 {selectedCourse.deskripsi && <p className="text-sm text-gray-500 mt-1">{selectedCourse.deskripsi}</p>}
                 <div className="flex flex-wrap items-center gap-3 mt-2">
                   {selectedCourse.trainer && <span className="text-sm text-gray-600">Trainer: <span className="font-medium">{selectedCourse.trainer}</span></span>}
@@ -237,11 +237,11 @@ export function Courses() {
         {/* Materials Section */}
         <div>
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Materi Kursus</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Materi Kursus</h3>
             <div className="flex items-center gap-3 w-full sm:w-auto">
               <div className="relative flex-1 sm:w-72">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <input type="text" placeholder="Cari materi..." className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                <input type="text" placeholder="Cari materi..." className="w-full pl-9 pr-4 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm bg-white dark:bg-[#161b22] dark:text-white dark:placeholder-gray-500"
                   value={materiSearch} onChange={e => setMateriSearch(e.target.value)} />
               </div>
               <button onClick={openAddMateri} className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors text-sm whitespace-nowrap">
@@ -260,7 +260,7 @@ export function Courses() {
                 const cfg = tipeConfig[m.tipe_materi] ?? tipeConfig.dokumen;
                 return (
                   <div key={m.id_materi} onClick={() => setViewer(m)}
-                    className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md hover:border-indigo-300 transition-all cursor-pointer group">
+                    className="bg-white dark:bg-[#161b22] rounded-xl shadow-sm border border-gray-200 dark:border-white/10 overflow-hidden hover:shadow-md hover:border-indigo-300 transition-all cursor-pointer group">
                     {thumb ? (
                       <div className="relative h-36">
                         <img src={thumb} alt={m.judul_materi} className="w-full h-full object-cover" />
@@ -275,19 +275,19 @@ export function Courses() {
                       </div>
                     ) : (
                       <div className={`h-36 flex items-center justify-center ${cfg.bg}`}>
-                        <div className="p-4 bg-white rounded-xl shadow-sm group-hover:scale-110 transition-transform">
+                        <div className="p-4 bg-white dark:bg-[#161b22] rounded-xl shadow-sm group-hover:scale-110 transition-transform">
                           {cfg.icon}
                         </div>
                       </div>
                     )}
                     <div className="p-4">
                       <div className="flex justify-between items-start mb-1">
-                        <h3 className="font-semibold text-gray-900 line-clamp-1 flex-1 mr-2 group-hover:text-indigo-600 transition-colors">{m.judul_materi}</h3>
+                        <h3 className="font-semibold text-gray-900 dark:text-white line-clamp-1 flex-1 mr-2 group-hover:text-indigo-600 transition-colors">{m.judul_materi}</h3>
                         <button onClick={e => handleDeleteMateri(m.id_materi, e)} className="text-gray-300 hover:text-red-500 p-0.5 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0">
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
-                      <div className="flex justify-between items-center text-xs pt-2 border-t border-gray-100">
+                      <div className="flex justify-between items-center text-xs pt-2 border-t border-gray-100 dark:border-white/8">
                         <span className={`uppercase font-medium px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.text}`}>{cfg.label}</span>
                         <span className="text-gray-400">{m.ukuran || ''}</span>
                       </div>
@@ -305,8 +305,8 @@ export function Courses() {
         {/* Viewer Modal */}
         {viewer && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col">
-              <div className="flex items-center justify-between px-6 py-4 border-b">
+            <div className="bg-white dark:bg-[#161b22] rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+              <div className="flex items-center justify-between px-6 py-4 border-b dark:border-white/10">
                 <div className="flex items-center gap-3 min-w-0">
                   <button onClick={() => setViewer(null)} className="text-gray-400 hover:text-gray-600 flex-shrink-0">
                     <ChevronLeft className="w-5 h-5" />
@@ -359,25 +359,25 @@ export function Courses() {
         {/* Upload Materi Modal */}
         {showMateriModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-md">
-              <div className="flex items-center justify-between p-6 border-b">
-                <h3 className="text-lg font-semibold">Tambah Materi</h3>
-                <button onClick={() => setShowMateriModal(false)}><X className="w-5 h-5 text-gray-400" /></button>
+            <div className="bg-white dark:bg-[#161b22] rounded-xl shadow-2xl w-full max-w-md">
+              <div className="flex items-center justify-between p-6 border-b dark:border-white/10">
+                <h3 className="text-lg font-semibold dark:text-white">Tambah Materi</h3>
+                <button onClick={() => setShowMateriModal(false)}><X className="w-5 h-5 text-gray-400 dark:text-gray-500" /></button>
               </div>
               <div className="p-6 space-y-4">
                 {materiError && <p className="text-red-500 text-sm bg-red-50 p-2 rounded">{materiError}</p>}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Kursus</label>
-                  <div className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-600 text-sm">{selectedCourse.judul}</div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Kursus</label>
+                  <div className="w-full px-3 py-2 border border-gray-200 dark:border-white/10 rounded-lg bg-gray-50 dark:bg-white/5 text-gray-600 dark:text-gray-400 text-sm">{selectedCourse.judul}</div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Judul Materi</label>
-                  <input className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Judul Materi</label>
+                  <input className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white dark:bg-[#161b22] dark:text-white"
                     value={materiForm.judul_materi} onChange={e => setMateriForm(f => ({ ...f, judul_materi: e.target.value }))} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Tipe</label>
-                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tipe</label>
+                  <select className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white dark:bg-[#161b22] dark:text-white"
                     value={materiForm.tipe_materi}
                     onChange={e => setMateriForm(f => ({ ...f, tipe_materi: e.target.value, file: null, youtube_url: '', drive_url: '' }))}>
                     <option value="pdf">📄 PDF (maks 5 MB)</option>
@@ -389,7 +389,7 @@ export function Courses() {
 
                 {materiForm.tipe_materi === 'video' && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Link YouTube</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Link YouTube</label>
                     <div className="relative">
                       <Youtube className="absolute left-3 top-1/2 -translate-y-1/2 text-red-500 w-4 h-4" />
                       <input type="url" placeholder="https://youtube.com/watch?v=..."
@@ -407,7 +407,7 @@ export function Courses() {
 
                 {materiForm.tipe_materi === 'link_drive' && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Link Google Drive</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Link Google Drive</label>
                     <div className="relative">
                       <Link className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-500 w-4 h-4" />
                       <input type="url" placeholder="https://drive.google.com/file/d/..."
@@ -420,7 +420,7 @@ export function Courses() {
 
                 {(materiForm.tipe_materi === 'pdf' || materiForm.tipe_materi === 'ppt') && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                       File {materiForm.tipe_materi.toUpperCase()} <span className="text-gray-400 font-normal">(maks 5 MB)</span>
                     </label>
                     <input type="file"
@@ -442,8 +442,8 @@ export function Courses() {
                   </div>
                 )}
               </div>
-              <div className="flex gap-3 p-6 border-t">
-                <button onClick={() => setShowMateriModal(false)} className="flex-1 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Batal</button>
+              <div className="flex gap-3 p-6 border-t dark:border-white/10">
+                <button onClick={() => setShowMateriModal(false)} className="flex-1 py-2 border border-gray-300 dark:border-white/10 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5">Batal</button>
                 <button onClick={handleSaveMateri} disabled={materiSaving} className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50">
                   {materiSaving ? 'Menyimpan...' : 'Simpan'}
                 </button>
@@ -461,7 +461,7 @@ export function Courses() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="relative w-full sm:w-96">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-          <input type="text" placeholder="Cari kursus dan trainer" className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+          <input type="text" placeholder="Cari kursus dan trainer" className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white dark:bg-[#161b22] dark:text-white dark:placeholder-gray-500"
             value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
         </div>
         <button onClick={openAdd} className="flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors">
@@ -472,11 +472,11 @@ export function Courses() {
       {loading ? (
         <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" /></div>
       ) : (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="bg-white dark:bg-[#161b22] rounded-xl shadow-sm border border-gray-200 dark:border-white/10 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-gray-50 border-b border-gray-200 text-sm font-medium text-gray-500 uppercase tracking-wider">
+                <tr className="bg-gray-50 dark:bg-[#161b22] border-b border-gray-200 dark:border-white/10 text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   <th className="px-6 py-4">Judul Kursus</th>
                   <th className="px-6 py-4">Trainer</th>
                   <th className="px-6 py-4">Status</th>
@@ -484,11 +484,11 @@ export function Courses() {
                   <th className="px-6 py-4 text-right">Aksi</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-gray-200 dark:divide-white/5">
                 {kursus.map(k => (
-                  <tr key={k.id} onClick={() => setSelectedCourse(k)} className="hover:bg-gray-50 transition-colors cursor-pointer">
+                  <tr key={k.id} onClick={() => setSelectedCourse(k)} className="hover:bg-gray-50 dark:hover:bg-white/3 transition-colors cursor-pointer">
                     <td className="px-6 py-4">
-                      <div className="font-medium text-gray-900 hover:text-indigo-600 transition-colors">{k.judul}</div>
+                      <div className="font-medium text-gray-900 dark:text-white hover:text-indigo-600 transition-colors">{k.judul}</div>
                       {k.deskripsi && <div className="text-xs text-gray-500 mt-0.5 truncate max-w-xs">{k.deskripsi}</div>}
                     </td>
                     <td className="px-6 py-4 text-gray-600">{k.trainer || '-'}</td>
@@ -513,12 +513,12 @@ export function Courses() {
             </table>
           </div>
           {meta && (
-            <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-              <span className="text-sm text-gray-500">Total {meta.total} kursus</span>
+            <div className="px-6 py-4 border-t border-gray-200 dark:border-white/10 flex items-center justify-between">
+              <span className="text-sm text-gray-500 dark:text-gray-400">Total {meta.total} kursus</span>
               <div className="flex space-x-2">
-                <button disabled={page <= 1} onClick={() => { setPage(p => p - 1); fetchKursus(page - 1, searchTerm); }} className="px-3 py-1 border border-gray-300 rounded-md text-sm disabled:opacity-50">Prev</button>
-                <span className="px-3 py-1 text-sm text-gray-600">{page} / {meta.last_page}</span>
-                <button disabled={page >= meta.last_page} onClick={() => { setPage(p => p + 1); fetchKursus(page + 1, searchTerm); }} className="px-3 py-1 border border-gray-300 rounded-md text-sm disabled:opacity-50">Next</button>
+                <button disabled={page <= 1} onClick={() => { setPage(p => p - 1); fetchKursus(page - 1, searchTerm); }} className="px-3 py-1 border border-gray-300 dark:border-white/10 rounded-md text-sm dark:text-gray-300 disabled:opacity-50">Prev</button>
+                <span className="px-3 py-1 text-sm text-gray-600 dark:text-gray-400">{page} / {meta.last_page}</span>
+                <button disabled={page >= meta.last_page} onClick={() => { setPage(p => p + 1); fetchKursus(page + 1, searchTerm); }} className="px-3 py-1 border border-gray-300 dark:border-white/10 rounded-md text-sm dark:text-gray-300 disabled:opacity-50">Next</button>
               </div>
             </div>
           )}
@@ -528,27 +528,27 @@ export function Courses() {
       {/* Course Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md">
-            <div className="flex items-center justify-between p-6 border-b">
-              <h3 className="text-lg font-semibold">{editData ? 'Edit Kursus' : 'Buat Kursus Baru'}</h3>
-              <button onClick={() => setShowModal(false)}><X className="w-5 h-5 text-gray-400" /></button>
+          <div className="bg-white dark:bg-[#161b22] rounded-xl shadow-2xl w-full max-w-md">
+            <div className="flex items-center justify-between p-6 border-b dark:border-white/10">
+              <h3 className="text-lg font-semibold dark:text-white">{editData ? 'Edit Kursus' : 'Buat Kursus Baru'}</h3>
+              <button onClick={() => setShowModal(false)}><X className="w-5 h-5 text-gray-400 dark:text-gray-500" /></button>
             </div>
             <div className="p-6 space-y-4">
               {error && <p className="text-red-500 text-sm bg-red-50 p-2 rounded">{error}</p>}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Judul Kursus</label>
-                <input className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Judul Kursus</label>
+                <input className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white dark:bg-[#161b22] dark:text-white"
                   value={form.judul_kursus} onChange={e => setForm(f => ({ ...f, judul_kursus: e.target.value }))} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Deskripsi</label>
-                <textarea rows={3} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none resize-none"
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Deskripsi</label>
+                <textarea rows={3} className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none resize-none bg-white dark:bg-[#161b22] dark:text-white"
                   value={form.deskripsi} onChange={e => setForm(f => ({ ...f, deskripsi: e.target.value }))} />
               </div>
               {!editData && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Trainer</label>
-                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Trainer</label>
+                  <select className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white dark:bg-[#161b22] dark:text-white"
                     value={form.id_trainer} onChange={e => setForm(f => ({ ...f, id_trainer: e.target.value }))}>
                     <option value="">-- Pilih Trainer --</option>
                     {trainers.map(t => <option key={t.id} value={t.id}>{t.nama}</option>)}
@@ -556,16 +556,16 @@ export function Courses() {
                 </div>
               )}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
+                <select className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white dark:bg-[#161b22] dark:text-white"
                   value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value }))}>
                   <option value="draft">Draft</option>
                   <option value="publish">Publish</option>
                 </select>
               </div>
             </div>
-            <div className="flex gap-3 p-6 border-t">
-              <button onClick={() => setShowModal(false)} className="flex-1 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Batal</button>
+            <div className="flex gap-3 p-6 border-t dark:border-white/10">
+              <button onClick={() => setShowModal(false)} className="flex-1 py-2 border border-gray-300 dark:border-white/10 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5">Batal</button>
               <button onClick={handleSave} disabled={saving} className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50">
                 {saving ? 'Menyimpan...' : 'Simpan'}
               </button>

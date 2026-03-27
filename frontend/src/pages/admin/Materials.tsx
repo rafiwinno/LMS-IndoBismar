@@ -97,7 +97,7 @@ export function Materials() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="relative w-full sm:w-96">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-          <input type="text" placeholder="Cari materi..." className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+          <input type="text" placeholder="Cari materi..." className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white dark:bg-[#161b22] dark:text-white dark:placeholder-gray-500"
             value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
         </div>
         <button onClick={() => { setForm({ judul_materi: '', tipe_materi: 'pdf', id_kursus: '', file: null, youtube_url: '', drive_url: '' }); setError(''); setShowModal(true); }}
@@ -117,7 +117,7 @@ export function Materials() {
             const cfg = tipeConfig[m.tipe_materi] ?? tipeConfig.dokumen;
             return (
               <div key={m.id_materi} onClick={() => setViewer(m)}
-                className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md hover:border-indigo-300 transition-all cursor-pointer group">
+                className="bg-white dark:bg-[#161b22] rounded-xl shadow-sm border border-gray-200 dark:border-white/10 overflow-hidden hover:shadow-md hover:border-indigo-300 transition-all cursor-pointer group">
                 {thumb ? (
                   <div className="relative h-36">
                     <img src={thumb} alt={m.judul_materi} className="w-full h-full object-cover" />
@@ -132,20 +132,20 @@ export function Materials() {
                   </div>
                 ) : (
                   <div className={`h-36 flex items-center justify-center ${cfg.bg}`}>
-                    <div className="p-4 bg-white rounded-xl shadow-sm group-hover:scale-110 transition-transform">
+                    <div className="p-4 bg-white dark:bg-[#161b22] rounded-xl shadow-sm group-hover:scale-110 transition-transform">
                       {cfg.icon}
                     </div>
                   </div>
                 )}
                 <div className="p-4">
                   <div className="flex justify-between items-start mb-1">
-                    <h3 className="font-semibold text-gray-900 line-clamp-1 flex-1 mr-2 group-hover:text-indigo-600 transition-colors">{m.judul_materi}</h3>
+                    <h3 className="font-semibold text-gray-900 dark:text-white line-clamp-1 flex-1 mr-2 group-hover:text-indigo-600 transition-colors">{m.judul_materi}</h3>
                     <button onClick={e => handleDelete(m.id_materi, e)} className="text-gray-300 hover:text-red-500 p-0.5 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                   <p className="text-sm text-indigo-600 mb-2 line-clamp-1">{m.kursus}</p>
-                  <div className="flex justify-between items-center text-xs pt-2 border-t border-gray-100">
+                  <div className="flex justify-between items-center text-xs pt-2 border-t border-gray-100 dark:border-white/8">
                     <span className={`uppercase font-medium px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.text}`}>{cfg.label}</span>
                     <span className="text-gray-400">{m.ukuran || ''}</span>
                   </div>
@@ -162,8 +162,8 @@ export function Materials() {
       {/* VIEWER MODAL */}
       {viewer && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col">
-            <div className="flex items-center justify-between px-6 py-4 border-b">
+          <div className="bg-white dark:bg-[#161b22] rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between px-6 py-4 border-b dark:border-white/10">
               <div className="flex items-center gap-3 min-w-0">
                 <button onClick={() => setViewer(null)} className="text-gray-400 hover:text-gray-600 flex-shrink-0">
                   <ChevronLeft className="w-5 h-5" />
@@ -217,29 +217,29 @@ export function Materials() {
       {/* UPLOAD MODAL */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md">
-            <div className="flex items-center justify-between p-6 border-b">
-              <h3 className="text-lg font-semibold">Tambah Materi</h3>
-              <button onClick={() => setShowModal(false)}><X className="w-5 h-5 text-gray-400" /></button>
+          <div className="bg-white dark:bg-[#161b22] rounded-xl shadow-2xl w-full max-w-md">
+            <div className="flex items-center justify-between p-6 border-b dark:border-white/10">
+              <h3 className="text-lg font-semibold dark:text-white">Tambah Materi</h3>
+              <button onClick={() => setShowModal(false)}><X className="w-5 h-5 text-gray-400 dark:text-gray-500" /></button>
             </div>
             <div className="p-6 space-y-4">
               {error && <p className="text-red-500 text-sm bg-red-50 p-2 rounded">{error}</p>}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Judul Materi</label>
-                <input className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Judul Materi</label>
+                <input className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white dark:bg-[#161b22] dark:text-white"
                   value={form.judul_materi} onChange={e => setForm(f => ({ ...f, judul_materi: e.target.value }))} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Kursus</label>
-                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Kursus</label>
+                <select className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white dark:bg-[#161b22] dark:text-white"
                   value={form.id_kursus} onChange={e => setForm(f => ({ ...f, id_kursus: e.target.value }))}>
                   <option value="">-- Pilih Kursus --</option>
                   {kursus.map(k => <option key={k.id} value={k.id}>{k.judul}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Tipe</label>
-                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tipe</label>
+                <select className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white dark:bg-[#161b22] dark:text-white"
                   value={form.tipe_materi}
                   onChange={e => setForm(f => ({ ...f, tipe_materi: e.target.value, file: null, youtube_url: '', drive_url: '' }))}>
                   <option value="pdf">📄 PDF (maks 5 MB)</option>
@@ -251,7 +251,7 @@ export function Materials() {
 
               {form.tipe_materi === 'video' && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Link YouTube</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Link YouTube</label>
                   <div className="relative">
                     <Youtube className="absolute left-3 top-1/2 -translate-y-1/2 text-red-500 w-4 h-4" />
                     <input type="url" placeholder="https://youtube.com/watch?v=..."
@@ -269,7 +269,7 @@ export function Materials() {
 
               {form.tipe_materi === 'link_drive' && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Link Google Drive</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Link Google Drive</label>
                   <div className="relative">
                     <Link className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-500 w-4 h-4" />
                     <input type="url" placeholder="https://drive.google.com/file/d/..."
@@ -282,7 +282,7 @@ export function Materials() {
 
               {(form.tipe_materi === 'pdf' || form.tipe_materi === 'ppt') && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     File {form.tipe_materi.toUpperCase()} <span className="text-gray-400 font-normal">(maks 5 MB)</span>
                   </label>
                   <input type="file"
@@ -304,8 +304,8 @@ export function Materials() {
                 </div>
               )}
             </div>
-            <div className="flex gap-3 p-6 border-t">
-              <button onClick={() => setShowModal(false)} className="flex-1 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Batal</button>
+            <div className="flex gap-3 p-6 border-t dark:border-white/10">
+              <button onClick={() => setShowModal(false)} className="flex-1 py-2 border border-gray-300 dark:border-white/10 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5">Batal</button>
               <button onClick={handleSave} disabled={saving} className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50">
                 {saving ? 'Menyimpan...' : 'Simpan'}
               </button>

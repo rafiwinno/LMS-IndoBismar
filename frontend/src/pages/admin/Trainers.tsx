@@ -129,10 +129,10 @@ export function Trainers() {
     <div className="space-y-6">
       {/* Toolbar */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="flex space-x-1 bg-gray-200 p-1 rounded-lg">
+        <div className="flex space-x-1 bg-gray-200 dark:bg-white/10 p-1 rounded-lg">
           {(['list', 'schedule'] as const).map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)}
-              className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${activeTab === tab ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}>
+              className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${activeTab === tab ? 'bg-white dark:bg-[#161b22] text-gray-900 dark:text-white shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}>
               {tab === 'list' ? 'Daftar Trainer' : 'Jadwal'}
             </button>
           ))}
@@ -141,7 +141,7 @@ export function Trainers() {
           <div className="relative w-full sm:w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
             <input type="text" placeholder={activeTab === 'list' ? 'Cari trainer...' : 'Cari jadwal...'}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white dark:bg-[#161b22] dark:text-white dark:placeholder-gray-500"
               value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
           </div>
           {activeTab === 'list' && (
@@ -165,7 +165,7 @@ export function Trainers() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredTrainers.map(t => (
-              <div key={t.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+              <div key={t.id} className="bg-white dark:bg-[#161b22] rounded-xl shadow-sm border border-gray-200 dark:border-white/10 p-6 hover:shadow-md transition-shadow">
                 <div className="flex justify-between items-start mb-4">
                   <div className="h-12 w-12 rounded-full bg-indigo-100 flex items-center justify-center">
                     <span className="text-indigo-600 font-bold text-lg">{initials(t.nama)}</span>
@@ -174,14 +174,14 @@ export function Trainers() {
                     {t.status === 'aktif' ? 'Aktif' : t.status}
                   </span>
                 </div>
-                <h3 className="font-semibold text-gray-900 mb-1">{t.nama}</h3>
-                <div className="flex items-center text-sm text-gray-500 mb-4">
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-1">{t.nama}</h3>
+                <div className="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-4">
                   <Mail className="w-4 h-4 mr-2 flex-shrink-0" />
                   <span className="truncate">{t.email}</span>
                 </div>
                 {t.nomor_hp && <p className="text-xs text-gray-400 mb-3">{t.nomor_hp}</p>}
-                <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                  <div className="flex items-center text-sm text-gray-600">
+                <div className="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-white/8">
+                  <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
                     <BookOpen className="w-4 h-4 mr-1 text-indigo-500" />
                     <span>{t.courses} Kursus</span>
                   </div>
@@ -207,11 +207,11 @@ export function Trainers() {
 
       {/* Jadwal */}
       {activeTab === 'schedule' && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="bg-white dark:bg-[#161b22] rounded-xl shadow-sm border border-gray-200 dark:border-white/10 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-gray-50 border-b border-gray-200 text-sm font-medium text-gray-500 uppercase tracking-wider">
+                <tr className="bg-gray-50 dark:bg-[#161b22] border-b border-gray-200 dark:border-white/10 text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   <th className="px-6 py-4">Trainer</th>
                   <th className="px-6 py-4">Kursus</th>
                   <th className="px-6 py-4">Tanggal & Jam</th>
@@ -219,31 +219,31 @@ export function Trainers() {
                   <th className="px-6 py-4 text-right">Aksi</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-gray-200 dark:divide-white/5">
                 {filteredJadwal.map(j => (
-                  <tr key={j.id} className="hover:bg-gray-50 transition-colors">
+                  <tr key={j.id} className="hover:bg-gray-50 dark:hover:bg-white/3 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center space-x-3">
                         <div className="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
                           <span className="text-indigo-600 font-bold text-xs">{initials(j.trainer || '?')}</span>
                         </div>
-                        <span className="font-medium text-gray-900">{j.trainer}</span>
+                        <span className="font-medium text-gray-900 dark:text-white">{j.trainer}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-gray-600">{j.kursus}</td>
                     <td className="px-6 py-4">
                       <div className="flex flex-col space-y-1">
-                        <div className="flex items-center text-sm text-gray-900">
+                        <div className="flex items-center text-sm text-gray-900 dark:text-white">
                           <CalendarIcon className="w-4 h-4 mr-2 text-gray-400" />{j.tanggal}
                         </div>
-                        <div className="flex items-center text-sm text-gray-500">
+                        <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
                           <Clock className="w-4 h-4 mr-2 text-gray-400" />{j.jam}
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex flex-col space-y-1">
-                        <span className="text-sm text-gray-900">{j.ruangan || '-'}</span>
+                        <span className="text-sm text-gray-900 dark:text-white">{j.ruangan || '-'}</span>
                         <span className={`inline-flex w-fit items-center px-2 py-0.5 rounded text-xs font-medium ${j.tipe === 'Online' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'}`}>
                           {j.tipe}
                         </span>
@@ -273,17 +273,17 @@ export function Trainers() {
       {/* Modal Tambah/Edit Jadwal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md">
-            <div className="flex items-center justify-between p-6 border-b">
-              <h3 className="text-lg font-semibold">{editJadwal ? 'Edit Jadwal' : 'Tambah Jadwal'}</h3>
-              <button onClick={() => setShowModal(false)}><X className="w-5 h-5 text-gray-400" /></button>
+          <div className="bg-white dark:bg-[#161b22] rounded-xl shadow-2xl w-full max-w-md">
+            <div className="flex items-center justify-between p-6 border-b dark:border-white/10">
+              <h3 className="text-lg font-semibold dark:text-white">{editJadwal ? 'Edit Jadwal' : 'Tambah Jadwal'}</h3>
+              <button onClick={() => setShowModal(false)}><X className="w-5 h-5 text-gray-400 dark:text-gray-500" /></button>
             </div>
             <div className="p-6 space-y-4">
               {error && <p className="text-red-500 text-sm bg-red-50 p-2 rounded">{error}</p>}
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Trainer</label>
-                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Trainer</label>
+                <select className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white dark:bg-[#161b22] dark:text-white"
                   value={form.id_trainer} onChange={e => setForm(f => ({ ...f, id_trainer: e.target.value }))}>
                   <option value="">-- Pilih Trainer --</option>
                   {trainers.map(t => <option key={t.id} value={t.id}>{t.nama}</option>)}
@@ -291,8 +291,8 @@ export function Trainers() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Kursus</label>
-                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Kursus</label>
+                <select className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white dark:bg-[#161b22] dark:text-white"
                   value={form.id_kursus} onChange={e => setForm(f => ({ ...f, id_kursus: e.target.value }))}>
                   <option value="">-- Pilih Kursus --</option>
                   {kursus.map(k => <option key={k.id} value={k.id}>{k.judul}</option>)}
@@ -300,32 +300,32 @@ export function Trainers() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Tanggal</label>
-                <input type="date" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tanggal</label>
+                <input type="date" className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white dark:bg-[#161b22] dark:text-white"
                   value={form.tanggal} onChange={e => setForm(f => ({ ...f, tanggal: e.target.value }))} />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Jam Mulai</label>
-                  <input type="time" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Jam Mulai</label>
+                  <input type="time" className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white dark:bg-[#161b22] dark:text-white"
                     value={form.jam_mulai} onChange={e => setForm(f => ({ ...f, jam_mulai: e.target.value }))} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Jam Selesai</label>
-                  <input type="time" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Jam Selesai</label>
+                  <input type="time" className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white dark:bg-[#161b22] dark:text-white"
                     value={form.jam_selesai} onChange={e => setForm(f => ({ ...f, jam_selesai: e.target.value }))} />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Ruangan</label>
-                <input type="text" placeholder="cth: Lab A, Room 302" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ruangan</label>
+                <input type="text" placeholder="cth: Lab A, Room 302" className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white dark:bg-[#161b22] dark:text-white"
                   value={form.ruangan} onChange={e => setForm(f => ({ ...f, ruangan: e.target.value }))} />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Tipe</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tipe</label>
                 <div className="flex gap-2">
                   {(['Online', 'Offline'] as const).map(t => (
                     <button key={t} onClick={() => setForm(f => ({ ...f, tipe: t }))}
@@ -336,8 +336,8 @@ export function Trainers() {
                 </div>
               </div>
             </div>
-            <div className="flex gap-3 p-6 border-t">
-              <button onClick={() => setShowModal(false)} className="flex-1 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Batal</button>
+            <div className="flex gap-3 p-6 border-t dark:border-white/10">
+              <button onClick={() => setShowModal(false)} className="flex-1 py-2 border border-gray-300 dark:border-white/10 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5">Batal</button>
               <button onClick={handleSave} disabled={saving} className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50">
                 {saving ? 'Menyimpan...' : 'Simpan'}
               </button>
@@ -349,10 +349,10 @@ export function Trainers() {
       {/* Modal Tambah Trainer */}
       {showCreateTrainer && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md">
-            <div className="flex items-center justify-between p-6 border-b">
-              <h3 className="text-lg font-semibold">Tambah Trainer Baru</h3>
-              <button onClick={() => setShowCreateTrainer(false)}><X className="w-5 h-5 text-gray-400" /></button>
+          <div className="bg-white dark:bg-[#161b22] rounded-xl shadow-2xl w-full max-w-md">
+            <div className="flex items-center justify-between p-6 border-b dark:border-white/10">
+              <h3 className="text-lg font-semibold dark:text-white">Tambah Trainer Baru</h3>
+              <button onClick={() => setShowCreateTrainer(false)}><X className="w-5 h-5 text-gray-400 dark:text-gray-500" /></button>
             </div>
             <div className="p-6 space-y-4">
               {trainerError && <p className="text-red-500 text-sm bg-red-50 p-2 rounded">{trainerError}</p>}
@@ -364,16 +364,16 @@ export function Trainers() {
                 { key: 'nomor_hp', label: 'Nomor HP',     type: 'tel',      placeholder: '08xxxxxxxxxx' },
               ].map(({ key, label, type, placeholder }) => (
                 <div key={key}>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{label}</label>
                   <input type={type} placeholder={placeholder}
                     value={(trainerForm as any)[key]}
                     onChange={e => setTrainerForm(f => ({ ...f, [key]: key === 'nomor_hp' ? e.target.value.replace(/\D/g, '') : e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" />
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white dark:bg-[#161b22] dark:text-white" />
                 </div>
               ))}
             </div>
-            <div className="flex gap-3 p-6 border-t">
-              <button onClick={() => setShowCreateTrainer(false)} className="flex-1 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Batal</button>
+            <div className="flex gap-3 p-6 border-t dark:border-white/10">
+              <button onClick={() => setShowCreateTrainer(false)} className="flex-1 py-2 border border-gray-300 dark:border-white/10 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5">Batal</button>
               <button onClick={handleCreateTrainer} disabled={savingTrainer} className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50">
                 {savingTrainer ? 'Menyimpan...' : 'Tambah Trainer'}
               </button>

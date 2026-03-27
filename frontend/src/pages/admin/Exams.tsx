@@ -201,7 +201,7 @@ export function Exams() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="relative w-full sm:w-96">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-          <input type="text" placeholder="Cari kuis..." className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+          <input type="text" placeholder="Cari kuis..." className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white dark:bg-[#161b22] dark:text-white dark:placeholder-gray-500"
             value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
         </div>
         <button onClick={() => { setForm({ judul_kuis: '', id_kursus: '', waktu_mulai: '', waktu_selesai: '' }); setError(''); setModalMode('create'); }}
@@ -214,11 +214,11 @@ export function Exams() {
       {loading ? (
         <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"/></div>
       ) : (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="bg-white dark:bg-[#161b22] rounded-xl shadow-sm border border-gray-200 dark:border-white/10 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-gray-50 border-b border-gray-200 text-sm font-medium text-gray-500 uppercase tracking-wider">
+                <tr className="bg-gray-50 dark:bg-[#161b22] border-b border-gray-200 dark:border-white/10 text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   <th className="px-6 py-4">Judul Kuis</th>
                   <th className="px-6 py-4">Kursus</th>
                   <th className="px-6 py-4">Waktu Mulai</th>
@@ -228,11 +228,11 @@ export function Exams() {
                   <th className="px-6 py-4 text-right">Aksi</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-gray-200 dark:divide-white/5">
                 {kuis.map(k => (
-                  <tr key={k.id} className="hover:bg-gray-50 transition-colors">
+                  <tr key={k.id} className="hover:bg-gray-50 dark:hover:bg-white/3 transition-colors">
                     <td className="px-6 py-4">
-                      <div className="font-medium text-gray-900 flex items-center space-x-2">
+                      <div className="font-medium text-gray-900 dark:text-white flex items-center space-x-2">
                         <Award className="w-4 h-4 text-indigo-500" /><span>{k.judul}</span>
                       </div>
                     </td>
@@ -274,21 +274,21 @@ export function Exams() {
       {/* ── MODAL BUAT KUIS ───────────────────────────────────────────────── */}
       {modalMode === 'create' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md">
-            <div className="flex items-center justify-between p-6 border-b">
-              <h3 className="text-lg font-semibold">Buat Kuis Baru</h3>
-              <button onClick={closeModal}><X className="w-5 h-5 text-gray-400" /></button>
+          <div className="bg-white dark:bg-[#161b22] rounded-xl shadow-2xl w-full max-w-md">
+            <div className="flex items-center justify-between p-6 border-b dark:border-white/10">
+              <h3 className="text-lg font-semibold dark:text-white">Buat Kuis Baru</h3>
+              <button onClick={closeModal}><X className="w-5 h-5 text-gray-400 dark:text-gray-500" /></button>
             </div>
             <div className="p-6 space-y-4">
               {error && <p className="text-red-500 text-sm bg-red-50 p-2 rounded">{error}</p>}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Judul Kuis</label>
-                <input className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Judul Kuis</label>
+                <input className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white dark:bg-[#161b22] dark:text-white"
                   value={form.judul_kuis} onChange={e => setForm(f => ({ ...f, judul_kuis: e.target.value }))} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Kursus</label>
-                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Kursus</label>
+                <select className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white dark:bg-[#161b22] dark:text-white"
                   value={form.id_kursus} onChange={e => setForm(f => ({ ...f, id_kursus: e.target.value }))}>
                   <option value="">-- Pilih Kursus --</option>
                   {kursus.map(k => <option key={k.id} value={k.id}>{k.judul}</option>)}
@@ -300,7 +300,7 @@ export function Exams() {
                 const [datePart, timePart] = (form[field] || 'T').split('T');
                 return (
                   <div key={key}>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                       Waktu {key === 'mulai' ? 'Mulai' : 'Selesai'}
                     </label>
                     <div className="flex items-center gap-2">
@@ -316,8 +316,8 @@ export function Exams() {
                 );
               })}
             </div>
-            <div className="flex gap-3 p-6 border-t">
-              <button onClick={closeModal} className="flex-1 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Batal</button>
+            <div className="flex gap-3 p-6 border-t dark:border-white/10">
+              <button onClick={closeModal} className="flex-1 py-2 border border-gray-300 dark:border-white/10 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5">Batal</button>
               <button onClick={handleCreateKuis} disabled={saving}
                 className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50 flex items-center justify-center gap-2">
                 {saving ? 'Menyimpan...' : <><span>Lanjut Buat Soal</span><ChevronRight className="w-4 h-4" /></>}
@@ -330,23 +330,23 @@ export function Exams() {
       {/* ── MODAL EDITOR SOAL ─────────────────────────────────────────────── */}
       {modalMode === 'soal' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+          <div className="bg-white dark:bg-[#161b22] rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col">
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b">
+            <div className="flex items-center justify-between px-6 py-4 border-b dark:border-white/10">
               <div>
-                <h3 className="text-lg font-semibold">Editor Soal — {selectedKuis?.judul}</h3>
+                <h3 className="text-lg font-semibold dark:text-white">Editor Soal — {selectedKuis?.judul}</h3>
                 <p className="text-xs text-gray-500">{soalList.length} soal · Total bobot: {soalList.reduce((s, q) => s + (q.bobot_nilai || 0), 0)} poin</p>
               </div>
-              <button onClick={closeModal}><X className="w-5 h-5 text-gray-400" /></button>
+              <button onClick={closeModal}><X className="w-5 h-5 text-gray-400 dark:text-gray-500" /></button>
             </div>
 
             <div className="flex flex-1 overflow-hidden">
               {/* Sidebar soal */}
-              <div className="w-48 border-r bg-gray-50 flex flex-col overflow-y-auto flex-shrink-0">
+              <div className="w-48 border-r dark:border-white/10 bg-gray-50 dark:bg-[#0d0f14] flex flex-col overflow-y-auto flex-shrink-0">
                 <div className="p-3 space-y-1">
                   {soalList.map((s, i) => (
                     <button key={i} onClick={() => setActiveSoal(i)}
-                      className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center justify-between group ${activeSoal === i ? 'bg-indigo-600 text-white' : 'hover:bg-gray-200 text-gray-700'}`}>
+                      className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center justify-between group ${activeSoal === i ? 'bg-indigo-600 text-white' : 'hover:bg-gray-200 dark:hover:bg-white/10 text-gray-700 dark:text-gray-300'}`}>
                       <span className="font-medium">Soal {i + 1}</span>
                       <div className="flex items-center gap-1">
                         <span className={`text-xs ${activeSoal === i ? 'text-indigo-200' : 'text-gray-400'}`}>
@@ -375,7 +375,7 @@ export function Exams() {
                   {/* Tipe & bobot */}
                   <div className="flex gap-4">
                     <div className="flex-1">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Tipe Soal</label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tipe Soal</label>
                       <div className="flex gap-2">
                         {(['pilihan_ganda', 'essay'] as const).map(t => (
                           <button key={t} onClick={() => updateSoal(activeSoal, 'tipe', t)}
@@ -386,7 +386,7 @@ export function Exams() {
                       </div>
                     </div>
                     <div className="w-28">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Bobot Nilai</label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Bobot Nilai</label>
                       <input type="number" min="1" max="100"
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-center font-semibold"
                         value={currentSoal.bobot_nilai === 0 ? '' : currentSoal.bobot_nilai}
@@ -397,9 +397,9 @@ export function Exams() {
 
                   {/* Pertanyaan */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Pertanyaan <span className="text-indigo-600">Soal {activeSoal + 1}</span></label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Pertanyaan <span className="text-indigo-600">Soal {activeSoal + 1}</span></label>
                     <textarea rows={3} placeholder="Tulis pertanyaan di sini..."
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none resize-none"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none resize-none bg-white dark:bg-[#161b22] dark:text-white"
                       value={currentSoal.pertanyaan}
                       onChange={e => updateSoal(activeSoal, 'pertanyaan', e.target.value)} />
                   </div>
@@ -443,10 +443,10 @@ export function Exams() {
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-between px-6 py-4 border-t bg-gray-50">
-              <p className="text-sm text-gray-500">{soalList.length} soal · {soalList.reduce((s, q) => s + (q.bobot_nilai || 0), 0)} total poin</p>
+            <div className="flex items-center justify-between px-6 py-4 border-t dark:border-white/10 bg-gray-50 dark:bg-[#0d0f14]">
+              <p className="text-sm text-gray-500 dark:text-gray-400">{soalList.length} soal · {soalList.reduce((s, q) => s + (q.bobot_nilai || 0), 0)} total poin</p>
               <div className="flex gap-3">
-                <button onClick={closeModal} className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 text-sm">Batal</button>
+                <button onClick={closeModal} className="px-4 py-2 border border-gray-300 dark:border-white/10 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 text-sm">Batal</button>
                 <button onClick={handleSaveSoal} disabled={saving}
                   className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50 text-sm flex items-center gap-2">
                   <Save className="w-4 h-4" />{saving ? 'Menyimpan...' : 'Simpan Semua Soal'}
@@ -460,17 +460,17 @@ export function Exams() {
       {/* ── MODAL HASIL ───────────────────────────────────────────────────── */}
       {modalMode === 'results' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[85vh] flex flex-col">
-            <div className="flex items-center justify-between p-6 border-b">
+          <div className="bg-white dark:bg-[#161b22] rounded-xl shadow-2xl w-full max-w-3xl max-h-[85vh] flex flex-col">
+            <div className="flex items-center justify-between p-6 border-b dark:border-white/10">
               <div>
-                <h3 className="text-lg font-semibold">Hasil: {selectedKuis?.judul}</h3>
+                <h3 className="text-lg font-semibold dark:text-white">Hasil: {selectedKuis?.judul}</h3>
                 {results && (
                   <p className="text-sm text-gray-500 mt-0.5">
                     Rata-rata: <span className="font-medium text-indigo-600">{results.avg_score}</span> · {results.total_peserta} peserta selesai
                   </p>
                 )}
               </div>
-              <button onClick={closeModal}><X className="w-5 h-5 text-gray-400" /></button>
+              <button onClick={closeModal}><X className="w-5 h-5 text-gray-400 dark:text-gray-500" /></button>
             </div>
 
             {gradingAttempt ? (
@@ -539,7 +539,7 @@ export function Exams() {
               /* Tabel hasil */
               <div className="overflow-y-auto flex-1">
                 <table className="w-full text-left">
-                  <thead className="bg-gray-50 text-xs font-medium text-gray-500 uppercase sticky top-0">
+                  <thead className="bg-gray-50 dark:bg-[#161b22] text-xs font-medium text-gray-500 dark:text-gray-400 uppercase sticky top-0 border-b border-gray-200 dark:border-white/10">
                     <tr>
                       <th className="px-6 py-3">Peserta</th>
                       <th className="px-6 py-3">Skor</th>
@@ -548,7 +548,7 @@ export function Exams() {
                       <th className="px-6 py-3">Essay</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200">
+                  <tbody className="divide-y divide-gray-200 dark:divide-white/5">
                     {results?.data?.map((r: any, i: number) => (
                       <tr key={i} className="hover:bg-gray-50">
                         <td className="px-6 py-3 text-sm font-medium text-gray-900">{r.peserta}</td>

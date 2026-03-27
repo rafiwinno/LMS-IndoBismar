@@ -2,10 +2,19 @@ import React, { useEffect, useState } from 'react';
 import { Users, BookOpen, FileText, ClipboardList, TrendingUp } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, LineChart, Line } from 'recharts';
 import { api } from '../../lib/api';
+import { useTheme } from '../../context/ThemeContext';
 
 export function Dashboard() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+
+  const gridColor   = isDark ? 'rgba(255,255,255,0.07)' : '#e5e7eb';
+  const tickColor   = isDark ? '#6b7280' : '#6b7280';
+  const tooltipStyle = isDark
+    ? { borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 4px 16px rgba(0,0,0,0.5)', backgroundColor: '#161b22', color: '#f3f4f6' }
+    : { borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', backgroundColor: '#fff', color: '#111' };
 
   useEffect(() => {
     api.dashboard().then(setData).catch(console.error).finally(() => setLoading(false));
@@ -29,8 +38,8 @@ export function Dashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Kuis Diselesaikan (per Minggu)</h3>
+          <div className="bg-white dark:bg-[#161b22] p-6 rounded-xl shadow-sm border border-gray-100 dark:border-white/8">
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">Kuis Diselesaikan (per Minggu)</h3>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={progressData}>
@@ -40,10 +49,10 @@ export function Dashboard() {
                       <stop offset="95%" stopColor="#4f46e5" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#6b7280', fontSize: 12}} />
-                  <YAxis axisLine={false} tickLine={false} tick={{fill: '#6b7280', fontSize: 12}} />
-                  <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={gridColor} />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: tickColor, fontSize: 12}} />
+                  <YAxis axisLine={false} tickLine={false} tick={{fill: tickColor, fontSize: 12}} />
+                  <Tooltip contentStyle={tooltipStyle} />
                   <Area type="monotone" dataKey="progress" stroke="#4f46e5" strokeWidth={3} fillOpacity={1} fill="url(#colorProgress)" />
                 </AreaChart>
               </ResponsiveContainer>
@@ -51,30 +60,30 @@ export function Dashboard() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Completion Kursus</h3>
+            <div className="bg-white dark:bg-[#161b22] p-6 rounded-xl shadow-sm border border-gray-100 dark:border-white/8">
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">Completion Kursus</h3>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={courseData}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#6b7280', fontSize: 11}} />
-                    <YAxis axisLine={false} tickLine={false} tick={{fill: '#6b7280', fontSize: 12}} />
-                    <Tooltip cursor={{fill: '#f3f4f6'}} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={gridColor} />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: tickColor, fontSize: 11}} />
+                    <YAxis axisLine={false} tickLine={false} tick={{fill: tickColor, fontSize: 12}} />
+                    <Tooltip cursor={{fill: isDark ? 'rgba(255,255,255,0.04)' : '#f3f4f6'}} contentStyle={tooltipStyle} />
                     <Bar dataKey="completion" fill="#3b82f6" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
             </div>
 
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Materi Dibuka (per Hari)</h3>
+            <div className="bg-white dark:bg-[#161b22] p-6 rounded-xl shadow-sm border border-gray-100 dark:border-white/8">
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">Materi Dibuka (per Hari)</h3>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={submissionData}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#6b7280', fontSize: 12}} />
-                    <YAxis axisLine={false} tickLine={false} tick={{fill: '#6b7280', fontSize: 12}} />
-                    <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={gridColor} />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: tickColor, fontSize: 12}} />
+                    <YAxis axisLine={false} tickLine={false} tick={{fill: tickColor, fontSize: 12}} />
+                    <Tooltip contentStyle={tooltipStyle} />
                     <Line type="monotone" dataKey="rate" stroke="#10b981" strokeWidth={3} dot={{r: 4}} activeDot={{r: 6}} />
                   </LineChart>
                 </ResponsiveContainer>
@@ -83,24 +92,24 @@ export function Dashboard() {
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Aktivitas Terbaru</h3>
+        <div className="bg-white dark:bg-[#161b22] p-6 rounded-xl shadow-sm border border-gray-100 dark:border-white/8">
+          <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">Aktivitas Terbaru</h3>
           {activities.length === 0 ? (
             <p className="text-sm text-gray-400 text-center py-8">Belum ada aktivitas</p>
           ) : (
             <div className="space-y-6">
               {activities.map((activity: any, i: number) => (
                 <div key={i} className="flex space-x-4">
-                  <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
-                    <span className="text-indigo-600 font-semibold text-sm">
+                  <div className="h-10 w-10 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0">
+                    <span className="text-red-600 dark:text-red-400 font-semibold text-sm">
                       {activity.user?.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
                     </span>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-800">
-                      <span className="font-medium">{activity.user}</span> {activity.action} <span className="font-medium text-indigo-600">{activity.target}</span>
+                    <p className="text-sm text-gray-800 dark:text-white">
+                      <span className="font-medium">{activity.user}</span> {activity.action} <span className="font-medium text-red-600 dark:text-red-400">{activity.target}</span>
                     </p>
-                    <p className="text-xs text-gray-500 mt-1">{activity.time ? new Date(activity.time).toLocaleString('id-ID') : ''}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{activity.time ? new Date(activity.time).toLocaleString('id-ID') : ''}</p>
                   </div>
                 </div>
               ))}
@@ -114,15 +123,15 @@ export function Dashboard() {
 
 function StatCard({ title, value, icon: Icon, color }: { title: string; value: string | null; icon: any; color: string }) {
   return (
-    <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center space-x-4">
+    <div className="bg-white dark:bg-[#161b22] p-5 rounded-xl shadow-sm border border-gray-100 dark:border-white/8 flex items-center space-x-4">
       <div className={`p-3 rounded-xl ${color} flex-shrink-0`}>
         <Icon className="w-6 h-6 text-white" />
       </div>
       <div>
-        <p className="text-xs font-medium text-gray-500">{title}</p>
+        <p className="text-xs font-medium text-gray-500 dark:text-gray-400">{title}</p>
         {value === null
-          ? <div className="h-7 w-12 bg-gray-200 rounded animate-pulse mt-1" />
-          : <h4 className="text-xl font-bold text-gray-900">{value}</h4>
+          ? <div className="h-7 w-12 bg-gray-200 dark:bg-white/10 rounded animate-pulse mt-1" />
+          : <h4 className="text-xl font-bold text-gray-900 dark:text-white">{value}</h4>
         }
       </div>
     </div>
