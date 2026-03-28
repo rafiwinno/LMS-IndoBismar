@@ -16,7 +16,6 @@ export default function Courses() {
   const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
 
-  // Baca search dari URL (diketik di header search bar)
   const search = searchParams.get('search') ?? '';
 
   useEffect(() => {
@@ -30,24 +29,23 @@ export default function Courses() {
     c.judul_kursus.toLowerCase().includes(search.toLowerCase())
   );
 
-  // ✅ Skeleton saat loading
   if (loading) return <CoursesSkeleton />;
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Daftar Kursus</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Daftar Kursus</h1>
           {search && (
-            <p className="text-slate-500 text-sm mt-1">
-              Hasil pencarian: <span className="font-semibold text-blue-600">"{search}"</span>
+            <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
+              Hasil pencarian: <span className="font-semibold text-red-600 dark:text-red-400">"{search}"</span>
             </p>
           )}
         </div>
       </div>
 
       {filtered.length === 0 ? (
-        <div className="text-center text-slate-500 py-12">
+        <div className="text-center text-gray-500 dark:text-gray-400 py-12">
           {search ? `Tidak ada kursus yang cocok dengan "${search}".` : 'Tidak ada kursus ditemukan.'}
         </div>
       ) : (
@@ -56,17 +54,17 @@ export default function Courses() {
             <Link
               key={course.id_kursus}
               to={`/courses/${course.id_kursus}`}
-              className="bg-white rounded-2xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow group flex flex-col h-full overflow-hidden"
+              className="bg-white dark:bg-[#161b27] rounded-2xl shadow-sm border border-gray-200 dark:border-white/8 hover:shadow-md transition-shadow group flex flex-col h-full overflow-hidden"
             >
-              <div className="h-32 bg-slate-100 flex items-center justify-center">
-                <BookOpen size={48} className="text-slate-300" />
+              <div className="h-32 bg-gray-100 dark:bg-white/5 flex items-center justify-center">
+                <BookOpen size={48} className="text-gray-300 dark:text-gray-600" />
               </div>
               <div className="p-5 flex-1 flex flex-col">
-                <h3 className="font-bold text-slate-900 mb-2 group-hover:text-blue-600 transition-colors line-clamp-2">
+                <h3 className="font-bold text-gray-900 dark:text-white mb-2 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors line-clamp-2">
                   {course.judul_kursus}
                 </h3>
-                <p className="text-sm text-slate-500 line-clamp-2 mb-3">{course.deskripsi}</p>
-                <p className="text-xs text-slate-400 mt-auto">Trainer: {course.nama_trainer ?? '-'}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mb-3">{course.deskripsi}</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-auto">Trainer: {course.nama_trainer ?? '-'}</p>
               </div>
             </Link>
           ))}

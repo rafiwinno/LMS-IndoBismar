@@ -45,95 +45,80 @@ export default function Grades() {
     nilai: k.skor,
   }));
 
-  // ✅ Skeleton saat loading
   if (loading) return <GradesSkeleton />;
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Nilai & Progres</h1>
-        <p className="text-slate-500 text-sm mt-1">Pantau perkembangan belajar dan nilai Anda</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Nilai & Progres</h1>
+        <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Pantau perkembangan belajar dan nilai Anda</p>
       </div>
 
       {/* Stat Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center">
-            <Award size={24} />
+        {[
+          { icon: Award, color: 'blue', label: 'Nilai Akhir PKL', value: nilaiPkl?.nilai_akhir ?? '-' },
+          { icon: CheckCircle, color: 'emerald', label: 'Kuis Selesai', value: riwayatKuis.length },
+          { icon: TrendingUp, color: 'purple', label: 'Rata-rata Nilai Kuis', value: rataKuis },
+        ].map(({ icon: Icon, color, label, value }) => (
+          <div key={label} className="bg-white dark:bg-[#161b27] rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-white/8 flex items-center gap-4">
+            <div className={`w-12 h-12 rounded-xl bg-${color}-100 dark:bg-${color}-500/10 text-${color}-600 dark:text-${color}-400 flex items-center justify-center`}>
+              <Icon size={24} />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{label}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{value}</p>
+            </div>
           </div>
-          <div>
-            <p className="text-sm font-medium text-slate-500">Nilai Akhir PKL</p>
-            <p className="text-2xl font-bold text-slate-900">{nilaiPkl?.nilai_akhir ?? '-'}</p>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
-            <CheckCircle size={24} />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-slate-500">Kuis Selesai</p>
-            <p className="text-2xl font-bold text-slate-900">{riwayatKuis.length}</p>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center">
-            <TrendingUp size={24} />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-slate-500">Rata-rata Nilai Kuis</p>
-            <p className="text-2xl font-bold text-slate-900">{rataKuis}</p>
-          </div>
-        </div>
+        ))}
       </div>
 
       {/* Nilai PKL */}
       {nilaiPkl && (
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="p-6 border-b border-slate-100">
-            <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-              <Award size={20} className="text-blue-600" />
+        <div className="bg-white dark:bg-[#161b27] rounded-2xl shadow-sm border border-gray-200 dark:border-white/8 overflow-hidden">
+          <div className="p-6 border-b border-gray-100 dark:border-white/8">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <Award size={20} className="text-red-500" />
               Penilaian PKL
             </h2>
           </div>
           <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="text-center p-4 bg-slate-50 rounded-xl">
-              <p className="text-sm text-slate-500 mb-1">Nilai Teknis</p>
-              <p className="text-3xl font-bold text-blue-600">{nilaiPkl.nilai_teknis}</p>
+            <div className="text-center p-4 bg-gray-50 dark:bg-white/5 rounded-xl">
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Nilai Teknis</p>
+              <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">{nilaiPkl.nilai_teknis}</p>
             </div>
-            <div className="text-center p-4 bg-slate-50 rounded-xl">
-              <p className="text-sm text-slate-500 mb-1">Nilai Non-Teknis</p>
-              <p className="text-3xl font-bold text-purple-600">{nilaiPkl.nilai_non_teknis}</p>
+            <div className="text-center p-4 bg-gray-50 dark:bg-white/5 rounded-xl">
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Nilai Non-Teknis</p>
+              <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">{nilaiPkl.nilai_non_teknis}</p>
             </div>
-            <div className="text-center p-4 bg-emerald-50 rounded-xl">
-              <p className="text-sm text-slate-500 mb-1">Nilai Akhir</p>
-              <p className="text-3xl font-bold text-emerald-600">{nilaiPkl.nilai_akhir}</p>
+            <div className="text-center p-4 bg-emerald-50 dark:bg-emerald-500/10 rounded-xl">
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Nilai Akhir</p>
+              <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">{nilaiPkl.nilai_akhir}</p>
             </div>
           </div>
           {nilaiPkl.catatan && (
             <div className="px-6 pb-6">
-              <p className="text-sm text-slate-500">Catatan: <span className="text-slate-700">{nilaiPkl.catatan}</span></p>
-              <p className="text-xs text-slate-400 mt-1">Dinilai oleh: {nilaiPkl.nama_penilai} · {new Date(nilaiPkl.tanggal_penilaian).toLocaleDateString('id-ID')}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Catatan: <span className="text-gray-700 dark:text-gray-300">{nilaiPkl.catatan}</span></p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Dinilai oleh: {nilaiPkl.nama_penilai} · {new Date(nilaiPkl.tanggal_penilaian).toLocaleDateString('id-ID')}</p>
             </div>
           )}
         </div>
       )}
 
       {/* Riwayat Kuis */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="p-6 border-b border-slate-100">
-          <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-            <BookOpen size={20} className="text-blue-600" />
+      <div className="bg-white dark:bg-[#161b27] rounded-2xl shadow-sm border border-gray-200 dark:border-white/8 overflow-hidden">
+        <div className="p-6 border-b border-gray-100 dark:border-white/8">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+            <BookOpen size={20} className="text-red-500" />
             Riwayat Kuis
           </h2>
         </div>
         {riwayatKuis.length === 0 ? (
-          <div className="p-8 text-center text-slate-500">Belum ada kuis yang dikerjakan.</div>
+          <div className="p-8 text-center text-gray-500 dark:text-gray-400">Belum ada kuis yang dikerjakan.</div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-slate-600">
-              <thead className="bg-slate-50 text-slate-700 font-semibold border-b border-slate-200">
+            <table className="w-full text-left text-sm text-gray-600 dark:text-gray-400">
+              <thead className="bg-gray-50 dark:bg-white/5 text-gray-700 dark:text-gray-300 font-semibold border-b border-gray-200 dark:border-white/8">
                 <tr>
                   <th className="px-6 py-4">Nama Kuis</th>
                   <th className="px-6 py-4">Kursus</th>
@@ -142,24 +127,24 @@ export default function Grades() {
                   <th className="px-6 py-4 text-center">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-gray-100 dark:divide-white/8">
                 {riwayatKuis.map((item, index) => (
-                  <tr key={index} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-6 py-4 font-medium text-slate-900">{item.judul_kuis}</td>
-                    <td className="px-6 py-4 text-slate-600">{item.judul_kursus}</td>
+                  <tr key={index} className="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+                    <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">{item.judul_kuis}</td>
+                    <td className="px-6 py-4 text-gray-600 dark:text-gray-400">{item.judul_kursus}</td>
                     <td className="px-6 py-4 text-center">
-                      <span className={`text-lg font-bold ${item.skor >= 70 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                      <span className={`text-lg font-bold ${item.skor >= 70 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
                         {item.skor}
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-1.5 text-slate-500">
+                      <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400">
                         <Clock size={14} />
                         {new Date(item.waktu_mulai).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
                       </div>
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
+                      <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">
                         {item.status}
                       </span>
                     </td>
@@ -173,21 +158,29 @@ export default function Grades() {
 
       {/* Chart */}
       {chartData.length > 0 && (
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="p-6 border-b border-slate-100">
-            <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-              <TrendingUp size={20} className="text-blue-600" />
+        <div className="bg-white dark:bg-[#161b27] rounded-2xl shadow-sm border border-gray-200 dark:border-white/8 overflow-hidden">
+          <div className="p-6 border-b border-gray-100 dark:border-white/8">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <TrendingUp size={20} className="text-red-500" />
               Grafik Nilai Kuis
             </h2>
           </div>
           <div className="p-6 h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b' }} />
-                <YAxis domain={[0, 100]} axisLine={false} tickLine={false} tick={{ fill: '#64748b' }} />
-                <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                <Bar dataKey="nilai" name="Nilai" fill="#2563eb" radius={[6, 6, 0, 0]} maxBarSize={60} />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(148,163,184,0.15)" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8' }} />
+                <YAxis domain={[0, 100]} axisLine={false} tickLine={false} tick={{ fill: '#94a3b8' }} />
+                <Tooltip
+                  contentStyle={{
+                    borderRadius: '12px',
+                    border: 'none',
+                    backgroundColor: '#161b27',
+                    color: '#fff',
+                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.3)',
+                  }}
+                />
+                <Bar dataKey="nilai" name="Nilai" fill="#dc2626" radius={[6, 6, 0, 0]} maxBarSize={60} />
               </BarChart>
             </ResponsiveContainer>
           </div>

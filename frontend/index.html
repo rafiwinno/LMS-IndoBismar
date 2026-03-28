@@ -4,6 +4,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>LMS PT Indo Bismar</title>
+    <script>
+      (function () {
+        const dark = localStorage.getItem('lms_dark_mode') === 'true';
+        if (dark) document.documentElement.classList.add('dark');
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
