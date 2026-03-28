@@ -1,15 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
-  LayoutDashboard,
-  BookOpen,
-  CheckSquare,
-  Award,
-  User,
-  FolderOpen,
-  X,
-  LogOut,
-  Moon,
-  Sun,
+  LayoutDashboard, BookOpen, CheckSquare,
+  Award, User, FolderOpen, X, LogOut,
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -36,7 +28,7 @@ const navItems = [
 ];
 
 export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
-  const { dark: isDark, toggle: toggleDark} = useDarkMode();
+  const { dark, toggle } = useDarkMode();
   const navigate = useNavigate();
   const user = getUser();
 
@@ -52,7 +44,6 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
 
   return (
     <>
-      {/* Mobile overlay */}
       {isOpen && (
         <div
           className="fixed inset-0 z-20 bg-black/50 lg:hidden"
@@ -72,16 +63,25 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
         {/* Logo */}
         <div className="flex items-center justify-between h-16 px-5 border-b border-gray-200 dark:border-white/8 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center font-bold text-white text-sm select-none">
-              IB
+            {/* Logo gambar */}
+            <img
+              src="/src/assets/logo-bismar.png"
+              alt="Logo Indo Bismar"
+              className="w-9 h-9 rounded-full object-cover shrink-0"
+            />
+            {/* Teks nama + subtitle */}
+            <div className="leading-tight">
+              <p className="text-[14px] font-bold text-gray-900 dark:text-white tracking-tight">
+                Indo Bismar
+              </p>
+              <p className="text-[10px] text-gray-400 dark:text-gray-500 font-medium tracking-wide">
+                Learning Management
+              </p>
             </div>
-            <span className="text-[15px] font-bold text-gray-900 dark:text-white tracking-tight">
-              LMS Indo Bismar
-            </span>
           </div>
           <button
             onClick={() => setIsOpen(false)}
-            className="lg:hidden p-1 rounded-md hover:bg-gray-100 dark:hover:bg-white/8 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+            className="lg:hidden p-1 rounded-md hover:bg-gray-100 dark:hover:bg-white/8 text-gray-400 transition-colors"
           >
             <X size={20} />
           </button>
@@ -106,10 +106,7 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
             >
               {({ isActive }) => (
                 <>
-                  <item.icon
-                    size={18}
-                    className={isActive ? 'text-red-500 dark:text-red-400' : ''}
-                  />
+                  <item.icon size={18} className={isActive ? 'text-red-500 dark:text-red-400' : ''} />
                   {item.name}
                 </>
               )}
@@ -132,13 +129,22 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
             </div>
           </div>
 
-          {/* Dark mode toggle */}
+          {/* Dark mode toggle switch */}
           <button
-            onClick={toggleDark}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/8 hover:text-gray-900 dark:hover:text-white transition-colors"
+            onClick={toggle}
+            className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/8 transition-colors"
           >
-            {isDark ? <Sun size={18} /> : <Moon size={18} />}
-            {isDark ? 'Mode Terang' : 'Mode Gelap'}
+            <span>{dark ? 'Dark Mode' : 'Light Mode'}</span>
+            {/* Toggle switch */}
+            <div className={cn(
+              'relative w-11 h-6 rounded-full transition-colors duration-200',
+              dark ? 'bg-red-500' : 'bg-gray-300'
+            )}>
+              <div className={cn(
+                'absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200',
+                dark ? 'translate-x-5' : 'translate-x-0.5'
+              )} />
+            </div>
           </button>
 
           {/* Logout */}

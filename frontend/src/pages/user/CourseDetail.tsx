@@ -88,7 +88,7 @@ export default function CourseDetail() {
                     <h3 className="font-semibold text-base text-gray-900 dark:text-white">{item.judul_materi}</h3>
                   </div>
                   {item.url && (
-                    
+                    <a
                       href={item.url}
                       target="_blank"
                       rel="noopener noreferrer"
