@@ -234,7 +234,7 @@ export default function SuperAdminLayout() {
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 overflow-y-auto pt-5 pb-3">
+      <nav className="flex-1 pt-5 pb-3">
         {NAV_ITEMS.map(group => (
           <div key={group.group} className="mb-4">
             {(!collapsed || isMobile) && (
@@ -349,7 +349,7 @@ export default function SuperAdminLayout() {
 
       {/* Desktop sidebar */}
       <aside
-        className={`hidden lg:flex flex-col bg-sidebar shrink-0 border-r border-theme
+        className={`hidden lg:flex flex-col bg-sidebar shrink-0 border-r border-theme sticky top-0 h-screen
           transition-all duration-300 ease-in-out ${collapsed ? 'w-[68px]' : 'w-[220px]'}`}
       >
         <SidebarContent />
