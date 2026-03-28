@@ -20,10 +20,10 @@ const Skel = ({ className='' }) => <div className={`bg-muted animate-pulse round
 // ─── Role Config ──────────────────────────────────────────────────────────────
 const ROLE_ORDER: BranchUserRole[] = ['admin', 'trainer', 'user'];
 const ROLE_CFG: Record<BranchUserRole, { label:string; sectionBg:string; sectionText:string; badgeBg:string; badgeText:string; }> = {
-  superadmin: { label:'Superadmin', sectionBg:'bg-rose-50',   sectionText:'text-rose-700',   badgeBg:'bg-rose-100',   badgeText:'text-rose-700' },
-  admin:      { label:'Admin',      sectionBg:'bg-purple-50', sectionText:'text-purple-700', badgeBg:'bg-purple-100', badgeText:'text-purple-700' },
-  trainer:    { label:'Trainer',    sectionBg:'bg-blue-50',   sectionText:'text-blue-700',   badgeBg:'bg-blue-100',   badgeText:'text-blue-700' },
-  user:       { label:'User',       sectionBg:'bg-muted',  sectionText:'text-secondary',  badgeBg:'bg-muted',  badgeText:'text-label' },
+  superadmin: { label:'Superadmin', sectionBg:'bg-rose-50 dark:bg-rose-500/10',     sectionText:'text-rose-700 dark:text-rose-400',     badgeBg:'bg-rose-100 dark:bg-rose-500/20',     badgeText:'text-rose-700 dark:text-rose-400' },
+  admin:      { label:'Admin',      sectionBg:'bg-purple-50 dark:bg-purple-500/10', sectionText:'text-purple-700 dark:text-purple-400', badgeBg:'bg-purple-100 dark:bg-purple-500/20', badgeText:'text-purple-700 dark:text-purple-400' },
+  trainer:    { label:'Trainer',    sectionBg:'bg-blue-50 dark:bg-blue-500/10',     sectionText:'text-blue-700 dark:text-blue-400',     badgeBg:'bg-blue-100 dark:bg-blue-500/20',     badgeText:'text-blue-700 dark:text-blue-400' },
+  user:       { label:'User',       sectionBg:'bg-muted',                           sectionText:'text-secondary',                       badgeBg:'bg-muted',                            badgeText:'text-label' },
 };
 
 // ─── Users Modal ──────────────────────────────────────────────────────────────
@@ -54,14 +54,14 @@ function UsersModal({ branch, onClose }: { branch: Branch; onClose: ()=>void }) 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
       onClick={e=>{ if(e.target===e.currentTarget) onClose(); }}>
-      <div className="w-full max-w-3xl bg-white rounded-2xl flex flex-col shadow-2xl overflow-hidden border border-subtle"
+      <div className="w-full max-w-3xl bg-card rounded-2xl flex flex-col shadow-2xl overflow-hidden border border-subtle"
         style={{ maxHeight:'88vh' }}>
 
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-subtle bg-muted/50 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0">
-              <Users size={16} className="text-blue-600" />
+            <div className="w-9 h-9 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20 flex items-center justify-center shrink-0">
+              <Users size={16} className="text-red-600 dark:text-red-400" />
             </div>
             <div>
               <p className="text-sm font-bold text-primary leading-tight">{branch.nama_cabang}</p>
@@ -76,16 +76,14 @@ function UsersModal({ branch, onClose }: { branch: Branch; onClose: ()=>void }) 
             </div>
           </div>
           <button type="button" onClick={onClose}
-            className="p-1.5 rounded-lg bg-muted hover:bg-slate-200 text-label transition-colors">
-            <X size={15}/>
-          </button>
+            className="p-1.5 rounded-lg bg-muted hover:bg-muted text-label transition-colors"><X size={15}/></button>
         </div>
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto">
           {loading && (
             <div className="flex flex-col items-center justify-center py-24 gap-3">
-              <Loader2 size={28} className="text-blue-500 animate-spin" />
+              <Loader2 size={28} className="text-red-500 animate-spin" />
               <p className="text-xs text-muted">Memuat data…</p>
             </div>
           )}
@@ -98,7 +96,7 @@ function UsersModal({ branch, onClose }: { branch: Branch; onClose: ()=>void }) 
           {!loading && !error && users.length === 0 && (
             <div className="flex flex-col items-center justify-center py-24 gap-3">
               <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center">
-                <Users size={20} className="text-slate-300" />
+                <Users size={20} className="text-muted" />
               </div>
               <p className="text-sm font-semibold text-muted">Belum ada user di cabang ini</p>
             </div>
@@ -119,7 +117,7 @@ function UsersModal({ branch, onClose }: { branch: Branch; onClose: ()=>void }) 
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
                       {group.map(user => (
                         <div key={user.id}
-                          className="flex items-center gap-3 bg-white rounded-xl px-4 py-3 border border-subtle hover:border-blue-200 hover:shadow-sm transition-all">
+                          className="flex items-center gap-3 bg-card rounded-xl px-4 py-3 border border-subtle hover:border-red-200 dark:hover:border-red-500/30 hover:shadow-sm transition-all">
                           <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
                             style={{ background: avatarColor(user.nama) }}>
                             {getInitials(user.nama)}
@@ -128,8 +126,8 @@ function UsersModal({ branch, onClose }: { branch: Branch; onClose: ()=>void }) 
                             <p className="text-xs font-semibold text-primary truncate">{user.nama}</p>
                             <p className="text-[10px] text-muted truncate">@{user.username}</p>
                             <div className="flex items-center gap-1 mt-1">
-                              <span className={`w-1.5 h-1.5 rounded-full ${user.status==='aktif'?'bg-emerald-400':'bg-slate-300'}`} />
-                              <span className={`text-[10px] font-semibold ${user.status==='aktif'?'text-emerald-600':'text-muted'}`}>
+                              <span className={`w-1.5 h-1.5 rounded-full ${user.status==='aktif'?'bg-emerald-400':'bg-muted border border-theme'}`} />
+                              <span className={`text-[10px] font-semibold ${user.status==='aktif'?'text-emerald-600 dark:text-emerald-400':'text-muted'}`}>
                                 {user.status==='aktif'?'Aktif':'Nonaktif'}
                               </span>
                             </div>
@@ -159,7 +157,7 @@ function UsersModal({ branch, onClose }: { branch: Branch; onClose: ()=>void }) 
               })}
             </div>
             <button type="button" onClick={onClose}
-              className="px-4 py-2 rounded-lg bg-slate-900 text-white text-xs font-bold hover:bg-slate-700 transition-colors">
+              className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition-colors">
               Tutup
             </button>
           </div>
@@ -223,18 +221,18 @@ function BranchModal({ isOpen, onClose, onSuccess, initialData, cities }:
     finally { setLoading(false); }
   };
 
-  const inp = (k:string) => `w-full pl-9 pr-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${errors[k]?'border-red-300 bg-red-50':'border-slate-200 bg-white'}`;
+  const inp = (k:string) => `w-full pl-9 pr-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors ${errors[k]?'border-red-300 dark:border-red-500/40 bg-red-50 dark:bg-red-500/10':'border-theme bg-card'}`;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
       onClick={e=>{if(e.target===e.currentTarget)onClose()}}>
-      <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden border border-subtle">
+      <div className="bg-card rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden border border-subtle">
 
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-subtle bg-muted/50">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center">
-              <Building2 size={16} className="text-blue-600"/>
+            <div className="w-9 h-9 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20 flex items-center justify-center">
+              <Building2 size={16} className="text-red-600 dark:text-red-400"/>
             </div>
             <div>
               <h2 className="text-sm font-bold text-primary">{isEdit?'Edit Cabang':'Tambah Cabang Baru'}</h2>
@@ -246,7 +244,7 @@ function BranchModal({ isOpen, onClose, onSuccess, initialData, cities }:
 
         {/* Form */}
         <div className="px-6 py-4 space-y-3">
-          {errors.general && <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{errors.general}</p>}
+          {errors.general && <p className="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-lg px-3 py-2">{errors.general}</p>}
 
           <div>
             <label className="block text-xs font-semibold text-secondary mb-1">Nama Cabang <span className="text-red-500">*</span></label>
@@ -268,7 +266,7 @@ function BranchModal({ isOpen, onClose, onSuccess, initialData, cities }:
             <div>
               <label className="block text-xs font-semibold text-secondary mb-1">Kota <span className="text-red-500">*</span></label>
               <div className="relative"><MapPin size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted"/>
-                <select className={`w-full pl-9 pr-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white ${errors.kota?'border-red-300 bg-red-50':'border-slate-200'}`}
+                <select className={`w-full pl-9 pr-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-red-500 bg-card ${errors.kota?'border-red-300 dark:border-red-500/40':'border-theme'}`}
                   value={kota} onChange={e=>{setKota(e.target.value);ce('kota')}}>
                   <option value="">Pilih Kota</option>
                   {Object.entries(KOTA_GROUPS).map(([group,list])=>(
@@ -284,7 +282,7 @@ function BranchModal({ isOpen, onClose, onSuccess, initialData, cities }:
 
           <div>
             <label className="block text-xs font-semibold text-secondary mb-1">Alamat</label>
-            <textarea className="w-full px-3 py-2 rounded-lg border border-theme text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none bg-white"
+            <textarea className="w-full px-3 py-2 rounded-lg border border-theme text-sm focus:outline-none focus:ring-2 focus:ring-red-500 resize-none bg-card"
               placeholder="Jl. Basuki Rahmat No. 10" rows={2}
               value={alamat} onChange={e=>setAlamat(e.target.value)} />
           </div>
@@ -303,8 +301,9 @@ function BranchModal({ isOpen, onClose, onSuccess, initialData, cities }:
               {(['aktif','nonaktif'] as Branch['status'][]).map(s=>(
                 <button key={s} type="button" onClick={()=>setStatus(s)}
                   className={`px-4 py-1.5 rounded-lg text-xs font-bold border transition-all ${
-                    status===s ? s==='aktif' ? 'bg-emerald-600 border-emerald-600 text-white' : 'bg-slate-700 border-slate-700 text-white'
-                    : 'bg-white border-slate-200 text-label hover:border-slate-300'}`}>
+                    status===s
+                      ? s==='aktif' ? 'bg-emerald-600 border-emerald-600 text-white' : 'bg-slate-700 dark:bg-slate-600 border-slate-700 dark:border-slate-600 text-white'
+                      : 'bg-card border-theme text-label hover:bg-muted'}`}>
                   {s==='aktif'?'Aktif':'Nonaktif'}
                 </button>
               ))}
@@ -316,7 +315,7 @@ function BranchModal({ isOpen, onClose, onSuccess, initialData, cities }:
         <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-subtle bg-muted/50">
           <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg border border-theme text-xs font-semibold text-secondary hover:bg-muted transition-colors">Batal</button>
           <button type="button" onClick={handleSubmit} disabled={loading}
-            className="flex items-center gap-2 px-5 py-2 rounded-lg bg-slate-900 text-white text-xs font-bold hover:bg-slate-700 disabled:opacity-60 transition-colors shadow-sm">
+            className="flex items-center gap-2 px-5 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-bold disabled:opacity-60 transition-colors shadow-sm">
             {loading ? <><span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"/>Menyimpan…</>
               : isEdit ? 'Simpan Perubahan' : 'Buat Cabang'}
           </button>
@@ -331,9 +330,9 @@ function DeleteDialog({ branch, onCancel, onConfirm }:{ branch:Branch; onCancel:
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
       onClick={e=>{if(e.target===e.currentTarget)onCancel()}}>
-      <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl p-6 text-center border border-subtle">
-        <div className="w-11 h-11 rounded-full bg-red-50 border border-red-100 flex items-center justify-center mx-auto mb-4">
-          <Trash2 size={18} className="text-red-600"/>
+      <div className="bg-card rounded-2xl w-full max-w-sm shadow-2xl p-6 text-center border border-subtle">
+        <div className="w-11 h-11 rounded-full bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20 flex items-center justify-center mx-auto mb-4">
+          <Trash2 size={18} className="text-red-600 dark:text-red-400"/>
         </div>
         <h3 className="text-sm font-bold text-primary">Hapus Cabang?</h3>
         <p className="text-xs text-label mt-2">
@@ -354,7 +353,7 @@ function DetailDrawer({ branch, onClose, onEdit, onViewUsers }:
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/30 backdrop-blur-sm"
       onClick={e=>{if(e.target===e.currentTarget)onClose()}}>
-      <div className="bg-white h-full w-72 flex flex-col shadow-2xl border-l border-slate-200">
+      <div className="bg-card h-full w-72 flex flex-col shadow-2xl border-l border-theme">
         <div className="flex items-center justify-between px-5 py-4 border-b border-subtle bg-muted/50">
           <span className="text-xs font-bold text-secondary uppercase tracking-wider">Detail Cabang</span>
           <button type="button" onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted text-muted transition-colors"><X size={15}/></button>
@@ -362,20 +361,20 @@ function DetailDrawer({ branch, onClose, onEdit, onViewUsers }:
 
         <div className="flex-1 overflow-y-auto p-5">
           {/* Hero */}
-          <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-5 text-white mb-4">
+          <div className="bg-gradient-to-br from-red-600 to-red-800 rounded-xl p-5 text-white mb-4">
             <div className="flex items-start justify-between mb-4">
               <div>
                 <p className="font-bold text-base leading-tight">{branch.nama_cabang}</p>
-                <p className="text-muted text-xs font-mono mt-1">{branch.kode}</p>
+                <p className="text-red-200 text-xs font-mono mt-1">{branch.kode}</p>
               </div>
               <span className={`text-[10px] font-bold px-2 py-1 rounded-md ${
-                branch.status==='aktif' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-muted0/20 text-muted'
+                branch.status==='aktif' ? 'bg-white/20 text-white' : 'bg-white/10 text-red-200'
               }`}>{branch.status==='aktif'?'AKTIF':'NONAKTIF'}</span>
             </div>
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-2xl font-bold">{branch.total_users.toLocaleString()}</p>
-                <p className="text-muted text-xs">Total Users</p>
+                <p className="text-red-200 text-xs">Total Users</p>
               </div>
               <button type="button" onClick={onViewUsers}
                 className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-white border border-white/20 bg-white/10 hover:bg-white/20 transition-all">
@@ -385,8 +384,8 @@ function DetailDrawer({ branch, onClose, onEdit, onViewUsers }:
           </div>
 
           {/* Info */}
-          {([['Kota',    branch.kota,    MapPin], ['Alamat',branch.alamat,Building2], ['Telepon',branch.telepon,Phone], ['Admin',branch.admin,Shield]] as [string,string,any][]).map(([label,value,Icon])=>(
-            <div key={label} className="flex gap-3 py-3 border-b border-slate-50">
+          {([['Kota',branch.kota,MapPin],['Alamat',branch.alamat,Building2],['Telepon',branch.telepon,Phone],['Admin',branch.admin,Shield]] as [string,string,any][]).map(([label,value,Icon])=>(
+            <div key={label} className="flex gap-3 py-3 border-b border-theme">
               <div className="w-7 h-7 rounded-lg bg-muted flex items-center justify-center shrink-0 mt-0.5">
                 <Icon size={13} className="text-label"/>
               </div>
@@ -400,7 +399,7 @@ function DetailDrawer({ branch, onClose, onEdit, onViewUsers }:
 
         <div className="p-4 border-t border-subtle">
           <button type="button" onClick={onEdit}
-            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-700 transition-colors">
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition-colors">
             <Edit2 size={13}/> Edit Cabang
           </button>
         </div>
@@ -413,7 +412,7 @@ function DetailDrawer({ branch, onClose, onEdit, onViewUsers }:
 function BranchCard({ branch, onEdit, onDelete, onDetail, onUsers }:
   { branch:Branch; onEdit:()=>void; onDelete:()=>void; onDetail:()=>void; onUsers:()=>void }) {
   return (
-    <div className="card rounded-xl hover:shadow-md hover:border-slate-300 transition-all overflow-hidden flex flex-col group">
+    <div className="card rounded-xl hover:shadow-md hover:border-red-200 dark:hover:border-red-500/30 transition-all overflow-hidden flex flex-col group">
       <div className="p-5 flex-1">
         <div className="flex items-start justify-between mb-3">
           <div className="flex-1 min-w-0 pr-2">
@@ -423,11 +422,11 @@ function BranchCard({ branch, onEdit, onDelete, onDetail, onUsers }:
           {/* actions — visible on hover */}
           <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
             <button type="button" onClick={onEdit}
-              className="p-1.5 text-muted hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all" title="Edit">
+              className="p-1.5 text-muted hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-lg transition-all" title="Edit">
               <Edit2 size={13}/>
             </button>
             <button type="button" onClick={onDelete}
-              className="p-1.5 text-muted hover:text-red-600 hover:bg-red-50 rounded-lg transition-all" title="Hapus">
+              className="p-1.5 text-muted hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-all" title="Hapus">
               <Trash2 size={13}/>
             </button>
           </div>
@@ -436,9 +435,11 @@ function BranchCard({ branch, onEdit, onDelete, onDetail, onUsers }:
         {/* Status */}
         <div className="mb-3">
           <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${
-            branch.status==='aktif' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-muted text-label border-slate-200'
+            branch.status==='aktif'
+              ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20'
+              : 'bg-muted text-label border-theme'
           }`}>
-            <span className={`w-1.5 h-1.5 rounded-full ${branch.status==='aktif'?'bg-emerald-500':'bg-slate-300'}`}/>
+            <span className={`w-1.5 h-1.5 rounded-full ${branch.status==='aktif'?'bg-emerald-500':'bg-muted border border-theme'}`}/>
             {branch.status==='aktif'?'Aktif':'Nonaktif'}
           </span>
         </div>
@@ -459,8 +460,8 @@ function BranchCard({ branch, onEdit, onDelete, onDetail, onUsers }:
       {/* Card footer */}
       <div className="px-5 py-3 border-t border-subtle bg-muted/40 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-lg bg-blue-50 flex items-center justify-center">
-            <Users size={12} className="text-blue-600"/>
+          <div className="w-6 h-6 rounded-lg bg-red-50 dark:bg-red-500/10 flex items-center justify-center">
+            <Users size={12} className="text-red-600 dark:text-red-400"/>
           </div>
           <div>
             <p className="text-[10px] text-muted leading-none">Total Users</p>
@@ -469,11 +470,11 @@ function BranchCard({ branch, onEdit, onDelete, onDetail, onUsers }:
         </div>
         <div className="flex items-center gap-3">
           <button type="button" onClick={onUsers}
-            className="p-1.5 rounded-lg text-muted hover:text-blue-600 hover:bg-blue-50 transition-all" title="Lihat user">
+            className="p-1.5 rounded-lg text-muted hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all" title="Lihat user">
             <Eye size={13}/>
           </button>
           <button type="button" onClick={onDetail}
-            className="text-[11px] font-bold text-blue-600 hover:text-blue-800 transition-colors">
+            className="text-[11px] font-bold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors">
             Detail →
           </button>
         </div>
@@ -565,7 +566,7 @@ export default function Branches() {
     return [1,'...',page-1,page,page+1,'...',totalPages];
   };
 
-  const resetFilters  = () => { setSearch(''); setFilterStatus(''); setFilterKota(''); setPage(1); };
+  const resetFilters   = () => { setSearch(''); setFilterStatus(''); setFilterKota(''); setPage(1); };
   const openUsersModal = (b:Branch) => { setDetailTarget(null); setUsersTarget(b); };
 
   return (
@@ -573,8 +574,8 @@ export default function Branches() {
 
       {/* Toast */}
       {toast && (
-        <div className={`fixed top-5 right-5 z-[70] flex items-center gap-2 bg-white border-l-4 border border-subtle
-          ${toast.type==='success'?'border-l-emerald-500 text-emerald-700':'border-l-red-500 text-red-600'}
+        <div className={`fixed top-5 right-5 z-[70] flex items-center gap-2 bg-card border-l-4 border border-subtle
+          ${toast.type==='success'?'border-l-emerald-500 text-emerald-700 dark:text-emerald-400':'border-l-red-500 text-red-600 dark:text-red-400'}
           rounded-xl px-4 py-3 shadow-xl text-xs font-semibold`}>
           {toast.type==='success'?'✓':'✕'} {toast.msg}
         </div>
@@ -589,7 +590,7 @@ export default function Branches() {
           </p>
         </div>
         <button type="button" onClick={()=>setShowCreate(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-slate-700 text-white rounded-lg text-xs font-bold transition-colors shadow-sm shrink-0">
+          className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold transition-colors shadow-sm shrink-0">
           <Plus size={14}/> Tambah Cabang
         </button>
       </div>
@@ -599,19 +600,19 @@ export default function Branches() {
         <div className="relative w-full sm:w-72">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted"/>
           <input type="text" placeholder="Cari nama, kode, atau kota..."
-            className="w-full pl-9 pr-4 py-2 border border-theme rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            className="w-full pl-9 pr-4 py-2 border border-theme rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-red-500 bg-card"
             value={search} onChange={e=>setSearch(e.target.value)}/>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <SlidersHorizontal size={13} className="text-muted hidden sm:block"/>
           <select value={filterStatus} onChange={e=>setFilterStatus(e.target.value)}
-            className={`px-3 py-2 border rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 ${filterStatus?'border-blue-300 bg-blue-50 text-blue-700':'border-slate-200 bg-white text-secondary'}`}>
+            className={`px-3 py-2 border rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors ${filterStatus?'border-blue-300 dark:border-blue-500/40 bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400':'border-theme bg-card text-secondary'}`}>
             <option value="">Semua Status</option>
             <option value="aktif">Aktif</option>
             <option value="nonaktif">Nonaktif</option>
           </select>
           <select value={filterKota} onChange={e=>setFilterKota(e.target.value)}
-            className={`px-3 py-2 border rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 ${filterKota?'border-blue-300 bg-blue-50 text-blue-700':'border-slate-200 bg-white text-secondary'}`}>
+            className={`px-3 py-2 border rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors ${filterKota?'border-blue-300 dark:border-blue-500/40 bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400':'border-theme bg-card text-secondary'}`}>
             <option value="">Semua Kota</option>
             {cities.map(c=><option key={c} value={c}>{c}</option>)}
           </select>
@@ -621,7 +622,7 @@ export default function Branches() {
           )}
           <button type="button" onClick={handleExportCSV} disabled={exporting}
             className="flex items-center gap-1.5 px-3 py-2 border border-theme rounded-lg text-xs font-semibold text-secondary hover:bg-muted disabled:opacity-50 transition-colors">
-            {exporting ? <span className="w-3 h-3 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"/> : <Download size={12}/>}
+            {exporting ? <span className="w-3 h-3 border-2 border-muted border-t-transparent rounded-full animate-spin"/> : <Download size={12}/>}
             Export
           </button>
         </div>
@@ -652,11 +653,11 @@ export default function Branches() {
       ) : (
         <div className="card rounded-xl py-20 text-center">
           <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center mx-auto mb-3">
-            <Building2 size={20} className="text-slate-300"/>
+            <Building2 size={20} className="text-muted"/>
           </div>
           <p className="text-sm font-semibold text-muted">Tidak ada cabang</p>
-          <p className="text-xs text-slate-300 mt-1">Coba ubah filter atau tambah cabang baru</p>
-          {hasFilter && <button type="button" onClick={resetFilters} className="text-xs text-blue-600 hover:underline mt-2">Reset filter</button>}
+          <p className="text-xs text-muted mt-1">Coba ubah filter atau tambah cabang baru</p>
+          {hasFilter && <button type="button" onClick={resetFilters} className="text-xs text-red-600 dark:text-red-400 hover:underline mt-2">Reset filter</button>}
         </div>
       )}
 
@@ -665,7 +666,7 @@ export default function Branches() {
         <div className="flex items-center justify-between flex-wrap gap-4">
           <span className="text-xs text-muted">
             {(page-1)*PER_PAGE+1}–{Math.min(page*PER_PAGE,branches.length)} dari {branches.length} cabang
-            {hasFilter && <span className="text-blue-500 font-semibold ml-1">(difilter)</span>}
+            {hasFilter && <span className="text-red-500 dark:text-red-400 font-semibold ml-1">(difilter)</span>}
           </span>
           <div className="flex items-center gap-1">
             <button type="button" onClick={()=>setPage(p=>Math.max(1,p-1))} disabled={page===1}
@@ -673,9 +674,9 @@ export default function Branches() {
               <ChevronLeft size={13}/> Prev
             </button>
             {pageNumbers().map((p,i)=>
-              p==='...' ? <span key={`e${i}`} className="px-1 text-slate-300 text-xs">…</span>
+              p==='...' ? <span key={`e${i}`} className="px-1 text-muted text-xs">…</span>
               : <button key={p} type="button" onClick={()=>setPage(Number(p))}
-                  className={`w-7 h-7 rounded-lg text-xs font-bold border transition-colors ${page===p?'bg-slate-900 border-slate-900 text-white':'border-slate-200 text-label hover:bg-muted'}`}>
+                  className={`w-7 h-7 rounded-lg text-xs font-bold border transition-colors ${page===p?'bg-red-600 border-red-600 text-white':'border-theme text-label hover:bg-muted'}`}>
                   {p}
                 </button>
             )}

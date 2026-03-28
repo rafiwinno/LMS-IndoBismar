@@ -20,9 +20,9 @@ interface Branch { id: number; nama_cabang: string; kota: string; }
 const getInitials = (n: string) => n.trim().split(' ').slice(0,2).map(w=>w[0]?.toUpperCase()).join('');
 const getRoleLabel = (r: string) => ({ admin:'Admin Cabang', trainer:'Trainer', user:'User' }[r] ?? r);
 const ROLE_COLOR: Record<string, string> = {
-  admin:   'bg-purple-50 text-purple-700 border-purple-200',
-  trainer: 'bg-blue-50 text-blue-700 border-blue-200',
-  user:    'bg-muted text-secondary border-slate-200',
+  admin:   'bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-500/20',
+  trainer: 'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-500/20',
+  user:    'bg-muted text-secondary border-theme',
 };
 
 const parseWIB = (dt: string) =>
@@ -52,11 +52,11 @@ function OnlineBadge({ isOnline, lastLogin }: { isOnline: boolean; lastLogin: st
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
             <span className="relative inline-flex rounded-full w-2 h-2 bg-emerald-500" />
           </span>
-          <span className="text-xs font-semibold text-emerald-600">Online</span>
+          <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">Online</span>
         </>
       ) : (
         <>
-          <span className="w-2 h-2 rounded-full bg-slate-200 shrink-0" />
+          <span className="w-2 h-2 rounded-full bg-muted shrink-0 border border-theme" />
           <span className="text-xs text-label">{relative}</span>
         </>
       )}
@@ -66,7 +66,7 @@ function OnlineBadge({ isOnline, lastLogin }: { isOnline: boolean; lastLogin: st
             <p className={`font-semibold mb-0.5 ${isOnline?'text-emerald-400':'text-slate-300'}`}>
               {isOnline ? '● Sedang Online' : '● Offline'}
             </p>
-            <p className="text-muted">{lastLogin ? `Terakhir: ${full}` : 'Belum pernah login'}</p>
+            <p className="text-slate-400">{lastLogin ? `Terakhir: ${full}` : 'Belum pernah login'}</p>
           </div>
           <div className="w-2 h-2 bg-slate-900 rotate-45 ml-3 -mt-1" />
         </div>
@@ -126,19 +126,19 @@ function UserModal({ isOpen, onClose, onSuccess, initialData, branches }:
     finally { setLoading(false); }
   };
 
-  const inp = (k:string) => `w-full pl-9 pr-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${errors[k]?'border-red-300 bg-red-50':'border-slate-200 bg-white'}`;
-  const sel = (k:string) => `w-full pl-9 pr-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors bg-white ${errors[k]?'border-red-300':'border-slate-200'}`;
+  const inp = (k:string) => `w-full pl-9 pr-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors ${errors[k]?'border-red-300 dark:border-red-500/40 bg-red-50 dark:bg-red-500/10':'border-theme bg-card'}`;
+  const sel = (k:string) => `w-full pl-9 pr-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors bg-card ${errors[k]?'border-red-300 dark:border-red-500/40':'border-theme'}`;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
       onClick={e=>{if(e.target===e.currentTarget)onClose()}}>
-      <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden border border-subtle">
+      <div className="bg-card rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden border border-subtle">
 
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-subtle bg-muted/50">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center">
-              <UsersIcon size={16} className="text-blue-600" />
+            <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 flex items-center justify-center">
+              <UsersIcon size={16} className="text-blue-600 dark:text-blue-400" />
             </div>
             <div>
               <h2 className="text-sm font-bold text-primary">{isEdit?'Edit User':'Tambah User Baru'}</h2>
@@ -150,7 +150,7 @@ function UserModal({ isOpen, onClose, onSuccess, initialData, branches }:
 
         {/* Avatar preview */}
         <div className="flex items-center gap-3 px-6 pt-4 pb-1">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-bold text-sm shrink-0">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center text-white font-bold text-sm shrink-0">
             {getInitials(nama)||'?'}
           </div>
           <div>
@@ -161,12 +161,12 @@ function UserModal({ isOpen, onClose, onSuccess, initialData, branches }:
 
         {/* Form */}
         <div className="px-6 py-4 space-y-3 max-h-[60vh] overflow-y-auto">
-          {errors.general && <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{errors.general}</p>}
+          {errors.general && <p className="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-lg px-3 py-2">{errors.general}</p>}
 
           {[
-            { label:'Nama Lengkap', key:'nama', icon:User,  type:'text',     val:nama,     set:(v:string)=>{setNama(v);ce('nama')},     ph:'Contoh: Budi Santoso', req:true },
-            { label:'Username',     key:'username',icon:User,type:'text',    val:username, set:(v:string)=>{setUsername(v);ce('username')},ph:'username123', req:true },
-            { label:'Email',        key:'email', icon:Mail, type:'email',    val:email,    set:(v:string)=>{setEmail(v);ce('email')},    ph:'budi@domain.com', req:false },
+            { label:'Nama Lengkap', key:'nama',     icon:User, type:'text',  val:nama,     set:(v:string)=>{setNama(v);ce('nama')},         ph:'Contoh: Budi Santoso', req:true },
+            { label:'Username',     key:'username', icon:User, type:'text',  val:username, set:(v:string)=>{setUsername(v);ce('username')},  ph:'username123',           req:true },
+            { label:'Email',        key:'email',    icon:Mail, type:'email', val:email,    set:(v:string)=>{setEmail(v);ce('email')},        ph:'budi@domain.com',       req:false },
           ].map(f => (
             <div key={f.key}>
               <label className="block text-xs font-semibold text-secondary mb-1">{f.label} {f.req&&<span className="text-red-500">*</span>}</label>
@@ -226,8 +226,11 @@ function UserModal({ isOpen, onClose, onSuccess, initialData, branches }:
               {(['aktif','nonaktif'] as const).map(s=>(
                 <button key={s} type="button" onClick={()=>setStatus(s)}
                   className={`px-4 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
-                    status===s ? s==='aktif' ? 'bg-emerald-600 border-emerald-600 text-white' : 'bg-slate-700 border-slate-700 text-white'
-                    : 'bg-white border-slate-200 text-label hover:border-slate-300'}`}>
+                    status===s
+                      ? s==='aktif'
+                        ? 'bg-emerald-600 border-emerald-600 text-white'
+                        : 'bg-slate-700 dark:bg-slate-600 border-slate-700 dark:border-slate-600 text-white'
+                      : 'bg-card border-theme text-label hover:bg-muted'}`}>
                   {s==='aktif'?'Aktif':'Nonaktif'}
                 </button>
               ))}
@@ -239,7 +242,7 @@ function UserModal({ isOpen, onClose, onSuccess, initialData, branches }:
         <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-subtle bg-muted/50">
           <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg border border-theme text-xs font-semibold text-secondary hover:bg-muted transition-colors">Batal</button>
           <button type="button" onClick={handleSubmit} disabled={loading}
-            className="flex items-center gap-2 px-5 py-2 rounded-lg bg-slate-900 text-white text-xs font-bold hover:bg-slate-700 disabled:opacity-60 transition-colors shadow-sm">
+            className="flex items-center gap-2 px-5 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-bold disabled:opacity-60 transition-colors shadow-sm">
             {loading ? <><span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />Menyimpan...</>
               : isEdit ? 'Simpan Perubahan' : 'Buat User'}
           </button>
@@ -254,9 +257,9 @@ function DeleteDialog({ user, onCancel, onConfirm }:{ user:UserItem; onCancel:()
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
       onClick={e=>{if(e.target===e.currentTarget)onCancel()}}>
-      <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl p-6 text-center border border-subtle">
-        <div className="w-11 h-11 rounded-full bg-red-50 border border-red-100 flex items-center justify-center mx-auto mb-4">
-          <Trash2 size={18} className="text-red-600" />
+      <div className="bg-card rounded-2xl w-full max-w-sm shadow-2xl p-6 text-center border border-subtle">
+        <div className="w-11 h-11 rounded-full bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20 flex items-center justify-center mx-auto mb-4">
+          <Trash2 size={18} className="text-red-600 dark:text-red-400" />
         </div>
         <h3 className="text-sm font-bold text-primary">Hapus User?</h3>
         <p className="text-xs text-label mt-2">User <span className="font-semibold text-secondary">"{user.nama}"</span> akan dihapus permanen dan tidak bisa dipulihkan.</p>
@@ -275,7 +278,7 @@ function DetailDrawer({ user, onClose, onEdit }:{ user:UserItem; onClose:()=>voi
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/30 backdrop-blur-sm"
       onClick={e=>{if(e.target===e.currentTarget)onClose()}}>
-      <div className="bg-white h-full w-72 flex flex-col shadow-2xl border-l border-slate-200">
+      <div className="bg-card h-full w-72 flex flex-col shadow-2xl border-l border-theme">
         <div className="flex items-center justify-between px-5 py-4 border-b border-subtle bg-muted/50">
           <span className="text-xs font-bold text-secondary uppercase tracking-wider">Detail User</span>
           <button type="button" onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted text-muted transition-colors"><X size={15}/></button>
@@ -283,11 +286,11 @@ function DetailDrawer({ user, onClose, onEdit }:{ user:UserItem; onClose:()=>voi
         <div className="flex-1 overflow-y-auto p-5">
           <div className="flex flex-col items-center gap-2 pb-5 border-b border-subtle">
             <div className="relative">
-              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-bold text-xl">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center text-white font-bold text-xl">
                 {getInitials(user.nama)}
               </div>
               {user.is_online && (
-                <span className="absolute bottom-0.5 right-0.5 w-4 h-4 rounded-full bg-emerald-500 border-2 border-white">
+                <span className="absolute bottom-0.5 right-0.5 w-4 h-4 rounded-full bg-emerald-500 border-2 border-white dark:border-[#161b22]">
                   <span className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-75" />
                 </span>
               )}
@@ -295,14 +298,14 @@ function DetailDrawer({ user, onClose, onEdit }:{ user:UserItem; onClose:()=>voi
             <p className="font-bold text-primary mt-1 text-center">{user.nama}</p>
             <p className="text-xs text-muted text-center">{user.email ?? user.username}</p>
             <div className="flex items-center gap-2 flex-wrap justify-center">
-              <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${user.status==='aktif'?'bg-emerald-50 text-emerald-700 border-emerald-200':'bg-muted text-label border-slate-200'}`}>
+              <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${user.status==='aktif'?'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20':'bg-muted text-label border-theme'}`}>
                 {user.status==='aktif'?'Aktif':'Nonaktif'}
               </span>
               <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${ROLE_COLOR[user.role]}`}>
                 {getRoleLabel(user.role)}
               </span>
               {user.is_online && (
-                <span className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-600 border border-emerald-200">
+                <span className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />Online
                 </span>
               )}
@@ -310,7 +313,7 @@ function DetailDrawer({ user, onClose, onEdit }:{ user:UserItem; onClose:()=>voi
           </div>
           <div className="mt-3 space-y-0">
             {([['Branch', user.nama_cabang], ['Username', user.username]] as [string,string][]).map(([label,value]) => (
-              <div key={label} className="flex justify-between py-3 border-b border-slate-50">
+              <div key={label} className="flex justify-between py-3 border-b border-theme">
                 <span className="text-xs text-muted">{label}</span>
                 <span className="text-xs font-semibold text-secondary">{value}</span>
               </div>
@@ -320,7 +323,7 @@ function DetailDrawer({ user, onClose, onEdit }:{ user:UserItem; onClose:()=>voi
                 <span className="text-xs text-muted">Last Login</span>
                 <div className="text-right">
                   {user.is_online ? (
-                    <span className="flex items-center gap-1 text-xs font-semibold text-emerald-600">
+                    <span className="flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
                       <Wifi size={11} /> Sedang Online
                     </span>
                   ) : (
@@ -334,7 +337,7 @@ function DetailDrawer({ user, onClose, onEdit }:{ user:UserItem; onClose:()=>voi
         </div>
         <div className="p-4 border-t border-subtle">
           <button type="button" onClick={onEdit}
-            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-700 transition-colors">
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition-colors">
             <Edit2 size={13} /> Edit User
           </button>
         </div>
@@ -432,8 +435,8 @@ export default function Users() {
 
       {/* Toast */}
       {toast && (
-        <div className={`fixed top-5 right-5 z-[60] flex items-center gap-2 bg-white border-l-4 border border-subtle
-          ${toast.type==='success'?'border-l-emerald-500 text-emerald-700':'border-l-red-500 text-red-600'}
+        <div className={`fixed top-5 right-5 z-[60] flex items-center gap-2 bg-card border-l-4 border border-subtle
+          ${toast.type==='success'?'border-l-emerald-500 text-emerald-700 dark:text-emerald-400':'border-l-red-500 text-red-600 dark:text-red-400'}
           rounded-xl px-4 py-3 shadow-xl text-xs font-semibold`}>
           {toast.type==='success'?'✓':'✕'} {toast.msg}
         </div>
@@ -446,14 +449,14 @@ export default function Users() {
           <div className="flex items-center gap-2 mt-0.5">
             <p className="text-xs text-muted">Kelola pengguna, role, dan penugasan cabang</p>
             {onlineCount > 0 && (
-              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 px-2 py-0.5 rounded-full">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />{onlineCount} online
               </span>
             )}
           </div>
         </div>
         <button type="button" onClick={()=>setShowCreate(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-slate-700 text-white rounded-lg text-xs font-bold transition-colors shadow-sm shrink-0">
+          className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold transition-colors shadow-sm shrink-0">
           <Plus size={14}/> Tambah User
         </button>
       </div>
@@ -467,21 +470,21 @@ export default function Users() {
           <div className="relative w-full sm:w-72">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
             <input type="text" placeholder="Cari nama, email, username..."
-              className="w-full pl-9 pr-4 py-2 border border-theme rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+              className="w-full pl-9 pr-4 py-2 border border-theme rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-red-500 bg-card"
               value={search} onChange={e=>setSearch(e.target.value)} />
           </div>
           {/* Filters + actions */}
           <div className="flex items-center gap-2 flex-wrap">
             <SlidersHorizontal size={13} className="text-muted hidden sm:block" />
             <select value={filterRole} onChange={e=>setFilterRole(e.target.value)}
-              className={`px-3 py-2 border rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 ${filterRole?'border-blue-300 bg-blue-50 text-blue-700':'border-slate-200 bg-white text-secondary'}`}>
+              className={`px-3 py-2 border rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors ${filterRole?'border-blue-300 dark:border-blue-500/40 bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400':'border-theme bg-card text-secondary'}`}>
               <option value="">Semua Role</option>
               <option value="admin">Admin Cabang</option>
               <option value="trainer">Trainer</option>
               <option value="user">User</option>
             </select>
             <select value={filterCabang} onChange={e=>setFilterCabang(e.target.value)}
-              className={`px-3 py-2 border rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 ${filterCabang?'border-blue-300 bg-blue-50 text-blue-700':'border-slate-200 bg-white text-secondary'}`}>
+              className={`px-3 py-2 border rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors ${filterCabang?'border-blue-300 dark:border-blue-500/40 bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400':'border-theme bg-card text-secondary'}`}>
               <option value="">Semua Cabang</option>
               {branches.map(b=><option key={b.id} value={b.id}>{b.nama_cabang}</option>)}
             </select>
@@ -491,7 +494,7 @@ export default function Users() {
             )}
             <button type="button" onClick={handleExportCSV} disabled={exporting}
               className="flex items-center gap-1.5 px-3 py-2 border border-theme rounded-lg text-xs font-semibold text-secondary hover:bg-muted disabled:opacity-50 transition-colors">
-              {exporting ? <span className="w-3 h-3 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" /> : <Download size={12}/>}
+              {exporting ? <span className="w-3 h-3 border-2 border-muted border-t-transparent rounded-full animate-spin" /> : <Download size={12}/>}
               Export
             </button>
           </div>
@@ -507,7 +510,7 @@ export default function Users() {
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-50">
+            <tbody className="divide-y divide-theme">
               {loading ? (
                 Array.from({length:6}).map((_,i)=>(
                   <tr key={i}>{Array.from({length:6}).map((_,j)=>(
@@ -518,11 +521,11 @@ export default function Users() {
                 <tr>
                   <td colSpan={6} className="py-20 text-center">
                     <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center mx-auto mb-3">
-                      <UsersIcon size={20} className="text-slate-300" />
+                      <UsersIcon size={20} className="text-muted" />
                     </div>
                     <p className="text-sm font-semibold text-muted">Tidak ada pengguna</p>
-                    <p className="text-xs text-slate-300 mt-1">Coba ubah filter atau tambah user baru</p>
-                    {hasFilter && <button type="button" onClick={resetFilters} className="text-xs text-blue-600 hover:underline mt-2">Reset filter</button>}
+                    <p className="text-xs text-muted mt-1">Coba ubah filter atau tambah user baru</p>
+                    {hasFilter && <button type="button" onClick={resetFilters} className="text-xs text-red-600 dark:text-red-400 hover:underline mt-2">Reset filter</button>}
                   </td>
                 </tr>
               ) : users.map(user=>(
@@ -531,11 +534,11 @@ export default function Users() {
                   <td className="px-5 py-3.5">
                     <div className="flex items-center gap-3">
                       <div className="relative shrink-0">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-bold text-xs">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-red-400 to-red-600 flex items-center justify-center text-white font-bold text-xs">
                           {getInitials(user.nama)}
                         </div>
                         {user.is_online && (
-                          <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 border-2 border-white" />
+                          <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 border-2 border-white dark:border-[#161b22]" />
                         )}
                       </div>
                       <div>
@@ -554,8 +557,8 @@ export default function Users() {
                   <td className="px-5 py-3.5 text-xs font-medium text-secondary">{user.nama_cabang}</td>
                   {/* Status */}
                   <td className="px-5 py-3.5">
-                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold border ${user.status==='aktif'?'bg-emerald-50 text-emerald-700 border-emerald-200':'bg-muted text-label border-slate-200'}`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${user.status==='aktif'?'bg-emerald-500':'bg-slate-300'}`} />
+                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold border ${user.status==='aktif'?'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20':'bg-muted text-label border-theme'}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${user.status==='aktif'?'bg-emerald-500':'bg-muted border border-theme'}`} />
                       {user.status==='aktif'?'Aktif':'Nonaktif'}
                     </span>
                   </td>
@@ -565,9 +568,9 @@ export default function Users() {
                   <td className="px-5 py-3.5">
                     <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button type="button" onClick={()=>setEditTarget(user)}
-                        className="p-1.5 rounded-lg text-muted hover:text-blue-600 hover:bg-blue-50 transition-all" title="Edit"><Edit2 size={13}/></button>
+                        className="p-1.5 rounded-lg text-muted hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-all" title="Edit"><Edit2 size={13}/></button>
                       <button type="button" onClick={()=>setDelTarget(user)}
-                        className="p-1.5 rounded-lg text-muted hover:text-red-600 hover:bg-red-50 transition-all" title="Hapus"><Trash2 size={13}/></button>
+                        className="p-1.5 rounded-lg text-muted hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all" title="Hapus"><Trash2 size={13}/></button>
                       <button type="button" onClick={()=>setDetailTarget(user)}
                         className="p-1.5 rounded-lg text-muted hover:text-secondary hover:bg-muted transition-all" title="Detail"><MoreVertical size={13}/></button>
                     </div>
@@ -583,7 +586,7 @@ export default function Users() {
           <span className="text-xs text-muted">
             {total===0 ? 'Tidak ada hasil'
               : `${(page-1)*10+1}–${Math.min(page*10,total)} dari ${total} pengguna`}
-            {hasFilter && <span className="text-blue-500 font-semibold ml-1">(difilter)</span>}
+            {hasFilter && <span className="text-red-500 dark:text-red-400 font-semibold ml-1">(difilter)</span>}
           </span>
           <div className="flex items-center gap-1">
             <button type="button" onClick={()=>setPage(p=>Math.max(1,p-1))} disabled={page===1}
@@ -591,9 +594,9 @@ export default function Users() {
               <ChevronLeft size={13}/> Prev
             </button>
             {pageNumbers().map((p,i) =>
-              p==='...' ? <span key={`e${i}`} className="px-1 text-slate-300 text-xs">…</span>
+              p==='...' ? <span key={`e${i}`} className="px-1 text-muted text-xs">…</span>
               : <button key={p} type="button" onClick={()=>setPage(Number(p))}
-                  className={`w-7 h-7 rounded-lg text-xs font-bold border transition-colors ${page===p?'bg-slate-900 border-slate-900 text-white':'border-slate-200 text-label hover:bg-muted'}`}>
+                  className={`w-7 h-7 rounded-lg text-xs font-bold border transition-colors ${page===p?'bg-red-600 border-red-600 text-white':'border-theme text-label hover:bg-muted'}`}>
                   {p}
                 </button>
             )}
