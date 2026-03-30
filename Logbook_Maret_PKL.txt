@@ -1,0 +1,68 @@
+LOGBOOK PKL - MARET 2026
+Format: Bulan | Minggu | Tanggal
+Catatan: Minggu 1 (2-8 Maret, tanggal 2-6) sudah tercatat sebelumnya
+         Libur: 19-25 Maret
+
+==============================================================
+MINGGU KE-2 MARET (9 - 15 Maret 2026)
+==============================================================
+
+Maret	2	9
+08:00 – 16:00	Saya melanjutkan pengembangan backend dengan membuat model User beserta migrasi database yang mendukung multi-role (peserta, trainer, admin, superadmin). Kegiatan ini juga mencakup konfigurasi Laravel Sanctum sebagai sistem autentikasi berbasis token yang akan digunakan untuk mengamankan seluruh endpoint API pada sistem LMS.
+
+Maret	2	10
+08:00 – 16:00	Saya mengembangkan AuthController pada backend yang menangani proses login untuk semua role pengguna dan registrasi akun peserta baru. Setiap role diarahkan ke endpoint yang sesuai dengan hak aksesnya masing-masing. Saya juga menambahkan middleware untuk memastikan setiap request ke API telah terautentikasi dengan benar sebelum diproses.
+
+Maret	2	11
+08:00 – 16:00	Saya mengembangkan CourseController pada backend yang menangani operasi CRUD untuk data kursus milik trainer. Kegiatan ini meliputi pembuatan endpoint untuk menampilkan daftar kursus, membuat kursus baru, mengambil detail kursus, serta mengubah status aktif atau nonaktif kursus yang sudah ada.
+
+Maret	2	12
+08:00 – 16:00	Saya melanjutkan pengembangan CourseController dengan menambahkan endpoint untuk mengubah dan menghapus data kursus, serta mendefinisikan seluruh API route yang dibutuhkan pada file routes/api.php. Saya juga melakukan pengujian semua endpoint menggunakan Postman untuk memastikan respons API sesuai dengan yang diharapkan.
+
+Maret	2	13
+08:00 – 16:00	Saya mulai mengembangkan sisi frontend dengan mengintegrasikan halaman login ke API backend yang telah dibuat. Kegiatan ini meliputi pembuatan logic untuk menyimpan token autentikasi, pengaturan axios untuk menyertakan token pada setiap request, serta implementasi ProtectedRoute agar halaman tertentu hanya dapat diakses oleh pengguna yang sudah login sesuai rolenya.
+
+==============================================================
+MINGGU KE-3 MARET (16 - 22 Maret 2026)
+Catatan: 19-22 Maret masuk periode libur
+==============================================================
+
+Maret	3	16
+08:00 – 16:00	Saya membangun komponen tampilan utama untuk panel trainer di frontend, meliputi pembuatan komponen Layout, Sidebar, dan Header yang akan digunakan secara konsisten di seluruh halaman trainer. Navigasi antar halaman diatur menggunakan React Router dan setiap menu pada sidebar dihubungkan ke halaman yang sesuai.
+
+Maret	3	17
+08:00 – 16:00	Saya mengembangkan halaman manajemen kursus pada panel trainer yang menampilkan daftar kursus milik trainer beserta informasi detailnya. Halaman ini dilengkapi dengan form untuk membuat kursus baru dan tombol untuk mengedit atau menghapus kursus yang sudah ada. Komponen Modal juga dibuat sebagai komponen terpisah agar dapat digunakan kembali di halaman lain.
+
+Maret	3	18
+08:00 – 16:00	Saya menyempurnakan halaman manajemen kursus dengan menambahkan validasi input pada form, penanganan error dari respons API, serta tampilan loading saat data sedang diambil. Saya juga melakukan penyesuaian tampilan agar halaman terlihat rapi dan responsif di berbagai ukuran layar.
+
+==============================================================
+LIBUR 19 - 25 MARET 2026
+==============================================================
+
+==============================================================
+MINGGU KE-4 MARET (23 - 29 Maret 2026)
+Catatan: 23-25 Maret masih libur, masuk kembali tanggal 26
+==============================================================
+
+Maret	4	26
+08:00 – 16:00	Setelah libur, saya memulai pengembangan fitur manajemen materi (materials) pada sisi backend. Kegiatan ini meliputi pembuatan model Material beserta migrasi database, serta pengembangan MaterialController yang menangani operasi CRUD untuk data materi. Relasi antara tabel materi dan tabel kursus juga didefinisikan pada model Eloquent.
+
+Maret	4	27
+08:00 – 16:00	Saya melanjutkan pengembangan backend fitur materi dengan membuat endpoint untuk upload file materi ke server, mengonfigurasi Laravel Storage untuk penyimpanan file, serta menambahkan validasi tipe dan ukuran file yang diizinkan. Seluruh endpoint materi kemudian didaftarkan pada routes API dan diuji menggunakan Postman.
+
+Maret	4	28
+08:00 – 16:00	Saya mulai mengembangkan tampilan frontend untuk fitur materi pada panel trainer. Halaman ini menampilkan daftar materi yang dimiliki oleh setiap kursus, dilengkapi dengan informasi seperti judul, tipe konten, dan tanggal unggah. Saya juga mengintegrasikan halaman ini dengan API backend untuk mengambil data materi secara dinamis.
+
+Maret	4	29
+08:00 – 16:00	Saya mengembangkan form upload materi pada panel trainer yang memungkinkan trainer untuk mengunggah file materi baru ke dalam kursus mereka. Form ini dilengkapi dengan validasi di sisi frontend, tampilan preview nama file yang dipilih, serta notifikasi keberhasilan atau kegagalan saat proses upload berlangsung.
+
+==============================================================
+MINGGU KE-5 MARET (30 - 31 Maret 2026)
+==============================================================
+
+Maret	5	30
+08:00 – 16:00	Saya melakukan pengujian menyeluruh terhadap fitur manajemen materi yang telah selesai dikembangkan, mencakup proses upload, tampil, edit, dan hapus materi. Beberapa bug yang ditemukan selama pengujian diperbaiki, seperti masalah pada validasi file dan tampilan preview yang belum berjalan dengan benar.
+
+Maret	5	31
+08:00 – 16:00	Saya melakukan code review bersama tim terhadap semua fitur yang telah dikembangkan selama bulan Maret, mulai dari autentikasi, manajemen kursus, hingga fitur materi. Tim juga mendiskusikan rencana pengembangan untuk bulan April, termasuk pembagian tugas dan fitur-fitur yang akan dikerjakan selanjutnya.

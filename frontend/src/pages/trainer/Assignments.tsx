@@ -93,12 +93,16 @@ export default function TrainerAssignments() {
     { key: 'kuis' as const, label: 'Kuis', icon: HelpCircle },
   ];
   return (
-    <div className="space-y-7">
-      <div>
-        <p className="text-xs font-bold tracking-widest text-red-600 dark:text-red-400 uppercase mb-1">Trainer</p>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">Tugas & Kuis</h1>
-        <p className="text-gray-400 dark:text-gray-500 mt-1 text-sm">Kelola penilaian dan evaluasi peserta</p>
+    <div className="space-y-6">
+      {/* Header banner */}
+      <div className="relative overflow-hidden rounded-3xl px-7 py-6 bg-linear-to-br from-red-600 via-red-500 to-rose-500 shadow-lg shadow-red-500/25">
+        <div className="absolute -top-8 -right-8 w-44 h-44 bg-white/10 rounded-full pointer-events-none" />
+        <div className="absolute bottom-0 right-1/4 w-56 h-28 bg-white/5 rounded-full translate-y-1/2 pointer-events-none" />
+        <p className="text-red-200 text-xs font-bold tracking-widest uppercase mb-1 relative">Trainer</p>
+        <h1 className="text-3xl font-bold text-white tracking-tight relative">Tugas & Kuis</h1>
+        <p className="text-red-100/70 mt-1 text-sm relative">Kelola penilaian dan evaluasi peserta</p>
       </div>
+      {/* Tabs */}
       <div className="inline-flex bg-gray-100 dark:bg-white/6 p-1 rounded-2xl gap-1 shadow-inner">
         {tabs.map(({ key, label, icon: Icon }) => (
           <button key={key} onClick={() => setActiveTab(key)}
@@ -237,13 +241,16 @@ function TugasTab() {
       {assignments.length > 0 && (
         <div className="grid grid-cols-3 gap-3">
           {[
-            { label: 'Total', value: assignments.length, bg: 'bg-red-50 dark:bg-red-900/20', text: 'text-red-600 dark:text-red-400', icon: FileCheck },
-            { label: 'Aktif', value: assignments.filter(a => !isExpired(a.deadline)).length, bg: 'bg-emerald-50 dark:bg-emerald-900/20', text: 'text-emerald-600 dark:text-emerald-400', icon: CheckCircle2 },
-            { label: 'Berakhir', value: assignments.filter(a => isExpired(a.deadline)).length, bg: 'bg-amber-50 dark:bg-amber-900/20', text: 'text-amber-600 dark:text-amber-400', icon: Clock },
+            { label: 'Total',    value: assignments.length,                                    bg: 'bg-red-50 dark:bg-red-900/20',     text: 'text-red-500 dark:text-red-400',     icon: FileCheck   },
+            { label: 'Aktif',   value: assignments.filter(a => !isExpired(a.deadline)).length, bg: 'bg-emerald-50 dark:bg-emerald-900/20', text: 'text-emerald-500 dark:text-emerald-400', icon: CheckCircle2 },
+            { label: 'Berakhir',value: assignments.filter(a =>  isExpired(a.deadline)).length, bg: 'bg-amber-50 dark:bg-amber-900/20',  text: 'text-amber-500 dark:text-amber-400', icon: Clock       },
           ].map((s) => (
-            <div key={s.label} className="bg-white dark:bg-[#161b22] rounded-2xl border border-gray-100 dark:border-white/8 px-5 py-4 flex items-center gap-3">
-              <div className={`p-2.5 rounded-xl ${s.bg}`}><s.icon size={17} className={s.text} /></div>
-              <div><p className="text-xl font-bold text-gray-900 dark:text-white">{s.value}</p><p className="text-xs text-gray-400 dark:text-gray-500">{s.label}</p></div>
+            <div key={s.label} className="bg-white dark:bg-[#161b22] rounded-2xl border border-gray-100 dark:border-white/8 p-5 hover:shadow-md transition-shadow">
+              <div className={`w-9 h-9 rounded-xl ${s.bg} flex items-center justify-center mb-3`}>
+                <s.icon size={16} className={s.text} />
+              </div>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white leading-none">{s.value}</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{s.label}</p>
             </div>
           ))}
         </div>
@@ -255,82 +262,90 @@ function TugasTab() {
         </div>
       ) : (
         <div className="space-y-3">
-          {assignments.map((a) => (
-            <div key={a.id_tugas} className="bg-white dark:bg-[#161b22] rounded-2xl border border-gray-100 dark:border-white/8 overflow-hidden hover:shadow-md hover:shadow-gray-100/60 dark:hover:shadow-black/20 transition-shadow">
-              <div className="flex items-center gap-4 px-6 py-5">
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${isExpired(a.deadline) ? 'bg-gray-100 dark:bg-white/6' : 'bg-red-50 dark:bg-red-900/20'}`}>
-                  <FileCheck size={17} className={isExpired(a.deadline) ? 'text-gray-300 dark:text-gray-600' : 'text-red-500 dark:text-red-400'} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="font-semibold text-gray-900 dark:text-white truncate">{a.judul_tugas}</p>
-                    {isExpired(a.deadline) && <span className="text-xs px-2 py-0.5 bg-gray-100 dark:bg-white/8 text-gray-400 dark:text-gray-500 rounded-full font-medium flex-shrink-0">Berakhir</span>}
+          {assignments.map((a) => {
+            const expired = isExpired(a.deadline);
+            return (
+              <div key={a.id_tugas} className={`bg-white dark:bg-[#161b22] rounded-2xl border border-gray-100 dark:border-white/8 overflow-hidden hover:shadow-lg hover:shadow-gray-100/70 dark:hover:shadow-black/25 transition-all duration-200 border-l-[3px] ${expired ? 'border-l-gray-300 dark:border-l-white/10' : 'border-l-red-500'}`}>
+                <div className="flex items-center gap-4 px-5 py-4">
+                  {/* Icon */}
+                  <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 ${expired ? 'bg-gray-100 dark:bg-white/6' : 'bg-red-50 dark:bg-red-900/20'}`}>
+                    <FileCheck size={18} className={expired ? 'text-gray-300 dark:text-gray-600' : 'text-red-500 dark:text-red-400'} />
                   </div>
-                  <div className="flex flex-wrap gap-3 mt-1 text-xs text-gray-400 dark:text-gray-500">
-                    {a.deadline && (
-                      <span className={`flex items-center gap-1 ${isExpired(a.deadline) ? 'text-red-400 dark:text-red-500' : ''}`}>
-                        <Clock size={11} />{new Date(a.deadline).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className="font-bold text-gray-900 dark:text-white truncate">{a.judul_tugas}</p>
+                      <span className={`shrink-0 text-[11px] px-2 py-0.5 rounded-full font-semibold ${expired ? 'bg-gray-100 dark:bg-white/8 text-gray-400 dark:text-gray-500' : 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400'}`}>
+                        {expired ? 'Berakhir' : 'Aktif'}
                       </span>
-                    )}
-                    <span className="flex items-center gap-1"><Award size={11} />Maks {a.nilai_maksimal}</span>
-                    {a.file_tugas && (
-                      <a href={`${API_URL}/storage/${a.file_tugas}`} target="_blank" rel="noreferrer"
-                        className="flex items-center gap-1 text-red-600 dark:text-red-400 hover:underline">
-                        Lihat file tugas
-                      </a>
-                    )}
+                    </div>
+                    <div className="flex flex-wrap gap-3 text-xs text-gray-400 dark:text-gray-500">
+                      {a.deadline && (
+                        <span className={`flex items-center gap-1 ${expired ? 'text-red-400 dark:text-red-500' : ''}`}>
+                          <Clock size={11} />{new Date(a.deadline).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </span>
+                      )}
+                      <span className="flex items-center gap-1"><Award size={11} />Maks {a.nilai_maksimal}</span>
+                      {a.file_tugas && (
+                        <a href={`${API_URL}/storage/${a.file_tugas}`} target="_blank" rel="noreferrer"
+                          className="flex items-center gap-1 text-red-600 dark:text-red-400 hover:underline">
+                          Lihat file tugas
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                  {/* Actions */}
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button onClick={() => loadSubmissions(a.id_tugas)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors ${expandedId === a.id_tugas ? 'bg-red-600 text-white shadow-md shadow-red-600/25' : 'bg-gray-50 dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/10'}`}>
+                      <Users size={13} />Pengumpulan
+                      {expandedId === a.id_tugas ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
+                    </button>
+                    <button onClick={() => openEdit(a)} className="p-2 text-gray-300 dark:text-gray-600 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"><Pencil size={15} /></button>
+                    <button onClick={() => handleDelete(a.id_tugas)} disabled={deletingId === a.id_tugas} className="p-2 text-gray-300 dark:text-gray-600 hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors disabled:opacity-40">
+                      {deletingId === a.id_tugas ? <Loader2 size={15} className="animate-spin" /> : <Trash2 size={15} />}
+                    </button>
                   </div>
                 </div>
-                <div className="flex items-center gap-1">
-                  <button onClick={() => loadSubmissions(a.id_tugas)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors ${expandedId === a.id_tugas ? 'bg-red-600 text-white' : 'bg-gray-50 dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/8'}`}>
-                    <Users size={13} />Pengumpulan
-                    {expandedId === a.id_tugas ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
-                  </button>
-                  <button onClick={() => openEdit(a)} className="p-2 text-gray-300 dark:text-gray-600 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"><Pencil size={15} /></button>
-                  <button onClick={() => handleDelete(a.id_tugas)} disabled={deletingId === a.id_tugas} className="p-2 text-gray-300 dark:text-gray-600 hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors disabled:opacity-40">
-                    {deletingId === a.id_tugas ? <Loader2 size={15} className="animate-spin" /> : <Trash2 size={15} />}
-                  </button>
-                </div>
-              </div>
 
-              {expandedId === a.id_tugas && (
-                <div className="border-t border-gray-50 dark:border-white/6 bg-gray-50/60 dark:bg-white/2 px-6 py-5">
-                  <p className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-4">Pengumpulan · {submissions.length} peserta</p>
-                  {submissions.length === 0 ? (
-                    <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-8">Belum ada yang mengumpulkan.</p>
-                  ) : (
-                    <div className="space-y-2">
-                      {submissions.map((s) => (
-                        <div key={s.id_pengumpulan} className="flex items-center gap-3 bg-white dark:bg-[#161b22] rounded-xl px-4 py-3 border border-gray-100 dark:border-white/8">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-red-400 to-red-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                            {s.peserta?.nama?.charAt(0).toUpperCase()}
+                {expandedId === a.id_tugas && (
+                  <div className="border-t border-gray-50 dark:border-white/6 bg-gray-50/50 dark:bg-white/2 px-5 py-4">
+                    <p className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3">Pengumpulan · {submissions.length} peserta</p>
+                    {submissions.length === 0 ? (
+                      <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-8">Belum ada yang mengumpulkan.</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {submissions.map((s) => (
+                          <div key={s.id_pengumpulan} className="flex items-center gap-3 bg-white dark:bg-[#161b22] rounded-xl px-4 py-3 border border-gray-100 dark:border-white/8 hover:border-gray-200 dark:hover:border-white/12 transition-colors">
+                            <div className="w-9 h-9 rounded-full bg-linear-to-br from-red-400 to-red-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                              {s.peserta?.nama?.charAt(0).toUpperCase()}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">{s.peserta?.nama}</p>
+                              <p className="text-xs text-gray-400 dark:text-gray-500">{new Date(s.tanggal_kumpul).toLocaleDateString('id-ID')}</p>
+                            </div>
+                            {s.file_tugas && (
+                              <a href={`${API_URL}/storage/${s.file_tugas}`} target="_blank" rel="noreferrer"
+                                className="text-xs text-red-600 dark:text-red-400 hover:underline font-medium shrink-0">Lihat file</a>
+                            )}
+                            <div className="flex items-center gap-2 shrink-0">
+                              {s.nilai !== null
+                                ? <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1 rounded-full">{s.nilai}</span>
+                                : <span className="text-xs text-amber-500 font-medium bg-amber-50 dark:bg-amber-900/20 px-3 py-1 rounded-full">Belum dinilai</span>}
+                              <button onClick={() => { setGradeTarget(s); setGradeForm({ nilai: s.nilai ?? 0, feedback: s.feedback ?? '' }); }}
+                                className="flex items-center gap-1 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-xl transition-colors shadow-sm shadow-red-600/20">
+                                <Star size={11} />Nilai
+                              </button>
+                            </div>
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">{s.peserta?.nama}</p>
-                            <p className="text-xs text-gray-400 dark:text-gray-500">{new Date(s.tanggal_kumpul).toLocaleDateString('id-ID')}</p>
-                          </div>
-                          {s.file_tugas && (
-                            <a href={`${API_URL}/storage/${s.file_tugas}`} target="_blank" rel="noreferrer"
-                              className="text-xs text-red-600 dark:text-red-400 hover:underline font-medium">Lihat file</a>
-                          )}
-                          <div className="flex items-center gap-2 flex-shrink-0">
-                            {s.nilai !== null
-                              ? <span className="text-sm font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1 rounded-full">{s.nilai}</span>
-                              : <span className="text-xs text-amber-500 font-medium bg-amber-50 dark:bg-amber-900/20 px-3 py-1 rounded-full">Belum dinilai</span>}
-                            <button onClick={() => { setGradeTarget(s); setGradeForm({ nilai: s.nilai ?? 0, feedback: s.feedback ?? '' }); }}
-                              className="flex items-center gap-1 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-xl transition-colors">
-                              <Star size={11} />Nilai
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          ))}
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
 
@@ -512,21 +527,21 @@ function KuisTab() {
       ) : (
         <div className="space-y-3">
           {quizzes.map((q) => (
-            <div key={q.id_kuis} className="bg-white dark:bg-[#161b22] rounded-2xl border border-gray-100 dark:border-white/8 overflow-hidden hover:shadow-md hover:shadow-gray-100/60 dark:hover:shadow-black/20 transition-shadow">
-              <div className="flex items-center gap-4 px-6 py-5">
-                <div className="w-10 h-10 rounded-xl bg-violet-50 dark:bg-violet-900/20 flex items-center justify-center flex-shrink-0">
-                  <HelpCircle size={17} className="text-violet-500 dark:text-violet-400" />
+            <div key={q.id_kuis} className="bg-white dark:bg-[#161b22] rounded-2xl border border-gray-100 dark:border-white/8 overflow-hidden hover:shadow-lg hover:shadow-gray-100/70 dark:hover:shadow-black/25 transition-all duration-200 border-l-[3px] border-l-violet-500">
+              <div className="flex items-center gap-4 px-5 py-4">
+                <div className="w-11 h-11 rounded-2xl bg-violet-50 dark:bg-violet-900/20 flex items-center justify-center shrink-0">
+                  <HelpCircle size={18} className="text-violet-500 dark:text-violet-400" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-gray-900 dark:text-white">{q.judul_kuis}</p>
-                  <div className="flex gap-4 mt-1 text-xs text-gray-400 dark:text-gray-500">
+                  <p className="font-bold text-gray-900 dark:text-white mb-1">{q.judul_kuis}</p>
+                  <div className="flex gap-4 text-xs text-gray-400 dark:text-gray-500">
                     <span className="flex items-center gap-1"><BookOpen size={11} />{q.pertanyaan_count ?? 0} soal</span>
                     {q.waktu_mulai && <span className="flex items-center gap-1"><Clock size={11} />{new Date(q.waktu_mulai).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</span>}
                   </div>
                 </div>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 shrink-0">
                   <button onClick={() => loadQuestions(q)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors ${selectedQuiz?.id_kuis === q.id_kuis ? 'bg-violet-600 text-white' : 'bg-gray-50 dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/8'}`}>
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors ${selectedQuiz?.id_kuis === q.id_kuis ? 'bg-violet-600 text-white shadow-md shadow-violet-600/25' : 'bg-gray-50 dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/10'}`}>
                     <BookOpen size={13} />Soal
                     {selectedQuiz?.id_kuis === q.id_kuis ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
                   </button>
@@ -557,7 +572,7 @@ function KuisTab() {
                           <div className="flex items-start justify-between gap-3">
                             <div className="flex-1">
                               <div className="flex items-start gap-2 mb-2">
-                                <span className="w-6 h-6 rounded-lg bg-gray-100 dark:bg-white/8 flex items-center justify-center text-xs font-bold text-gray-500 dark:text-gray-400 flex-shrink-0 mt-0.5">{idx + 1}</span>
+                                <span className="w-6 h-6 rounded-lg bg-gray-100 dark:bg-white/8 flex items-center justify-center text-xs font-bold text-gray-500 dark:text-gray-400 shrink-0 mt-0.5">{idx + 1}</span>
                                 <p className="text-sm font-medium text-gray-800 dark:text-gray-100">{qt.pertanyaan}</p>
                               </div>
                               <div className="flex gap-2 ml-8">
@@ -570,14 +585,14 @@ function KuisTab() {
                                 <div className="mt-3 ml-8 grid grid-cols-2 gap-1.5">
                                   {qt.pilihan.map((p, pi) => (
                                     <div key={pi} className={`flex items-center gap-2 text-xs px-3 py-1.5 rounded-lg ${p.benar ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 font-semibold' : 'bg-gray-50 dark:bg-white/4 text-gray-500 dark:text-gray-400'}`}>
-                                      {p.benar ? <CheckCircle2 size={12} className="text-emerald-500 flex-shrink-0" /> : <Circle size={12} className="text-gray-300 dark:text-gray-600 flex-shrink-0" />}
+                                      {p.benar ? <CheckCircle2 size={12} className="text-emerald-500 shrink-0" /> : <Circle size={12} className="text-gray-300 dark:text-gray-600 shrink-0" />}
                                       <span className="truncate">{p.teks_jawaban}</span>
                                     </div>
                                   ))}
                                 </div>
                               )}
                             </div>
-                            <button onClick={() => handleDeleteQuestion(qt.id_pertanyaan!)} className="p-1.5 text-gray-300 dark:text-gray-600 hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors flex-shrink-0">
+                            <button onClick={() => handleDeleteQuestion(qt.id_pertanyaan!)} className="p-1.5 text-gray-300 dark:text-gray-600 hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors shrink-0">
                               <Trash2 size={14} />
                             </button>
                           </div>
@@ -618,7 +633,7 @@ function KuisTab() {
       {showQModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/60 backdrop-blur-sm p-4">
           <div className="bg-white dark:bg-[#1c2333] rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden max-h-[90vh] flex flex-col">
-            <div className="flex items-center justify-between px-7 py-5 border-b border-gray-100 dark:border-white/8 flex-shrink-0">
+            <div className="flex items-center justify-between px-7 py-5 border-b border-gray-100 dark:border-white/8 shrink-0">
               <h2 className="text-base font-bold text-gray-900 dark:text-white">Tambah Soal</h2>
               <button onClick={() => setShowQModal(false)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-white/8 rounded-xl"><X size={18} className="text-gray-400 dark:text-gray-500" /></button>
             </div>
@@ -642,7 +657,7 @@ function KuisTab() {
                   <div className="space-y-2">
                     {qForm.pilihan?.map((p, idx) => (
                       <div key={idx} className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${p.benar ? 'border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-900/20' : 'border-gray-200 dark:border-white/8 bg-gray-50 dark:bg-white/4 hover:border-gray-300 dark:hover:border-white/15'}`}>
-                        <button type="button" onClick={() => updatePilihan(idx, 'benar', true)} className="flex-shrink-0">
+                        <button type="button" onClick={() => updatePilihan(idx, 'benar', true)} className="shrink-0">
                           {p.benar ? <CheckCircle2 size={20} className="text-emerald-500" /> : <Circle size={20} className="text-gray-300 dark:text-gray-600 hover:text-gray-400" />}
                         </button>
                         <span className="text-xs font-bold text-gray-400 dark:text-gray-500 w-4">{String.fromCharCode(65 + idx)}</span>

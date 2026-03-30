@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Trainer;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use App\Models\Trainer\Course;
 
 class CourseController extends Controller
@@ -11,8 +12,10 @@ class CourseController extends Controller
     // 1. List course MILIK trainer yang login (bukan semua course)
     public function index(Request $request)
     {
-        // FIX: filter berdasarkan id_trainer, bukan Course::all()
-        $courses = Course::where('id_trainer', $request->user()->id_pengguna)->get();
+        $trainerId = $request->user()->id_pengguna;
+        $courses = Cache::remember("trainer_courses_{$trainerId}", 60, function () use ($trainerId) {
+            return Course::where('id_trainer', $trainerId)->get();
+        });
 
         return response()->json($courses);
     }
@@ -36,6 +39,8 @@ class CourseController extends Controller
             'deskripsi'    => $request->deskripsi,
             'status'       => 'draft',
         ]);
+
+        Cache::forget("trainer_courses_{$user->id_pengguna}");
 
         return response()->json([
             'message' => 'Course berhasil dibuat',
@@ -77,6 +82,8 @@ class CourseController extends Controller
             'deskripsi'    => $request->deskripsi    ?? $course->deskripsi,
         ]);
 
+        Cache::forget("trainer_courses_{$request->user()->id_pengguna}");
+
         return response()->json([
             'message' => 'Course berhasil diupdate',
             'data'    => $course,
@@ -93,6 +100,7 @@ class CourseController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
+        Cache::forget("trainer_courses_{$request->user()->id_pengguna}");
         $course->delete();
 
         return response()->json(['message' => 'Course berhasil dihapus']);
@@ -109,6 +117,8 @@ class CourseController extends Controller
         }
 
         $course->update(['status' => 'publish']);
+
+        Cache::forget("trainer_courses_{$request->user()->id_pengguna}");
 
         return response()->json([
             'message' => 'Course berhasil dipublish',
