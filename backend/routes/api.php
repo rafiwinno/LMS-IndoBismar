@@ -36,6 +36,7 @@ Route::middleware('auth:sanctum')->prefix('user')->group(function () {
     // Kursus
     Route::get('/kursus',                          [KursusController::class, 'index']);
     Route::get('/kursus/{id_kursus}',              [KursusController::class, 'show']);
+    Route::post('/kursus/{id_kursus}/materi/{id_materi}/progress', [KursusController::class, 'markProgress']);
 
     // Kuis
     Route::get('/kuis',                            [KuisController::class, 'index']);
