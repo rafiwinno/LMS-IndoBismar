@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, FileText, File, Download, Trash2, X, Youtube, ExternalLink, ChevronLeft, Presentation, Link } from 'lucide-react';
+import { Plus, Search, FileText, File, Trash2, X, Youtube, ExternalLink, ChevronLeft } from 'lucide-react';
 import { api } from '../../lib/api';
 import { confirm } from '../../lib/confirm';
 
@@ -25,6 +25,22 @@ export function Materials() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [viewer, setViewer] = useState<Materi | null>(null);
+  const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (viewer?.tipe_materi === 'pdf' && viewer?.file_materi) {
+      fetch(viewer.file_materi)
+        .then(r => r.blob())
+        .then(blob => {
+          const url = URL.createObjectURL(blob);
+          setPdfBlobUrl(url);
+        })
+        .catch(() => setPdfBlobUrl(null));
+    } else {
+      if (pdfBlobUrl) { URL.revokeObjectURL(pdfBlobUrl); }
+      setPdfBlobUrl(null);
+    }
+  }, [viewer]);
 
   const fetchMateri = async (search = '') => {
     setLoading(true);
@@ -58,9 +74,6 @@ export function Materials() {
       if (!form.youtube_url) { setError('Masukkan link YouTube'); return; }
       if (!getYoutubeId(form.youtube_url)) { setError('Link YouTube tidak valid'); return; }
       fd.append('youtube_url', form.youtube_url);
-    } else if (form.tipe_materi === 'link_drive') {
-      if (!form.drive_url) { setError('Masukkan link Google Drive'); return; }
-      fd.append('drive_url', form.drive_url);
     } else {
       if (!form.file) { setError('Pilih file terlebih dahulu'); return; }
       if (form.file.size > MAX_FILE_SIZE) { setError(`Ukuran file maksimal 5 MB. File kamu: ${(form.file.size / 1024 / 1024).toFixed(1)} MB`); return; }
@@ -87,7 +100,8 @@ export function Materials() {
     video:      { label: '▶ YouTube',    bg: 'bg-red-50',    text: 'text-red-600',    icon: <Youtube className="w-8 h-8 text-red-500" /> },
     pdf:        { label: 'PDF',          bg: 'bg-orange-50', text: 'text-orange-600', icon: <FileText className="w-8 h-8 text-red-500" /> },
     ppt:        { label: 'PPT',          bg: 'bg-orange-50', text: 'text-orange-600', icon: <File className="w-8 h-8 text-orange-500" /> },
-    link_drive: { label: '🔗 Drive',     bg: 'bg-blue-50',   text: 'text-blue-600',   icon: <Link className="w-8 h-8 text-blue-500" /> },
+    word:       { label: 'Word',         bg: 'bg-blue-50',   text: 'text-blue-600',   icon: <FileText className="w-8 h-8 text-blue-500" /> },
+    link_drive: { label: '🔗 Drive',     bg: 'bg-blue-50',   text: 'text-blue-600',   icon: <File className="w-8 h-8 text-blue-500" /> },
     dokumen:    { label: 'Dokumen',      bg: 'bg-gray-50',   text: 'text-gray-600',   icon: <File className="w-8 h-8 text-gray-400" /> },
   };
 
@@ -162,7 +176,7 @@ export function Materials() {
       {/* VIEWER MODAL */}
       {viewer && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-          <div className="bg-white dark:bg-[#161b22] rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+          <div className="bg-white dark:bg-[#161b22] rounded-2xl shadow-2xl w-full max-w-4xl flex flex-col" style={{ height: '90vh' }}>
             <div className="flex items-center justify-between px-6 py-4 border-b dark:border-white/10">
               <div className="flex items-center gap-3 min-w-0">
                 <button onClick={() => setViewer(null)} className="text-gray-400 hover:text-gray-600 flex-shrink-0">
@@ -186,7 +200,7 @@ export function Materials() {
                 </button>
               </div>
             </div>
-            <div className="flex-1 overflow-hidden">
+            <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
               {viewer.tipe_materi === 'video' && getYoutubeId(viewer.file_materi) ? (
                 <div className="w-full h-full min-h-[400px] bg-black flex items-center justify-center">
                   <iframe src={`https://www.youtube.com/embed/${getYoutubeId(viewer.file_materi)}?autoplay=1`}
@@ -195,11 +209,24 @@ export function Materials() {
                     allowFullScreen />
                 </div>
               ) : viewer.tipe_materi === 'pdf' && viewer.file_materi ? (
-                <iframe src={viewer.file_materi} className="w-full h-full min-h-[500px]" title={viewer.judul_materi} />
-              ) : viewer.tipe_materi === 'ppt' && viewer.file_materi ? (
-                <iframe
-                  src={`https://docs.google.com/viewer?url=${encodeURIComponent(viewer.file_materi)}&embedded=true`}
-                  className="w-full h-full min-h-[500px]" title={viewer.judul_materi} />
+                pdfBlobUrl ? (
+                  <iframe
+                    src={pdfBlobUrl}
+                    style={{ width: '100%', height: 'calc(90vh - 80px)', border: 'none', display: 'block' }}
+                    title={viewer.judul_materi}
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-64 text-gray-400 text-sm">Memuat PDF...</div>
+                )
+              ) : (viewer.tipe_materi === 'ppt' || viewer.tipe_materi === 'dokumen') && viewer.file_materi ? (
+                <div className="flex flex-col items-center justify-center h-full gap-4 text-gray-500">
+                  <File className="w-16 h-16 text-gray-300" />
+                  <p className="text-sm text-gray-500">Preview PPT tidak tersedia.</p>
+                  <a href={viewer.file_materi} target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700 transition-colors">
+                    <ExternalLink className="w-4 h-4" /> Download PPT
+                  </a>
+                </div>
               ) : viewer.tipe_materi === 'link_drive' && viewer.file_materi ? (
                 <iframe src={viewer.file_materi.replace('/view', '/preview')}
                   className="w-full h-full min-h-[500px]" title={viewer.judul_materi} allow="autoplay" />
@@ -243,9 +270,7 @@ export function Materials() {
                   value={form.tipe_materi}
                   onChange={e => setForm(f => ({ ...f, tipe_materi: e.target.value, file: null, youtube_url: '', drive_url: '' }))}>
                   <option value="pdf">📄 PDF (maks 5 MB)</option>
-                  <option value="ppt">📊 PowerPoint / PPT (maks 5 MB)</option>
                   <option value="video">🎬 Video (YouTube)</option>
-                  <option value="link_drive">🔗 Link Google Drive</option>
                 </select>
               </div>
 
@@ -267,26 +292,14 @@ export function Materials() {
                 </div>
               )}
 
-              {form.tipe_materi === 'link_drive' && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Link Google Drive</label>
-                  <div className="relative">
-                    <Link className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-500 w-4 h-4" />
-                    <input type="url" placeholder="https://drive.google.com/file/d/..."
-                      className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none"
-                      value={form.drive_url} onChange={e => setForm(f => ({ ...f, drive_url: e.target.value }))} />
-                  </div>
-                  <p className="text-xs text-gray-400 mt-1">Pastikan file di Drive sudah diset "Anyone with the link can view"</p>
-                </div>
-              )}
 
-              {(form.tipe_materi === 'pdf' || form.tipe_materi === 'ppt') && (
+              {form.tipe_materi === 'pdf' && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    File {form.tipe_materi.toUpperCase()} <span className="text-gray-400 font-normal">(maks 5 MB)</span>
+                    File PDF <span className="text-gray-400 font-normal">(maks 5 MB)</span>
                   </label>
                   <input type="file"
-                    accept={form.tipe_materi === 'pdf' ? '.pdf' : '.ppt,.pptx'}
+                    accept=".pdf"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
                     onChange={e => {
                       const file = e.target.files?.[0] || null;
