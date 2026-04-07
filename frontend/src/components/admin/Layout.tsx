@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import { Sidebar } from './Sidebar';
 import Header from './Header';
-import { Dashboard } from './Dashboard';
-import { Participants } from './Participants';
-import { Courses } from './Courses';
-import { Materials } from './Materials';
-import { Assignments } from './Assignments';
-import { Exams } from './Exams';
-import { Trainers } from './Trainers';
-import { Reports } from './Reports';
+import { ToastProvider } from '../../lib/toast';
+import { Dashboard } from '../../pages/admin/Dashboard';
+import { Participants } from '../../pages/admin/Participants';
+import { Courses } from '../../pages/admin/Courses';
+import { Materials } from '../../pages/admin/Materials';
+import { Exams } from '../../pages/admin/Exams';
+import { Trainers } from '../../pages/admin/Trainers';
+import { Reports } from '../../pages/admin/Reports';
 
 function renderContent(activeTab: string) {
   switch (activeTab) {
@@ -16,7 +16,6 @@ function renderContent(activeTab: string) {
     case 'participants': return <Participants />;
     case 'courses': return <Courses />;
     case 'materials': return <Materials />;
-    case 'assignments': return <Assignments />;
     case 'exams': return <Exams />;
     case 'trainers': return <Trainers />;
     case 'reports': return <Reports />;
@@ -29,7 +28,8 @@ export default function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="flex h-screen bg-slate-50 font-sans text-slate-900">
+    <ToastProvider>
+    <div className="flex h-screen bg-gray-50 dark:bg-[#0a0c10] font-sans text-gray-900 dark:text-white transition-colors duration-200">
       <Sidebar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -46,5 +46,6 @@ export default function Layout() {
         </main>
       </div>
     </div>
+    </ToastProvider>
   );
 }
