@@ -1,15 +1,15 @@
-import api from './axiosInstance';
+import axios from "axios";
 
-export const loginPeserta = (data: { email: string; password: string }) =>
-  api.post('/login/peserta', data);
+const API_URL = "http://127.0.0.1:8000/api";
 
-export const loginStaff = (data: { username: string; password: string }) =>
-  api.post('/login/staff', data);
+export const authService = {
+  login: async (username: string, password: string) => {
 
-export const register = (data: {
-  nama: string;
-  username: string;
-  email: string;
-  password: string;
-  nomor_hp: string;
-}) => api.post('/register', data);
+    const response = await axios.post(`${API_URL}/login/staff`, {
+      username: username,
+      password: password
+    });
+
+    return response.data;
+  }
+};

@@ -2,83 +2,48 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\Trainer\CourseController;
-use App\Http\Controllers\Api\Trainer\MaterialController;
-use App\Http\Controllers\Api\Trainer\AssignmentController; // FIX: import yang sebelumnya tidak ada
 use App\Http\Controllers\Api\User\AuthController;
-use App\Http\Controllers\Api\Trainer\FeedbackController;
-use App\Http\Controllers\Api\Trainer\ProgressController;
-use App\Http\Controllers\Api\Trainer\QuizController;
-use App\Http\Controllers\Api\Trainer\SubmissionController;
-use App\Http\Controllers\Api\Trainer\NotificationController;
+use App\Http\Controllers\Api\Superadmin\DashboardController;
+use App\Http\Controllers\Api\Superadmin\UserController;
+use App\Http\Controllers\Api\Superadmin\BranchController;
 
-// tambahkan di dalam group prefix('trainer')
-Route::get('/feedback',          [FeedbackController::class, 'index']);
-Route::post('/feedback',         [FeedbackController::class, 'store']);
-Route::get('/peserta/progress',  [ProgressController::class, 'index']);
-
-// TEST
 Route::get('/test', function () {
     return response()->json(['message' => 'API working']);
 });
 
-// AUTH (public)
-Route::post('/register',      [AuthController::class, 'register']);
-Route::post('/login/peserta', [AuthController::class, 'loginPeserta']);
-Route::post('/login/staff',   [AuthController::class, 'loginStaff']);
+// ===== AUTH ROUTES =====
+Route::post('/login',          [AuthController::class, 'login']);
+Route::post('/register',       [AuthController::class, 'register']);
+Route::post('/login/peserta',  [AuthController::class, 'loginPeserta']);
+Route::post('/login/staff',    [AuthController::class, 'loginStaff']);
+Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
 
-// AUTH (protected)
-Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/logout', [AuthController::class, 'logout']); // FIX: tambah logout endpoint
+// ===== TRAINER ROUTES =====
+Route::middleware('auth:sanctum')->prefix('trainer')->group(function () {
+    Route::get('/courses',              [CourseController::class, 'index']);
+    Route::post('/courses',             [CourseController::class, 'store']);
+    Route::get('/courses/{id}',         [CourseController::class, 'show']);
+    Route::put('/courses/{id}',         [CourseController::class, 'update']);
+    Route::delete('/courses/{id}',      [CourseController::class, 'destroy']);
+    Route::patch('/courses/{id}/publish', [CourseController::class, 'publish']);
+});
 
-    // ─── TRAINER ROUTES ───────────────────────────────────────
-    Route::prefix('trainer')->group(function () {
+// ===== SUPERADMIN ROUTES =====
+Route::middleware('auth:sanctum')->prefix('superadmin')->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index']);
+    Route::get('/dashboard/login-recap', [DashboardController::class, 'loginRecap']); // NEW
 
-        // COURSE
-        Route::get('/courses',              [CourseController::class, 'index']);
-        Route::post('/courses',             [CourseController::class, 'store']);
-        Route::get('/courses/{id}',         [CourseController::class, 'show']);
-        Route::put('/courses/{id}',         [CourseController::class, 'update']);
-        Route::delete('/courses/{id}',      [CourseController::class, 'destroy']);
-        Route::patch('/courses/{id}/publish', [CourseController::class, 'publish']);
+    // User Management
+    Route::get('/users',          [UserController::class, 'index']);
+    Route::post('/users',         [UserController::class, 'store']);
+    Route::put('/users/{id}',     [UserController::class, 'update']);
+    Route::delete('/users/{id}',  [UserController::class, 'destroy']);
+    Route::get('/branches',       [UserController::class, 'branches']); // dropdown only
 
-        // MATERIAL
-        Route::get('/courses/{id}/materials', [MaterialController::class, 'index']);
-        Route::post('/materials',             [MaterialController::class, 'store']);
-        Route::put('/materials/{id}',         [MaterialController::class, 'update']);
-        Route::delete('/materials/{id}',      [MaterialController::class, 'destroy']);
-
-        // ASSIGNMENT — FIX: sebelumnya route ini TIDAK ADA sama sekali!
-        Route::get('/courses/{id}/assignments', [AssignmentController::class, 'index']);
-        Route::post('/assignments',             [AssignmentController::class, 'store']);
-        Route::put('/assignments/{id}',         [AssignmentController::class, 'update']);
-        Route::delete('/assignments/{id}',      [AssignmentController::class, 'destroy']);
-
-        Route::get('/feedback',          [FeedbackController::class, 'index']);
-        Route::post('/feedback',         [FeedbackController::class, 'store']);
-        Route::get('/peserta/progress',  [ProgressController::class, 'index']);
-
-        // Tambah di dalam group prefix('trainer')
-        Route::get('/peserta', function (Illuminate\Http\Request $request) {
-            $peserta = \App\Models\User::where('id_role', 4)
-                ->where('id_cabang', $request->user()->id_cabang)
-                ->select('id_pengguna', 'nama', 'email')
-                ->get();
-            return response()->json(['data' => $peserta]);
-        });
-
-        Route::get('/courses/{id}/quizzes',          [QuizController::class, 'index']);
-        Route::post('/quizzes',                      [QuizController::class, 'store']);
-        Route::get('/quizzes/{id}',                  [QuizController::class, 'show']);
-        Route::put('/quizzes/{id}',                  [QuizController::class, 'update']);
-        Route::delete('/quizzes/{id}',               [QuizController::class, 'destroy']);
-        Route::post('/quizzes/{id}/questions',       [QuizController::class, 'storeQuestion']);
-        Route::delete('/questions/{id}',             [QuizController::class, 'destroyQuestion']);
-
-        Route::get('/assignments/{id}/submissions',  [SubmissionController::class, 'index']);
-        Route::put('/submissions/{id}/grade',        [SubmissionController::class, 'grade']);
-
-        Route::get('/notifications', [NotificationController::class, 'index']);
-
-
-    });
+    // Branch Management
+    Route::get('/cabang',                    [BranchController::class, 'index']);
+    Route::post('/cabang',                   [BranchController::class, 'store']);
+    Route::put('/cabang/{id}',               [BranchController::class, 'update']);
+    Route::delete('/cabang/{id}',            [BranchController::class, 'destroy']);
+    Route::get('/cabang/{id}/users',         [BranchController::class, 'users']);   // ← NEW
 });
