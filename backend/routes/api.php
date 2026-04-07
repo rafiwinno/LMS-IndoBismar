@@ -1,136 +1,84 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\Admin\AuthController;
-use App\Http\Controllers\Api\Admin\PesertaController;
-use App\Http\Controllers\Api\Admin\KursusController;
-use App\Http\Controllers\Api\Admin\MateriController;
-use App\Http\Controllers\Api\Admin\TugasController;
-use App\Http\Controllers\Api\Admin\KuisController;
-use App\Http\Controllers\Api\Admin\TrainerController;
-use App\Http\Controllers\Api\Admin\DashboardController;
-use App\Http\Controllers\Api\Admin\LaporanController;
-use App\Http\Controllers\Api\Admin\NotifikasiController;
+use App\Http\Controllers\Api\Trainer\CourseController;
+use App\Http\Controllers\Api\Trainer\MaterialController;
+use App\Http\Controllers\Api\Trainer\AssignmentController; // FIX: import yang sebelumnya tidak ada
+use App\Http\Controllers\Api\User\AuthController;
+use App\Http\Controllers\Api\Trainer\FeedbackController;
+use App\Http\Controllers\Api\Trainer\ProgressController;
+use App\Http\Controllers\Api\Trainer\QuizController;
+use App\Http\Controllers\Api\Trainer\SubmissionController;
+use App\Http\Controllers\Api\Trainer\NotificationController;
 
-/*
-|--------------------------------------------------------------------------
-| API Routes - LMS Indo Bismar
-|--------------------------------------------------------------------------
-*/
+// tambahkan di dalam group prefix('trainer')
+Route::get('/feedback',          [FeedbackController::class, 'index']);
+Route::post('/feedback',         [FeedbackController::class, 'store']);
+Route::get('/peserta/progress',  [ProgressController::class, 'index']);
 
-// ─── AUTH (Public) ───────────────────────────────────────────────────────────
-Route::prefix('auth')->group(function () {
-    Route::post('/login',       [AuthController::class, 'login'])->middleware('throttle:10,1');
-    Route::post('/login-admin', [AuthController::class, 'loginAdmin'])->middleware('throttle:5,1');
-    Route::post('/register',    [AuthController::class, 'register'])->middleware('throttle:10,1');
+// TEST
+Route::get('/test', function () {
+    return response()->json(['message' => 'API working']);
 });
 
-// ─── Auth Protected (semua role) ─────────────────────────────────────────────
+// AUTH (public)
+Route::post('/register',      [AuthController::class, 'register']);
+Route::post('/login/peserta', [AuthController::class, 'loginPeserta']);
+Route::post('/login/staff',   [AuthController::class, 'loginStaff']);
+
+// AUTH (protected)
 Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/auth/logout', [AuthController::class, 'logout']);
-    Route::get('/auth/me',      [AuthController::class, 'me']);
+    Route::post('/logout', [AuthController::class, 'logout']); // FIX: tambah logout endpoint
 
-    // Upload dokumen oleh peserta (setelah login, tidak perlu role admin)
-    Route::post('/peserta/saya/dokumen', [PesertaController::class, 'uploadDokumen']);
-});
-
-// ─── Protected Routes (admin, superadmin, trainer only) ──────────────────────
-Route::middleware(['auth:sanctum', 'admin'])->group(function () {
-
-    // ── Dashboard ──────────────────────────────────────────────────────────
-    Route::get('/dashboard', [DashboardController::class, 'index']);
-
-    // ── Peserta (Participants) ──────────────────────────────────────────────
-    Route::prefix('peserta')->group(function () {
-        Route::get('/',           [PesertaController::class, 'index']);
-        Route::post('/',          [PesertaController::class, 'store']);
-        Route::get('/{id}',       [PesertaController::class, 'show']);
-        Route::put('/{id}',       [PesertaController::class, 'update']);
-        Route::delete('/{id}',    [PesertaController::class, 'destroy']);
-        Route::patch('/{id}/status', [PesertaController::class, 'updateStatus']);
-        Route::patch('/{id}/verifikasi-dokumen', [PesertaController::class, 'verifikasiDokumen']);
-    });
-
-    // ── Kursus (Courses) ───────────────────────────────────────────────────
-    Route::prefix('kursus')->group(function () {
-        Route::get('/',           [KursusController::class, 'index']);
-        Route::post('/',          [KursusController::class, 'store']);
-        Route::get('/{id}',       [KursusController::class, 'show']);
-        Route::put('/{id}',       [KursusController::class, 'update']);
-        Route::delete('/{id}',    [KursusController::class, 'destroy']);
-        Route::patch('/{id}/status', [KursusController::class, 'updateStatus']);
-        // Peserta dalam kursus
-        Route::get('/{id}/peserta',  [KursusController::class, 'peserta']);
-        Route::post('/{id}/enroll',  [KursusController::class, 'enroll']);
-    });
-
-    // ── Materi (Materials) ─────────────────────────────────────────────────
-    Route::prefix('materi')->group(function () {
-        Route::get('/',           [MateriController::class, 'index']);
-        Route::post('/',          [MateriController::class, 'store']);
-        Route::get('/{id}',       [MateriController::class, 'show']);
-        Route::put('/{id}',       [MateriController::class, 'update']);
-        Route::delete('/{id}',    [MateriController::class, 'destroy']);
-        Route::post('/{id}/progress', [MateriController::class, 'updateProgress']);
-    });
-
-    // ── Tugas (Assignments) ────────────────────────────────────────────────
-    Route::prefix('tugas')->group(function () {
-        Route::get('/',           [TugasController::class, 'index']);
-        Route::post('/',          [TugasController::class, 'store']);
-        Route::get('/{id}',       [TugasController::class, 'show']);
-        Route::put('/{id}',       [TugasController::class, 'update']);
-        Route::delete('/{id}',    [TugasController::class, 'destroy']);
-        // Pengumpulan tugas
-        Route::get('/{id}/submissions',       [TugasController::class, 'submissions']);
-        Route::post('/{id}/submit',           [TugasController::class, 'submit']);
-        Route::patch('/submissions/{subId}/grade', [TugasController::class, 'grade']);
-    });
-
-    // ── Kuis / Ujian (Exams) ───────────────────────────────────────────────
-    Route::prefix('kuis')->group(function () {
-        Route::get('/',           [KuisController::class, 'index']);
-        Route::post('/',          [KuisController::class, 'store']);
-        Route::get('/{id}',       [KuisController::class, 'show']);
-        Route::put('/{id}',       [KuisController::class, 'update']);
-        Route::delete('/{id}',    [KuisController::class, 'destroy']);
-        // Attempt kuis
-        Route::post('/{id}/start',  [KuisController::class, 'start']);
-        Route::post('/{id}/submit', [KuisController::class, 'submitAttempt']);
-        Route::get('/{id}/results', [KuisController::class, 'results']);
-        Route::patch('/attempts/{attemptId}/grade-essay', [KuisController::class, 'gradeEssay']);
-    });
-
-    // ── Trainer ────────────────────────────────────────────────────────────
+    // ─── TRAINER ROUTES ───────────────────────────────────────
     Route::prefix('trainer')->group(function () {
-        Route::get('/',        [TrainerController::class, 'index']);
-        Route::post('/',       [TrainerController::class, 'store']);
-        // Jadwal routes MUST be before /{id} to avoid wildcard conflict
-        Route::get('/jadwal/all',         [TrainerController::class, 'allJadwal']);
-        Route::post('/jadwal',            [TrainerController::class, 'storeJadwal']);
-        Route::put('/jadwal/{id}',        [TrainerController::class, 'updateJadwal']);
-        Route::delete('/jadwal/{id}',     [TrainerController::class, 'deleteJadwal']);
-        // Trainer by ID (wildcard — must come last)
-        Route::get('/{id}',    [TrainerController::class, 'show']);
-        Route::put('/{id}',    [TrainerController::class, 'update']);
-        Route::delete('/{id}', [TrainerController::class, 'destroy']);
-        Route::patch('/{id}/status', [TrainerController::class, 'updateStatus']);
-    });
 
-    // ── Notifikasi ─────────────────────────────────────────────────────────
-    Route::prefix('notifikasi')->group(function () {
-        Route::get('/',               [NotifikasiController::class, 'index']);
-        Route::patch('/baca-semua',   [NotifikasiController::class, 'markAllRead']);
-        Route::patch('/{id}/baca',    [NotifikasiController::class, 'markRead']);
-    });
+        // COURSE
+        Route::get('/courses',              [CourseController::class, 'index']);
+        Route::post('/courses',             [CourseController::class, 'store']);
+        Route::get('/courses/{id}',         [CourseController::class, 'show']);
+        Route::put('/courses/{id}',         [CourseController::class, 'update']);
+        Route::delete('/courses/{id}',      [CourseController::class, 'destroy']);
+        Route::patch('/courses/{id}/publish', [CourseController::class, 'publish']);
 
-    // ── Laporan (Reports) ──────────────────────────────────────────────────
-    Route::prefix('laporan')->group(function () {
-        Route::get('/dashboard',    [LaporanController::class, 'dashboard']);
-        Route::get('/peserta',      [LaporanController::class, 'peserta']);
-        Route::get('/kursus',       [LaporanController::class, 'kursus']);
-        Route::get('/kuis',         [LaporanController::class, 'kuis']);
-        Route::get('/trainer',      [LaporanController::class, 'trainer']);
-    });
+        // MATERIAL
+        Route::get('/courses/{id}/materials', [MaterialController::class, 'index']);
+        Route::post('/materials',             [MaterialController::class, 'store']);
+        Route::put('/materials/{id}',         [MaterialController::class, 'update']);
+        Route::delete('/materials/{id}',      [MaterialController::class, 'destroy']);
 
+        // ASSIGNMENT — FIX: sebelumnya route ini TIDAK ADA sama sekali!
+        Route::get('/courses/{id}/assignments', [AssignmentController::class, 'index']);
+        Route::post('/assignments',             [AssignmentController::class, 'store']);
+        Route::put('/assignments/{id}',         [AssignmentController::class, 'update']);
+        Route::delete('/assignments/{id}',      [AssignmentController::class, 'destroy']);
+
+        Route::get('/feedback',          [FeedbackController::class, 'index']);
+        Route::post('/feedback',         [FeedbackController::class, 'store']);
+        Route::get('/peserta/progress',  [ProgressController::class, 'index']);
+
+        // Tambah di dalam group prefix('trainer')
+        Route::get('/peserta', function (Illuminate\Http\Request $request) {
+            $peserta = \App\Models\User::where('id_role', 4)
+                ->where('id_cabang', $request->user()->id_cabang)
+                ->select('id_pengguna', 'nama', 'email')
+                ->get();
+            return response()->json(['data' => $peserta]);
+        });
+
+        Route::get('/courses/{id}/quizzes',          [QuizController::class, 'index']);
+        Route::post('/quizzes',                      [QuizController::class, 'store']);
+        Route::get('/quizzes/{id}',                  [QuizController::class, 'show']);
+        Route::put('/quizzes/{id}',                  [QuizController::class, 'update']);
+        Route::delete('/quizzes/{id}',               [QuizController::class, 'destroy']);
+        Route::post('/quizzes/{id}/questions',       [QuizController::class, 'storeQuestion']);
+        Route::delete('/questions/{id}',             [QuizController::class, 'destroyQuestion']);
+
+        Route::get('/assignments/{id}/submissions',  [SubmissionController::class, 'index']);
+        Route::put('/submissions/{id}/grade',        [SubmissionController::class, 'grade']);
+
+        Route::get('/notifications', [NotificationController::class, 'index']);
+
+
+    });
 });

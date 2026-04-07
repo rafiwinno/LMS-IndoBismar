@@ -1,29 +1,15 @@
-import API from "./api";
+import api from './axiosInstance';
 
-export const authApi = {
-  login: (email: string, password: string) =>
-    API.post("/auth/login", { email, password }).then((r) => r.data),
+export const loginPeserta = (data: { email: string; password: string }) =>
+  api.post('/login/peserta', data);
 
-  loginAdmin: (username: string, password: string) =>
-    API.post("/auth/login-admin", { username, password }).then((r) => r.data),
+export const loginStaff = (data: { username: string; password: string }) =>
+  api.post('/login/staff', data);
 
-  register: (data: {
-    nama: string;
-    username: string;
-    email: string;
-    password: string;
-    password_confirmation: string;
-    nomor_hp?: string;
-    asal_sekolah?: string;
-    jurusan?: string;
-    id_cabang: number;
-  }) => API.post("/auth/register", data).then((r) => r.data),
-
-  logout: () =>
-    API.post("/auth/logout").then((r) => r.data),
-
-  me: () =>
-    API.get("/auth/me").then((r) => r.data),
-};
-
-export default authApi;
+export const register = (data: {
+  nama: string;
+  username: string;
+  email: string;
+  password: string;
+  nomor_hp: string;
+}) => api.post('/register', data);
