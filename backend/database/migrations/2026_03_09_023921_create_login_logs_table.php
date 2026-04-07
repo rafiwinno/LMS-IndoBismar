@@ -10,7 +10,8 @@ return new class extends Migration
     {
         Schema::create('login_logs', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained('pengguna')->onDelete('cascade');
+            $table->unsignedInteger('user_id');
+            $table->foreign('user_id')->references('id_pengguna')->on('pengguna')->onDelete('cascade');
             $table->string('ip_address')->nullable();
             $table->timestamp('logged_in_at')->useCurrent();
         });

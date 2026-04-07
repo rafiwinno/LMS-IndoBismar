@@ -12,13 +12,13 @@ export default function Login() {
 
   const handleLogin = (user: any, token: string) => {
     saveToken(token);
-    saveUser({
-      id:    user.id_pengguna,
-      nama:  user.nama,
-      email: user.email,
-      role:  user.role ?? 'user',
-    });
-    navigate('/dashboard');
+    saveUser(user);
+    // Redirect sesuai id_role
+    const role = user.id_role;
+    if (role === 1)      navigate('/superadmin/dashboard', { replace: true });
+    else if (role === 2) navigate('/admin/dashboard',      { replace: true });
+    else if (role === 3) navigate('/trainer/dashboard',    { replace: true });
+    else                 navigate('/dashboard',            { replace: true });
   };
 
   return (
@@ -248,7 +248,15 @@ function RegisterForm({ onBack }: any) {
       await API.post('/register', form);
       setSuccess(true);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Registrasi gagal');
+      const data = err.response?.data;
+      if (data?.errors) {
+        const messages = Object.entries(data.errors as Record<string, string[]>)
+          .map(([field, msgs]) => `${field}: ${msgs.join(', ')}`)
+          .join(' | ');
+        setError(messages);
+      } else {
+        setError(data?.message || 'Registrasi gagal');
+      }
     } finally { setLoading(false); }
   };
 

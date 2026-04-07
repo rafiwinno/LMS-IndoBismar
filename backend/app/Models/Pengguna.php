@@ -11,7 +11,7 @@ class Pengguna extends Authenticatable
     use HasApiTokens, Notifiable;
 
     protected $table      = 'pengguna';
-    protected $primaryKey = 'id';
+    protected $primaryKey = 'id_pengguna';
     public $incrementing  = true;
     protected $keyType    = 'int';
     public $timestamps    = false;
@@ -31,9 +31,28 @@ class Pengguna extends Authenticatable
         'password',
     ];
 
-    // Relasi ke tabel cabang
+    public function role()
+    {
+        return $this->belongsTo(Role::class, 'id_role', 'id_role');
+    }
+
     public function cabang()
     {
         return $this->belongsTo(Cabang::class, 'id_cabang', 'id');
+    }
+
+    public function dataPkl()
+    {
+        return $this->hasOne(DataPesertaPkl::class, 'id_pengguna', 'id_pengguna');
+    }
+
+    public function pesertaKursus()
+    {
+        return $this->hasMany(PesertaKursus::class, 'id_pengguna', 'id_pengguna');
+    }
+
+    public function penilaianPkl()
+    {
+        return $this->hasOne(PenilaianPkl::class, 'id_pengguna', 'id_pengguna');
     }
 }

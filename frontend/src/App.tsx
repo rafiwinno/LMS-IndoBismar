@@ -4,14 +4,14 @@ import { getUser, getDashboardPath } from './pages/types';
 import ProtectedRoute from './components/ProtectedRoute';
 import { PageLoader } from './components/ui/Spinner';
 
-// Layout
+// Layouts
 import Layout from './components/user/Layout';
 
-// Auth Pages (tidak di-lazy karena selalu dibutuhkan pertama kali)
+// Auth Pages
 import Login from './pages/Login';
 import Register from './pages/Register';
 
-// User Pages — lazy loaded (hanya dimuat saat halaman dikunjungi)
+// ── User Pages ────────────────────────────────────────────────────────────────
 const UserDashboard  = lazy(() => import('./pages/user/Dashboard'));
 const Courses        = lazy(() => import('./pages/user/Courses'));
 const CourseDetail   = lazy(() => import('./pages/user/CourseDetail'));
@@ -21,10 +21,22 @@ const Grades         = lazy(() => import('./pages/user/Grades'));
 const Profile        = lazy(() => import('./pages/user/Profile'));
 const Documents      = lazy(() => import('./pages/user/Documents'));
 
-// Admin/Trainer/Superadmin — lazy loaded
-const AdminDashboard      = lazy(() => import('./pages/admin/Dashboard'));
-const TrainerDashboard    = lazy(() => import('./pages/trainer/Dashboard'));
+// ── Admin Pages ───────────────────────────────────────────────────────────────
+const AdminLayout    = lazy(() => import('./components/admin/Layout'));
+
+// ── Trainer Pages ─────────────────────────────────────────────────────────────
+const TrainerLayout      = lazy(() => import('./components/trainer/Layout'));
+const TrainerDashboard   = lazy(() => import('./pages/trainer/Dashboard'));
+const TrainerCourse      = lazy(() => import('./pages/trainer/Course'));
+const TrainerAssignments = lazy(() => import('./pages/trainer/Assignments'));
+const TrainerProgress    = lazy(() => import('./pages/trainer/Progress'));
+const TrainerFeedback    = lazy(() => import('./pages/trainer/Feedback'));
+
+// ── Superadmin Pages ──────────────────────────────────────────────────────────
+const SuperAdminLayout   = lazy(() => import('./components/superadmin/Header')); // full layout w/ Outlet
 const SuperAdminDashboard = lazy(() => import('./pages/superadmin/Dashboard'));
+const SuperAdminUsers     = lazy(() => import('./pages/superadmin/Users'));
+const SuperAdminBranches  = lazy(() => import('./pages/superadmin/Branches'));
 
 function RootRedirect() {
   const user = getUser();
@@ -32,20 +44,37 @@ function RootRedirect() {
   return <Navigate to={getDashboardPath(user.role)} replace />;
 }
 
+const NotFound = () => (
+  <div className="min-h-screen flex items-center justify-center bg-slate-50">
+    <div className="text-center">
+      <h1 className="text-4xl font-bold text-slate-700">404</h1>
+      <p className="mt-2 text-slate-600">Halaman tidak ditemukan.</p>
+      <a href="/" className="mt-4 inline-block text-blue-600 underline">Kembali ke Beranda</a>
+    </div>
+  </div>
+);
+
+const Unauthorized = () => (
+  <div className="min-h-screen flex items-center justify-center bg-slate-50">
+    <div className="text-center">
+      <h1 className="text-4xl font-bold text-red-500">403</h1>
+      <p className="mt-2 text-slate-600">Anda tidak memiliki akses ke halaman ini.</p>
+      <a href="/login" className="mt-4 inline-block text-blue-600 underline">Kembali ke Login</a>
+    </div>
+  </div>
+);
+
 export default function App() {
   return (
     <Router>
-      {/* Suspense fallback tampil saat halaman lazy sedang dimuat */}
       <Suspense fallback={<PageLoader />}>
         <Routes>
-          {/* Auth */}
+          {/* ── Auth ── */}
           <Route path="/login"    element={<Login />} />
           <Route path="/register" element={<Register />} />
-
-          {/* Root: redirect sesuai role */}
           <Route path="/" element={<RootRedirect />} />
 
-          {/* ===== USER ROUTES ===== */}
+          {/* ── User / Peserta ── */}
           <Route
             path="/"
             element={
@@ -64,63 +93,51 @@ export default function App() {
             <Route path="profile"        element={<Profile />} />
           </Route>
 
-          {/* ===== ADMIN ROUTES ===== */}
+          {/* ── Admin Cabang ── */}
           <Route
-            path="/admin/dashboard"
+            path="/admin/*"
             element={
               <ProtectedRoute allowedRoles={['admin']}>
-                <AdminDashboard />
+                <AdminLayout />
               </ProtectedRoute>
             }
           />
 
-          {/* ===== TRAINER ROUTES ===== */}
+          {/* ── Superadmin (Admin Pusat) ── */}
           <Route
-            path="/trainer/dashboard"
-            element={
-              <ProtectedRoute allowedRoles={['trainer']}>
-                <TrainerDashboard />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* ===== SUPERADMIN ROUTES ===== */}
-          <Route
-            path="/superadmin/dashboard"
+            path="/superadmin"
             element={
               <ProtectedRoute allowedRoles={['superadmin']}>
-                <SuperAdminDashboard />
+                <SuperAdminLayout />
               </ProtectedRoute>
             }
-          />
+          >
+            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard" element={<SuperAdminDashboard />} />
+            <Route path="users"     element={<SuperAdminUsers />} />
+            <Route path="branches"  element={<SuperAdminBranches />} />
+          </Route>
 
-          {/* 403 */}
+          {/* ── Trainer ── */}
           <Route
-            path="/unauthorized"
+            path="/trainer"
             element={
-              <div className="min-h-screen flex items-center justify-center bg-slate-50">
-                <div className="text-center">
-                  <h1 className="text-4xl font-bold text-red-500">403</h1>
-                  <p className="mt-2 text-slate-600">Anda tidak memiliki akses ke halaman ini.</p>
-                  <a href="/login" className="mt-4 inline-block text-blue-600 underline">Kembali ke Login</a>
-                </div>
-              </div>
+              <ProtectedRoute allowedRoles={['trainer']}>
+                <TrainerLayout />
+              </ProtectedRoute>
             }
-          />
+          >
+            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard"   element={<TrainerDashboard />} />
+            <Route path="courses"     element={<TrainerCourse />} />
+            <Route path="assignments" element={<TrainerAssignments />} />
+            <Route path="progress"    element={<TrainerProgress />} />
+            <Route path="feedback"    element={<TrainerFeedback />} />
+          </Route>
 
-          {/* 404 */}
-          <Route
-            path="*"
-            element={
-              <div className="min-h-screen flex items-center justify-center bg-slate-50">
-                <div className="text-center">
-                  <h1 className="text-4xl font-bold text-slate-700">404</h1>
-                  <p className="mt-2 text-slate-600">Halaman tidak ditemukan.</p>
-                  <a href="/" className="mt-4 inline-block text-blue-600 underline">Kembali ke Beranda</a>
-                </div>
-              </div>
-            }
-          />
+          {/* ── Misc ── */}
+          <Route path="/unauthorized" element={<Unauthorized />} />
+          <Route path="*"             element={<NotFound />} />
         </Routes>
       </Suspense>
     </Router>

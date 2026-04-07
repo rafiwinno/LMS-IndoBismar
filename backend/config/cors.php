@@ -6,12 +6,14 @@ return [
     'allowed_methods' => ['*'],
 
     'allowed_origins' => [
-        'http://localhost:5173',   // React Vite dev server
-        'http://127.0.0.1:5173',
-        'http://localhost:3000',   // fallback
+        'http://LMS-IndoBismar.test',
+        'http://lms-indobismar.test',
     ],
 
-    'allowed_origins_patterns' => [],
+    'allowed_origins_patterns' => [
+        '#^http://localhost:\d+$#',
+        '#^http://127\.0\.0\.1:\d+$#',
+    ],
 
     'allowed_headers' => ['*'],
 

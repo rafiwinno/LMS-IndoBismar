@@ -43,6 +43,15 @@ export function getToken(): string | null {
   return localStorage.getItem('token');
 }
 
+// Simpan token & user ke localStorage
+export function saveToken(token: string): void {
+  localStorage.setItem('token', token);
+}
+
+export function saveUser(user: object): void {
+  localStorage.setItem('user', JSON.stringify(user));
+}
+
 // Logout: bersihkan storage
 export function logout(): void {
   localStorage.removeItem('token');

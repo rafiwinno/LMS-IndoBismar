@@ -18,9 +18,9 @@ return new class extends Migration
     {
         Schema::create('feedback', function (Blueprint $table) {
             $table->id('id_feedback');
-            $table->unsignedBigInteger('id_trainer');   // trainer yang memberi feedback
-            $table->unsignedBigInteger('id_peserta');   // peserta yang menerima feedback
-            $table->unsignedBigInteger('id_kursus')->nullable(); // course terkait (opsional)
+            $table->unsignedInteger('id_trainer');   // trainer yang memberi feedback
+            $table->unsignedInteger('id_peserta');   // peserta yang menerima feedback
+            $table->unsignedInteger('id_kursus')->nullable(); // course terkait (opsional)
             $table->text('pesan');
             $table->enum('tipe', ['positif', 'negatif', 'netral'])->default('netral');
             $table->timestamp('dibuat_pada')->useCurrent();

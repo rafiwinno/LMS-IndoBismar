@@ -37,9 +37,9 @@ export default function Profile() {
     try {
       await API.put('/user/profil', { nama: form.nama, nomor_hp: form.nomor_hp });
       await fetchProfil();
-      const currentUser = JSON.parse(localStorage.getItem('lms_user') || '{}');
-      localStorage.setItem('lms_user', JSON.stringify({ ...currentUser, nama: form.nama }));
-      window.dispatchEvent(new Event('lms_user_updated'));
+      const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+      localStorage.setItem('user', JSON.stringify({ ...currentUser, nama: form.nama }));
+      window.dispatchEvent(new Event('user_updated'));
       setSuccessMsg('Profil berhasil diperbarui!');
     } catch (err: any) {
       setErrorMsg(err.response?.data?.message || 'Gagal menyimpan profil.');

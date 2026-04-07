@@ -54,47 +54,61 @@ class KuisController extends Controller
             return response()->json(['message' => 'Kamu sudah mengerjakan kuis ini'], 409);
         }
 
-        // Hitung nilai otomatis dari jawaban
-        // $request->jawaban = [['id_pertanyaan' => 1, 'id_pilihan' => 3], ...]
         $jawaban = $request->jawaban ?? [];
         $totalPertanyaan = DB::table('pertanyaan')->where('id_kuis', $id_kuis)->count();
+        $totalPilihanGanda = DB::table('pertanyaan')
+            ->where('id_kuis', $id_kuis)
+            ->where('tipe', 'pilihan_ganda')
+            ->count();
         $benar = 0;
+        $adaEssay = false;
 
+        // Hitung nilai otomatis hanya untuk pilihan ganda
         foreach ($jawaban as $item) {
-            $isBenar = DB::table('pilihan_jawaban')
-                ->where('id_pilihan', $item['id_pilihan'])
-                ->where('id_pertanyaan', $item['id_pertanyaan'])
-                ->where('benar', 1)
-                ->exists();
-
-            if ($isBenar) $benar++;
+            if (!empty($item['id_pilihan'])) {
+                $isBenar = DB::table('pilihan_jawaban')
+                    ->where('id_pilihan', $item['id_pilihan'])
+                    ->where('id_pertanyaan', $item['id_pertanyaan'])
+                    ->where('benar', 1)
+                    ->exists();
+                if ($isBenar) $benar++;
+            } elseif (!empty($item['jawaban_text'])) {
+                $adaEssay = true;
+            }
         }
 
-        $nilai = $totalPertanyaan > 0 ? round(($benar / $totalPertanyaan) * 100, 2) : 0;
+        // Jika ada essay: nilai sementara dari MC saja, status 'menunggu_penilaian'
+        // Jika pure MC: nilai final, status 'selesai'
+        $status = $adaEssay ? 'menunggu_penilaian' : 'selesai';
+        $nilai  = $totalPertanyaan > 0
+            ? round(($benar / $totalPertanyaan) * 100, 2)
+            : 0;
 
-        // Simpan attempt
         $id_attempt = DB::table('attempt_kuis')->insertGetId([
-            'id_pengguna'   => $id_pengguna,
-            'id_kuis'       => $id_kuis,
-            'skor'          => $nilai,
-            'waktu_mulai'   => now(),
-            'status'        => 'selesai',
+            'id_pengguna' => $id_pengguna,
+            'id_kuis'     => $id_kuis,
+            'skor'        => $nilai,
+            'waktu_mulai' => now(),
+            'status'      => $status,
         ]);
 
         // Simpan detail jawaban
         foreach ($jawaban as $item) {
-            DB::table('jawaban_kuis')->insert([
-                'id_attempt'     => $id_attempt,
-                'id_pertanyaan'  => $item['id_pertanyaan'],
-                'id_pilihan'     => $item['id_pilihan'],
-            ]);
+            $row = [
+                'id_attempt'    => $id_attempt,
+                'id_pertanyaan' => $item['id_pertanyaan'],
+                'id_pilihan'    => $item['id_pilihan'] ?? null,
+                'jawaban_text'  => $item['jawaban_text'] ?? null,
+            ];
+            DB::table('jawaban_kuis')->insert($row);
         }
 
         return response()->json([
-            'message'   => 'Kuis berhasil dikerjakan',
+            'message'   => 'Kuis berhasil dikumpulkan',
             'nilai'     => $nilai,
             'benar'     => $benar,
             'total'     => $totalPertanyaan,
+            'ada_essay' => $adaEssay,
         ], 201);
     }
 

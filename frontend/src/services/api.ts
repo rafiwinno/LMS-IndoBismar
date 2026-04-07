@@ -7,12 +7,12 @@ interface AuthResponse {
 }
 
 const api = axios.create({
-  baseURL: "http://127.0.0.1:8000/api",
+  baseURL: import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000/api",
   headers: { "Content-Type": "application/json" },
 });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("lms_token");
+  const token = localStorage.getItem("token");
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
@@ -20,14 +20,12 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    // Jangan redirect ke login kalau sedang di halaman login
-    // atau kalau endpoint-nya adalah /login
     const isLoginEndpoint = err.config?.url?.includes('/login');
     const isOnLoginPage   = window.location.pathname === '/login';
 
     if (err.response?.status === 401 && !isLoginEndpoint && !isOnLoginPage) {
-      localStorage.removeItem("lms_token");
-      localStorage.removeItem("lms_user");
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
       window.location.href = "/login";
     }
     return Promise.reject(err);
@@ -52,8 +50,8 @@ export const authService = {
 
   logout: async () => {
     await api.post("/logout");
-    localStorage.removeItem("lms_token");
-    localStorage.removeItem("lms_user");
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
   },
 };
 
