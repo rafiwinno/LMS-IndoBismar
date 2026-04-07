@@ -37,8 +37,8 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
 
   const handleLogout = async () => {
     try { await api.post('/logout'); } catch {}
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('user');
     navigate('/login');
   };
 

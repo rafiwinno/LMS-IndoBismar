@@ -205,8 +205,8 @@ export default function SuperAdminLayout() {
   const handleLogout = async () => {
     setLoggingOut(true);
     try { await authService.logout(); } catch {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
+      sessionStorage.removeItem('token');
+      sessionStorage.removeItem('user');
     } finally { navigate('/login', { replace: true }); }
   };
 

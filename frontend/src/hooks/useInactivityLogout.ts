@@ -1,6 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react';
 import api from '../services/api';
-import { removeUser } from '../pages/types';
+import { logout } from '../pages/types';
 
 // ─── Konfigurasi ──────────────────────────────────────────────────────────────
 const INACTIVITY_LIMIT_MS = 60 * 60 * 1000; // 1 jam
@@ -37,7 +37,7 @@ export function useInactivityLogout({ onWarning, onLogout }: Options = {}) {
     } catch {
       // Tetap logout meski request gagal
     } finally {
-      removeUser();
+      logout();
       onLogout?.();
     }
   }, [onLogout]);

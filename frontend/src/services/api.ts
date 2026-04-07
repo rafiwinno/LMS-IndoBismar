@@ -1,5 +1,5 @@
 import axios from "axios";
-import { User } from "../pages/types";
+import type { AuthUser as User } from "../pages/types";
 
 interface AuthResponse {
   token: string;
@@ -12,7 +12,7 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
+  const token = sessionStorage.getItem("token");
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
@@ -24,8 +24,8 @@ api.interceptors.response.use(
     const isOnLoginPage   = window.location.pathname === '/login';
 
     if (err.response?.status === 401 && !isLoginEndpoint && !isOnLoginPage) {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
+      sessionStorage.removeItem("token");
+      sessionStorage.removeItem("user");
       window.location.href = "/login";
     }
     return Promise.reject(err);
@@ -50,8 +50,8 @@ export const authService = {
 
   logout: async () => {
     await api.post("/logout");
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    sessionStorage.removeItem("token");
+    sessionStorage.removeItem("user");
   },
 };
 

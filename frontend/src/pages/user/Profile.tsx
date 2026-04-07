@@ -37,8 +37,8 @@ export default function Profile() {
     try {
       await API.put('/user/profil', { nama: form.nama, nomor_hp: form.nomor_hp });
       await fetchProfil();
-      const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
-      localStorage.setItem('user', JSON.stringify({ ...currentUser, nama: form.nama }));
+      const currentUser = JSON.parse(sessionStorage.getItem('user') || '{}');
+      sessionStorage.setItem('user', JSON.stringify({ ...currentUser, nama: form.nama }));
       window.dispatchEvent(new Event('user_updated'));
       setSuccessMsg('Profil berhasil diperbarui!');
     } catch (err: any) {

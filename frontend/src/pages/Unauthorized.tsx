@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { getUser, getDashboardPath, removeUser } from '../pages/types';
+import { getUser, getDashboardPath, logout } from '../pages/types';
 
 // Halaman ini muncul jika user mencoba akses halaman yang bukan haknya
 // Contoh: user biasa coba akses /admin/dashboard
@@ -17,7 +17,7 @@ export default function Unauthorized() {
   };
 
   const handleLogout = () => {
-    removeUser();
+    logout();
     navigate('/login');
   };
 

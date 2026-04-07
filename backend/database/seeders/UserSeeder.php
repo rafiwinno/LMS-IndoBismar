@@ -21,8 +21,6 @@ class UserSeeder extends Seeder
                 'id_role'    => 1,
                 'status'     => 'aktif',
                 'id_cabang'  => 1,
-                'created_at' => now(),
-                'updated_at' => now(),
             ],
             [
                 'nama'       => 'admincabang',
@@ -33,8 +31,6 @@ class UserSeeder extends Seeder
                 'id_role'    => 2,
                 'status'     => 'aktif',
                 'id_cabang'  => 1,
-                'created_at' => now(),
-                'updated_at' => now(),
             ],
             [
                 'nama'       => 'trainer1',
@@ -45,8 +41,6 @@ class UserSeeder extends Seeder
                 'id_role'    => 3,
                 'status'     => 'aktif',
                 'id_cabang'  => 1,
-                'created_at' => now(),
-                'updated_at' => now(),
             ],
             [
                 'nama'       => 'Peserta Test',
@@ -57,8 +51,6 @@ class UserSeeder extends Seeder
                 'id_role'    => 4,
                 'status'     => 'aktif',
                 'id_cabang'  => 1,
-                'created_at' => now(),
-                'updated_at' => now(),
             ],
 
         ]);

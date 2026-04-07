@@ -9,9 +9,13 @@ import {
   CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
 import api, { dashboardService } from "../../services/api";
-import { DashboardData } from "../types";
+
 
 // ─── Types ────────────────────────────────────────────────────────────────────
+interface DashboardData {
+  stats: { total_active_users: number; total_branches: number };
+  weekly_chart: { day: string; date: string; active_users: number }[];
+}
 interface BranchBreakdown { id: number; nama_cabang: string; kota: string; total_logins: number; unique_users: number; }
 interface RecapData {
   period: { start: string; end: string; days: number };

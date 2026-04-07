@@ -1,7 +1,7 @@
 const API_BASE = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000/api';
 
 export async function apiFetch(endpoint: string, options: RequestInit = {}) {
-  const token = localStorage.getItem('token');
+  const token = sessionStorage.getItem('token');
   const isFormData = options.body instanceof FormData;
 
   let res: Response;
@@ -21,8 +21,8 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}) {
 
   const isLoginEndpoint = endpoint === '/auth/login' || endpoint === '/auth/login-admin';
   if (res.status === 401 && !isLoginEndpoint) {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('user');
     window.location.href = '/';
     throw new Error('Sesi telah berakhir. Silakan login kembali.');
   }

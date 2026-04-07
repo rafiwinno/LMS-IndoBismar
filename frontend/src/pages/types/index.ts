@@ -9,29 +9,29 @@ export interface User {
 
 // User 
 export const saveUser = (user: User) => {
-  localStorage.setItem("lms_user", JSON.stringify(user));
+  sessionStorage.setItem("lms_user", JSON.stringify(user));
 }
 
 export const getUser = (): User | null => {
-  const data = localStorage.getItem("lms_user");
+  const data = sessionStorage.getItem("lms_user");
   return data ? JSON.parse(data) : null;
 }
 
 export const removeUser = () => {
-  localStorage.removeItem("lms_user");
+  sessionStorage.removeItem("lms_user");
 }
 
 // Token 
 export const saveToken = (token: string) => {
-  localStorage.setItem("lms_token", token);
+  sessionStorage.setItem("lms_token", token);
 }
 
 export const getToken = (): string | null => {
-  return localStorage.getItem("lms_token");
+  return sessionStorage.getItem("lms_token");
 }
 
 export const removeToken = () => {
-  localStorage.removeItem("lms_token");
+  sessionStorage.removeItem("lms_token");
 }
 
 // Redirect 
