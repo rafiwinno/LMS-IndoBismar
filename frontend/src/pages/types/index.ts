@@ -3,52 +3,44 @@ export type Role = "user" | "admin" | "trainer" | "superadmin";
 export interface User {
   id: number;
   nama: string;
-  username: string;
-  email: string | null;
+  email: string;
   role: Role;
-  id_role: number;
-  id_cabang: number;
-  status: string;
 }
 
-export function getDashboardPath(role: Role): string {
-  switch (role) {
-    case "superadmin": return "/superadmin/dashboard";
-    case "admin":      return "/admin/dashboard";
-    case "trainer":    return "/trainer/dashboard";
-    case "user":       return "/dashboard";
-    default:           return "/login";
-  }
-}
-
-export function getUser(): User | null {
-  try {
-    const raw = localStorage.getItem("lms_user");
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
-}
-
-export function saveUser(user: User): void {
+// User 
+export const saveUser = (user: User) => {
   localStorage.setItem("lms_user", JSON.stringify(user));
 }
 
-export interface WeeklyChart {
-  day: string;
-  date: string;
-  active_users: number;
+export const getUser = (): User | null => {
+  const data = localStorage.getItem("lms_user");
+  return data ? JSON.parse(data) : null;
 }
 
-export interface DashboardData {
-  stats: {
-    total_active_users: number;
-    total_branches: number;
-  };
-  weekly_chart: WeeklyChart[];
-}
-
-export function removeUser(): void {
+export const removeUser = () => {
   localStorage.removeItem("lms_user");
+}
+
+// Token 
+export const saveToken = (token: string) => {
+  localStorage.setItem("lms_token", token);
+}
+
+export const getToken = (): string | null => {
+  return localStorage.getItem("lms_token");
+}
+
+export const removeToken = () => {
   localStorage.removeItem("lms_token");
 }
+
+// Redirect 
+export const getDashboardPath = (role: Role): string => {
+  switch (role) {
+    case "superadmin":  return "/admin/dashboard";
+    case "admin":       return "/admin/dashboard";
+    case "trainer":     return "/trainer/dashboard";
+    case "user":      
+    default:            return "/dashboard";
+  }
+};

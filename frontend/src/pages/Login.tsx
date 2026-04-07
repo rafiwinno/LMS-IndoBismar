@@ -1,286 +1,319 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { User, Lock, ArrowRight, AlertCircle, Eye, EyeOff } from 'lucide-react';
-import { saveUser, getDashboardPath } from './types';
-import api from '../services/api';
+import { useNavigate } from 'react-router-dom';
+import { User, Shield, UserPlus, Eye, EyeOff, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import API from '../api/api';
+import { saveToken, saveUser } from './types';
+
+type Mode = 'main' | 'admin' | 'register';
 
 export default function Login() {
-  const navigate   = useNavigate();
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPw,   setShowPw]   = useState(false);
-  const [error,    setError]    = useState('');
-  const [loading,  setLoading]  = useState(false);
-  const [focused,  setFocused]  = useState<'username'|'password'|null>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [mode, setMode] = useState<Mode>('main');
+  const navigate = useNavigate();
+
+  const handleLogin = (user: any, token: string) => {
+    saveToken(token);
+    saveUser({
+      id:    user.id_pengguna,
+      nama:  user.nama,
+      email: user.email,
+      role:  user.role ?? 'user',
+    });
+    navigate('/dashboard');
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl" />
+        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl" />
+      </div>
+
+      <div className="relative w-full max-w-md">
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-2xl mb-4 shadow-lg shadow-blue-600/30">
+            <span className="text-white font-bold text-2xl">IB</span>
+          </div>
+          <h1 className="text-2xl font-bold text-white">LMS Indo Bismar</h1>
+          <p className="text-slate-400 text-sm mt-1">Learning Management System</p>
+        </div>
+
+        {mode === 'main'     && <UserLoginForm   onLogin={handleLogin} onSwitchAdmin={() => setMode('admin')} onSwitchRegister={() => setMode('register')} />}
+        {mode === 'admin'    && <AdminLoginForm  onLogin={handleLogin} onBack={() => setMode('main')} />}
+        {mode === 'register' && <RegisterForm    onBack={() => setMode('main')} />}
+      </div>
+    </div>
+  );
+}
+
+// ─── User Login ───────────────────────────────────────────────────────────────
+function UserLoginForm({ onLogin, onSwitchAdmin, onSwitchRegister }: any) {
+  const [email, setEmail]         = useState('');
+  const [password, setPassword]   = useState('');
+  const [showPass, setShowPass]   = useState(false);
+  const [loading, setLoading]     = useState(false);
+  const [error, setError]         = useState('');
+  const [countdown, setCountdown] = useState(0);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d')!;
-    let raf: number;
-
-    const resize = () => {
-      canvas.width  = canvas.offsetWidth;
-      canvas.height = canvas.offsetHeight;
-    };
-    resize();
-    window.addEventListener('resize', resize);
-
-    // Generate stars
-    const COUNT = 120;
-    const stars = Array.from({ length: COUNT }, () => ({
-      x:    Math.random() * canvas.width,
-      y:    Math.random() * canvas.height,
-      r:    Math.random() * 3.5 + 1.0,       // radius 0.3–1.9
-      vx:   (Math.random() - 0.5) * 0.3,    // drift x
-      vy:   (Math.random() - 0.5) * 0.3,    // drift y
-      alpha: Math.random() * 0.5 + 0.3,
-      da:   (Math.random() * 0.008 + 0.003) * (Math.random() < 0.5 ? 1 : -1), // twinkle speed
-    }));
-
-    const draw = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      for (const s of stars) {
-        // Twinkle
-        s.alpha += s.da;
-        if (s.alpha <= 0.05 || s.alpha >= 1) s.da *= -1;
-
-        // Drift
-        s.x += s.vx;
-        s.y += s.vy;
-        if (s.x < -5) s.x = canvas.width  + 5;
-        if (s.x > canvas.width  + 5) s.x = -5;
-        if (s.y < -5) s.y = canvas.height + 5;
-        if (s.y > canvas.height + 5) s.y = -5;
-
-        ctx.beginPath();
-        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(100, 130, 200, ${s.alpha * 0.6})`;
-        ctx.fill();
-      }
-      raf = requestAnimationFrame(draw);
-    };
-    draw();
-
-    return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener('resize', resize);
-    };
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, []);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const startCountdown = (seconds: number) => {
+    setCountdown(seconds);
+    timerRef.current = setInterval(() => {
+      setCountdown(prev => {
+        if (prev <= 1) { clearInterval(timerRef.current!); timerRef.current = null; setError(''); return 0; }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(''); setLoading(true);
+    setLoading(true); setError('');
     try {
-      const res = await api.post('/login', { username, password });
-      const { token, user } = res.data;
-      localStorage.setItem('lms_token', token);
-      saveUser(user);
-      window.location.href = getDashboardPath(user.role);
+      const res = await API.post('/login/peserta', { email, password });
+      onLogin(res.data.user, res.data.token);
     } catch (err: any) {
-      const s = err.response?.status;
-      setError(
-        s === 401 ? 'Username atau password salah.' :
-        s === 403 ? 'Akun tidak aktif. Hubungi administrator.' :
-        'Terjadi kesalahan. Coba beberapa saat lagi.'
-      );
+      setError(err.response?.data?.message || 'Email atau password salah');
       setPassword('');
-      setTimeout(() => document.getElementById('pw-input')?.focus(), 50);
+      if (err.response?.data?.retry_after) startCountdown(err.response.data.retry_after);
     } finally { setLoading(false); }
   };
 
-  const inputCls = (field: 'username'|'password') =>
-    `w-full pl-10 pr-10 py-3 rounded-xl border text-sm outline-none transition-all duration-200
-    ${focused === field
-      ? 'border-blue-500 ring-3 ring-blue-500/15 bg-white'
-      : error
-        ? 'border-slate-200 bg-slate-50/50'
-        : 'border-slate-200 bg-slate-50/50 hover:border-slate-300 hover:bg-white'
-    }`;
+  const isLocked = countdown > 0;
 
   return (
-    <div className="min-h-screen flex">
-      <style>{`
-        @keyframes slideUp   { from { opacity:0; transform:translateY(20px) } to { opacity:1; transform:translateY(0) } }
-        @keyframes fadeIn    { from { opacity:0 } to { opacity:1 } }
-        @keyframes shake     { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-6px)} 40%,80%{transform:translateX(6px)} }
-        @keyframes bgFloat   { 0%,100%{transform:translateY(0) rotate(0deg)} 50%{transform:translateY(-20px) rotate(3deg)} }
-        .slide-up   { animation: slideUp .5s cubic-bezier(.34,1.56,.64,1) both }
-        .fade-in    { animation: fadeIn .4s ease both }
-        .shake-err  { animation: shake .4s ease }
-        .delay-1    { animation-delay: .1s }
-        .delay-2    { animation-delay: .2s }
-        .delay-3    { animation-delay: .3s }
-      `}</style>
-
-      {/* ── Left panel (branding) ── */}
-      <div className="hidden lg:flex lg:w-[45%] xl:w-[40%] bg-[#0f172a] flex-col justify-between p-10 relative overflow-hidden shrink-0">
-
-        {/* Decorative blobs */}
-        <div className="absolute -top-24 -left-24 w-80 h-80 rounded-full bg-blue-600/10 blur-3xl pointer-events-none" style={{ animation:'bgFloat 8s ease-in-out infinite' }} />
-        <div className="absolute -bottom-32 -right-16 w-96 h-96 rounded-full bg-indigo-600/10 blur-3xl pointer-events-none" style={{ animation:'bgFloat 10s ease-in-out infinite reverse' }} />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full border border-white/3 pointer-events-none" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] rounded-full border border-white/3 pointer-events-none" />
-
-        {/* Logo */}
-        <div className="relative fade-in">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-600/30">
-              <span className="text-white font-black text-sm tracking-widest">IB</span>
-            </div>
-            <div>
-              <p className="text-white font-bold text-sm leading-tight">Indo Bismar</p>
-              <p className="text-blue-400/60 text-[10px] uppercase tracking-widest font-medium">Education LMS</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Center content */}
-        <div className="relative space-y-6 fade-in delay-1">
-          <div className="space-y-3">
-            <h2 className="text-3xl font-black text-white leading-tight tracking-tight">
-              Selamat datang<br />kembali.
-            </h2>
-            <p className="text-slate-400 text-sm leading-relaxed max-w-xs">
-              Platform PKL digital untuk mengakses materi, tugas, dan progres pelatihan Anda.
-            </p>
-          </div>
-
-          {/* Feature pills */}
-          <div className="flex flex-col gap-2.5">
-            {[
-              { icon:'📚', label:'Materi PKL terstruktur' },
-              { icon:'📊', label:'Pantau progres real-time' },
-              { icon:'🔐', label:'Akses aman & terenkripsi' },
-            ].map(f => (
-              <div key={f.label} className="flex items-center gap-3 text-sm">
-                <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/8 flex items-center justify-center text-base shrink-0">
-                  {f.icon}
-                </div>
-                <span className="text-slate-300 font-medium">{f.label}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Footer */}
-        <p className="relative text-slate-600 text-xs fade-in delay-2">
-          © 2025 PT Indo Bismar Education. All rights reserved.
-        </p>
-      </div>
-
-      {/* ── Right panel (form) ── */}
-      <div className="flex-1 flex items-center justify-center p-6 bg-slate-50 relative overflow-hidden">
-
-        {/* Subtle bg pattern */}
-        <div className="absolute inset-0 pointer-events-none"
-          style={{ backgroundImage:'radial-gradient(circle at 1px 1px, #e2e8f0 1px, transparent 0)', backgroundSize:'28px 28px' }} />
-
-        {/* Star canvas */}
-        <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none" />
-
-        <div className="w-full max-w-sm relative">
-
-          {/* Mobile logo */}
-          <div className="lg:hidden flex items-center gap-3 mb-8 slide-up">
-            <div className="w-9 h-9 rounded-xl bg-slate-900 flex items-center justify-center">
-              <span className="text-white font-black text-xs tracking-widest">IB</span>
-            </div>
-            <div>
-              <p className="text-slate-900 font-bold text-sm">Indo Bismar</p>
-              <p className="text-slate-400 text-[10px] uppercase tracking-widest">Education LMS</p>
-            </div>
-          </div>
-
-          {/* Heading */}
-          <div className="mb-8 slide-up">
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight">Masuk ke akun</h1>
-            <p className="text-slate-500 text-sm mt-1">Gunakan username dan password Anda</p>
-          </div>
-
-          {/* Card */}
-          <div className="bg-white rounded-2xl shadow-xl shadow-slate-200/60 border border-slate-100 p-6 space-y-4 slide-up delay-1">
-
-            {/* Error banner */}
-            {error && (
-              <div className="flex items-center gap-2.5 text-xs text-red-600 bg-red-50 border border-red-200 rounded-xl px-3.5 py-3 shake-err">
-                <AlertCircle size={14} className="shrink-0" />
-                <span className="font-medium">{error}</span>
-              </div>
-            )}
-
-            <form onSubmit={handleLogin} className="space-y-4">
-
-              {/* Username */}
-              <div>
-                <label className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wider">Username</label>
-                <div className="relative">
-                  <User size={15} className={`absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors ${focused==='username' ? 'text-blue-500' : 'text-slate-400'}`} />
-                  <input
-                    type="text" required autoFocus
-                    value={username}
-                    onChange={e => { setUsername(e.target.value); setError(''); }}
-                    onFocus={() => setFocused('username')}
-                    onBlur={() => setFocused(null)}
-                    className={inputCls('username')}
-                    placeholder="username123"
-                  />
-                </div>
-              </div>
-
-              {/* Password */}
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider">Password</label>
-                  <a href="#" className="text-[11px] font-semibold text-blue-600 hover:text-blue-500 transition-colors">
-                    Lupa password?
-                  </a>
-                </div>
-                <div className="relative">
-                  <Lock size={15} className={`absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors ${focused==='password' ? 'text-blue-500' : 'text-slate-400'}`} />
-                  <input
-                    id="pw-input"
-                    type={showPw ? 'text' : 'password'} required
-                    value={password}
-                    onChange={e => { setPassword(e.target.value); setError(''); }}
-                    onFocus={() => setFocused('password')}
-                    onBlur={() => setFocused(null)}
-                    className={inputCls('password')}
-                    placeholder="••••••••"
-                  />
-                  <button type="button" onClick={() => setShowPw(s => !s)}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors p-0.5">
-                    {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
-                  </button>
-                </div>
-              </div>
-
-              {/* Submit */}
-              <button type="submit" disabled={loading || !username || !password}
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold text-white
-                  bg-slate-900 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed
-                  transition-all duration-200 shadow-lg shadow-slate-900/20 hover:shadow-slate-900/30 hover:-translate-y-0.5
-                  active:translate-y-0 active:shadow-md mt-2">
-                {loading ? (
-                  <><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Memproses...</>
-                ) : (
-                  <>Masuk <ArrowRight size={15} /></>
-                )}
-              </button>
-            </form>
-          </div>
-
-          {/* Register link */}
-          <p className="text-center text-xs text-slate-500 mt-5 slide-up delay-2">
-            Belum punya akun?{' '}
-            <Link to="/register" className="font-bold text-slate-900 hover:text-blue-600 transition-colors">
-              Daftar sekarang
-            </Link>
-          </p>
-
+    <div className="bg-slate-800/80 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-slate-700/50">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="p-2 bg-blue-600/20 rounded-lg"><User className="w-5 h-5 text-blue-400" /></div>
+        <div>
+          <h2 className="text-lg font-semibold text-white">Masuk sebagai Peserta</h2>
+          <p className="text-xs text-slate-400">Gunakan email dan password Anda</p>
         </div>
       </div>
+
+      {error && (
+        <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm">
+          {error}{isLocked && <span className="font-semibold"> ({countdown}s)</span>}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-slate-300 mb-1.5">Email</label>
+          <input type="email" value={email} onChange={e => setEmail(e.target.value)}
+            placeholder="email@sekolah.com" required disabled={isLocked}
+            className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all disabled:opacity-50" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-300 mb-1.5">Password</label>
+          <div className="relative">
+            <input type={showPass ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)}
+              placeholder="••••••••" required disabled={isLocked}
+              className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all pr-10 disabled:opacity-50" />
+            <button type="button" onClick={() => setShowPass(s => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200">
+              {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+          </div>
+        </div>
+        <button type="submit" disabled={loading || isLocked}
+          className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-semibold rounded-lg transition-colors">
+          {loading ? 'Masuk...' : isLocked ? `Tunggu ${countdown} detik...` : 'Masuk'}
+        </button>
+      </form>
+
+      <div className="flex items-center gap-3 my-5">
+        <div className="flex-1 h-px bg-slate-700" />
+        <span className="text-xs text-slate-500">atau</span>
+        <div className="flex-1 h-px bg-slate-700" />
+      </div>
+
+      <div className="space-y-3">
+        <button onClick={onSwitchAdmin}
+          className="w-full py-2.5 bg-slate-700 hover:bg-slate-600 text-slate-200 font-medium rounded-lg transition-colors flex items-center justify-center gap-2 border border-slate-600">
+          <Shield className="w-4 h-4 text-amber-400" /> Login sebagai Admin
+        </button>
+        <button onClick={onSwitchRegister}
+          className="w-full py-2.5 bg-transparent hover:bg-slate-700/50 text-slate-400 hover:text-slate-200 font-medium rounded-lg transition-colors flex items-center justify-center gap-2 border border-slate-700">
+          <UserPlus className="w-4 h-4" /> Daftar Akun Baru
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Admin Login ──────────────────────────────────────────────────────────────
+function AdminLoginForm({ onLogin, onBack }: any) {
+  const [username, setUsername]   = useState('');
+  const [password, setPassword]   = useState('');
+  const [showPass, setShowPass]   = useState(false);
+  const [loading, setLoading]     = useState(false);
+  const [error, setError]         = useState('');
+  const [countdown, setCountdown] = useState(0);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, []);
+
+  const startCountdown = (seconds: number) => {
+    setCountdown(seconds);
+    timerRef.current = setInterval(() => {
+      setCountdown(prev => {
+        if (prev <= 1) { clearInterval(timerRef.current!); timerRef.current = null; setError(''); return 0; }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true); setError('');
+    try {
+      // ✅ Endpoint sesuai api.php: /login/staff
+      const res = await API.post('/login/staff', { username, password });
+      onLogin(res.data.user, res.data.token);
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Username atau password salah');
+      setUsername(''); setPassword('');
+      if (err.response?.data?.retry_after) startCountdown(err.response.data.retry_after);
+    } finally { setLoading(false); }
+  };
+
+  const isLocked = countdown > 0;
+
+  return (
+    <div className="bg-slate-800/80 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-amber-600/20">
+      <button onClick={onBack} className="flex items-center gap-1.5 text-slate-400 hover:text-slate-200 text-sm mb-5 transition-colors">
+        <ArrowLeft className="w-4 h-4" /> Kembali
+      </button>
+      <div className="flex items-center gap-3 mb-6">
+        <div className="p-2 bg-amber-500/20 rounded-lg"><Shield className="w-5 h-5 text-amber-400" /></div>
+        <div>
+          <h2 className="text-lg font-semibold text-white">Login Admin</h2>
+          <p className="text-xs text-slate-400">Khusus Admin Cabang & Admin Pusat</p>
+        </div>
+      </div>
+
+      {error && (
+        <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm">
+          {error}{isLocked && <span className="font-semibold"> ({countdown}s)</span>}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-slate-300 mb-1.5">Username</label>
+          <input type="text" value={username} onChange={e => setUsername(e.target.value)}
+            placeholder="username admin" required disabled={isLocked}
+            className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all disabled:opacity-50" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-300 mb-1.5">Password</label>
+          <div className="relative">
+            <input type={showPass ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)}
+              placeholder="••••••••" required disabled={isLocked}
+              className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all pr-10 disabled:opacity-50" />
+            <button type="button" onClick={() => setShowPass(s => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200">
+              {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+          </div>
+        </div>
+        <button type="submit" disabled={loading || isLocked}
+          className="w-full py-2.5 bg-amber-600 hover:bg-amber-700 disabled:opacity-60 text-white font-semibold rounded-lg transition-colors">
+          {loading ? 'Masuk...' : isLocked ? `Tunggu ${countdown} detik...` : 'Masuk sebagai Admin'}
+        </button>
+      </form>
+    </div>
+  );
+}
+
+// ─── Register ─────────────────────────────────────────────────────────────────
+function RegisterForm({ onBack }: any) {
+  const [form, setForm] = useState({
+    nama: '', username: '', email: '', password: '', password_confirmation: '',
+    nomor_hp: '', asal_sekolah: '', jurusan: '', id_cabang: 1,
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError]     = useState('');
+  const [success, setSuccess] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (form.password !== form.password_confirmation) { setError('Password tidak sama'); return; }
+    setLoading(true); setError('');
+    try {
+      await API.post('/register', form);
+      setSuccess(true);
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Registrasi gagal');
+    } finally { setLoading(false); }
+  };
+
+  if (success) return (
+    <div className="bg-slate-800/80 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-green-600/20 text-center">
+      <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+        <CheckCircle2 className="w-8 h-8 text-green-400" />
+      </div>
+      <h3 className="text-lg font-semibold text-white mb-2">Pendaftaran Berhasil!</h3>
+      <p className="text-slate-400 text-sm mb-2">Akun Anda telah terdaftar. Silakan login dan upload dokumen persyaratan PKL Anda.</p>
+      <p className="text-slate-500 text-xs mb-6">Dokumen akan diverifikasi oleh admin cabang setelah diupload.</p>
+      <button onClick={onBack} className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors">
+        Kembali ke Login
+      </button>
+    </div>
+  );
+
+  return (
+    <div className="bg-slate-800/80 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-slate-700/50 max-h-[85vh] overflow-y-auto">
+      <button onClick={onBack} className="flex items-center gap-1.5 text-slate-400 hover:text-slate-200 text-sm mb-5 transition-colors">
+        <ArrowLeft className="w-4 h-4" /> Kembali
+      </button>
+      <div className="flex items-center gap-3 mb-6">
+        <div className="p-2 bg-green-600/20 rounded-lg"><UserPlus className="w-5 h-5 text-green-400" /></div>
+        <div>
+          <h2 className="text-lg font-semibold text-white">Daftar Akun Baru</h2>
+          <p className="text-xs text-slate-400">Untuk peserta PKL Indo Bismar</p>
+        </div>
+      </div>
+
+      {error && <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm">{error}</div>}
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {[
+          { key: 'nama',         label: 'Nama Lengkap', type: 'text',  placeholder: 'Nama lengkap Anda' },
+          { key: 'username',     label: 'Username',     type: 'text',  placeholder: 'username unik' },
+          { key: 'email',        label: 'Email',        type: 'email', placeholder: 'email@example.com' },
+          { key: 'nomor_hp',     label: 'Nomor HP',     type: 'tel',   placeholder: '08xxxxxxxxxx' },
+          { key: 'asal_sekolah', label: 'Asal Sekolah', type: 'text',  placeholder: 'SMKN 1 ...' },
+          { key: 'jurusan',      label: 'Jurusan',      type: 'text',  placeholder: 'Teknik Informatika' },
+        ].map(({ key, label, type, placeholder }) => (
+          <div key={key}>
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">{label}</label>
+            <input type={type} placeholder={placeholder} value={(form as any)[key]}
+              onChange={e => setForm(f => ({ ...f, [key]: key === 'nomor_hp' ? e.target.value.replace(/\D/g, '') : e.target.value }))}
+              className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all" />
+          </div>
+        ))}
+        <div>
+          <label className="block text-sm font-medium text-slate-300 mb-1.5">Password</label>
+          <input type="password" placeholder="Min. 8 karakter" value={form.password} required
+            onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
+            className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-300 mb-1.5">Konfirmasi Password</label>
+          <input type="password" placeholder="Ulangi password" value={form.password_confirmation} required
+            onChange={e => setForm(f => ({ ...f, password_confirmation: e.target.value }))}
+            className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all" />
+        </div>
+        <button type="submit" disabled={loading}
+          className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-semibold rounded-lg transition-colors mt-2">
+          {loading ? 'Mendaftar...' : 'Daftar Sekarang'}
+        </button>
+      </form>
     </div>
   );
 }

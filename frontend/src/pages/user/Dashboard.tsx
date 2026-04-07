@@ -1,97 +1,95 @@
-import { BookOpen, CheckCircle, Award, Clock } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { BookOpen, CheckCircle, Clock, Award, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import API from '../../api/api';
+import { getUser } from '../types';
+import { DashboardSkeleton } from '../../components/ui/Skeleton';
+
+interface DashboardStats {
+  total_kursus: number;
+  total_kuis: number;
+  kuis_selesai: number;
+  kuis_belum: number;
+  nilai_rata_rata: number;
+}
 
 export default function Dashboard() {
-  const stats = [
-    { name: 'Total Course', value: '12', icon: BookOpen, color: 'text-blue-600', bg: 'bg-blue-100' },
-    { name: 'Course Selesai', value: '4', icon: CheckCircle, color: 'text-emerald-600', bg: 'bg-emerald-100' },
-    { name: 'Nilai Rata-rata', value: '85', icon: Award, color: 'text-purple-600', bg: 'bg-purple-100' },
-    { name: 'Tugas Pending', value: '3', icon: Clock, color: 'text-amber-600', bg: 'bg-amber-100' },
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const user = getUser();
+
+  useEffect(() => {
+    API.get('/user/dashboard')
+      .then(res => setStats(res.data))
+      .catch(err => console.error(err))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return <DashboardSkeleton />;
+
+  const statCards = [
+    { label: 'Total Kursus',    value: stats?.total_kursus ?? 0,    icon: BookOpen,    color: 'text-red-500',    bg: 'bg-red-500/10' },
+    { label: 'Kuis Selesai',    value: stats?.kuis_selesai ?? 0,    icon: CheckCircle, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+    { label: 'Kuis Belum',      value: stats?.kuis_belum ?? 0,      icon: Clock,       color: 'text-amber-500',  bg: 'bg-amber-500/10' },
+    { label: 'Nilai Rata-rata', value: stats?.nilai_rata_rata ?? 0, icon: Award,       color: 'text-blue-500',   bg: 'bg-blue-500/10' },
   ];
 
-  const recentCourses = [
-    { id: 1, title: 'Pengenalan Jaringan Komputer', trainer: 'Ahmad Santoso', progress: 100, status: 'Selesai' },
-    { id: 2, title: 'Dasar Pemrograman Web', trainer: 'Budi Raharjo', progress: 65, status: 'Sedang Berjalan' },
-    { id: 3, title: 'Troubleshooting Hardware', trainer: 'Citra Dewi', progress: 20, status: 'Sedang Berjalan' },
-    { id: 4, title: 'Komunikasi Profesional', trainer: 'Dian Sastro', progress: 0, status: 'Belum Dimulai' },
+  const quickLinks = [
+    { label: 'Lihat Kursus',  path: '/courses', icon: BookOpen, color: 'text-red-500',   bg: 'bg-red-500/10' },
+    { label: 'Kerjakan Kuis', path: '/tasks',   icon: Clock,    color: 'text-amber-500', bg: 'bg-amber-500/10' },
+    { label: 'Lihat Nilai',   path: '/grades',  icon: Award,    color: 'text-blue-500',  bg: 'bg-blue-500/10' },
   ];
 
   return (
     <div className="space-y-6">
-      {/* Welcome Section */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
-        <h1 className="text-2xl font-bold text-slate-900 mb-2">Selamat datang, Budi Wibowo! 👋</h1>
-        <p className="text-slate-600 mb-4">Lanjutkan pembelajaran Anda hari ini. Tetap semangat!</p>
-        
-        <div className="flex flex-wrap gap-4 mt-6">
-          <div className="bg-slate-50 px-4 py-3 rounded-lg border border-slate-100">
-            <p className="text-xs text-slate-500 font-medium uppercase tracking-wider mb-1">Cabang PKL</p>
-            <p className="text-sm font-semibold text-slate-900">Surabaya Pusat</p>
-          </div>
-          <div className="bg-slate-50 px-4 py-3 rounded-lg border border-slate-100">
-            <p className="text-xs text-slate-500 font-medium uppercase tracking-wider mb-1">Pembimbing</p>
-            <p className="text-sm font-semibold text-slate-900">Ahmad Santoso, S.Kom</p>
-          </div>
+
+      {/* Page heading */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white">{user?.nama ?? 'Peserta'}</h2>
+          <p className="text-sm text-gray-400 dark:text-gray-500 mt-0.5">PT Indo Bismar &middot; Peserta PKL</p>
         </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((stat) => (
-          <div key={stat.name} className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex items-center gap-4">
-            <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${stat.bg} ${stat.color}`}>
-              <stat.icon size={24} />
+      {/* Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {statCards.map((s) => (
+          <div key={s.label} className="bg-white dark:bg-[#161b22] border border-gray-200 dark:border-white/8 rounded-xl p-5 flex items-center gap-4">
+            <div className={`w-10 h-10 rounded-lg ${s.bg} flex items-center justify-center shrink-0`}>
+              <s.icon size={18} className={s.color} />
             </div>
             <div>
-              <p className="text-sm font-medium text-slate-500">{stat.name}</p>
-              <p className="text-2xl font-bold text-slate-900">{stat.value}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white leading-none">{s.value}</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{s.label}</p>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Recent Courses */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-slate-900">Course Anda</h2>
-          <Link to="/courses" className="text-sm font-medium text-blue-600 hover:text-blue-700">
-            Lihat Semua
-          </Link>
+      {/* Quick links */}
+      <div className="bg-white dark:bg-[#161b22] border border-gray-200 dark:border-white/8 rounded-xl">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-white/6">
+          <h3 className="font-semibold text-gray-900 dark:text-white text-sm">Menu Cepat</h3>
         </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {recentCourses.map((course) => (
-            <Link key={course.id} to={`/courses/${course.id}`} className="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 hover:shadow-md transition-shadow group">
-              <div className="mb-4">
-                <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-                  course.status === 'Selesai' ? 'bg-emerald-100 text-emerald-700' :
-                  course.status === 'Sedang Berjalan' ? 'bg-blue-100 text-blue-700' :
-                  'bg-slate-100 text-slate-700'
-                }`}>
-                  {course.status}
-                </span>
+        <div className="p-5 grid grid-cols-1 md:grid-cols-3 gap-4">
+          {quickLinks.map((q) => (
+            <Link
+              key={q.label}
+              to={q.path}
+              className="border border-gray-100 dark:border-white/6 rounded-lg p-4 hover:border-red-300 dark:hover:border-red-800/60 transition-colors group flex items-center gap-3"
+            >
+              <div className={`w-9 h-9 rounded-lg ${q.bg} flex items-center justify-center shrink-0`}>
+                <q.icon size={16} className={q.color} />
               </div>
-              <h3 className="font-bold text-slate-900 mb-1 group-hover:text-blue-600 transition-colors line-clamp-2 h-12">
-                {course.title}
-              </h3>
-              <p className="text-sm text-slate-500 mb-4">Trainer: {course.trainer}</p>
-              
-              <div>
-                <div className="flex justify-between text-xs mb-1.5">
-                  <span className="font-medium text-slate-700">Progress</span>
-                  <span className="font-bold text-slate-900">{course.progress}%</span>
-                </div>
-                <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                  <div 
-                    className={`h-2 rounded-full ${course.progress === 100 ? 'bg-emerald-500' : 'bg-blue-600'}`}
-                    style={{ width: `${course.progress}%` }}
-                  ></div>
-                </div>
-              </div>
+              <p className="font-semibold text-sm text-gray-800 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">
+                {q.label}
+              </p>
+              <ArrowRight size={14} className="ml-auto text-gray-300 dark:text-gray-600 group-hover:text-red-400 transition-colors" />
             </Link>
           ))}
         </div>
       </div>
+
     </div>
   );
 }
