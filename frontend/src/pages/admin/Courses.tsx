@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Plus, Search, Edit2, Trash2, X, ChevronLeft,
   FileText, File, Youtube, ExternalLink,
-  Link, BookOpen,
+  Link, BookOpen, ClipboardList, Clock, Download, Star, Users, CheckCircle,
 } from 'lucide-react';
 import { api } from '../../lib/api';
 import { confirm } from '../../lib/confirm';
@@ -61,6 +61,20 @@ export function Courses() {
   const [materiError, setMateriError] = useState('');
   const [viewer, setViewer] = useState<Materi | null>(null);
   const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
+
+  // ── Tugas state ────────────────────────────────────────────────────────
+  const [activeDetailTab, setActiveDetailTab] = useState<'materi' | 'tugas'>('materi');
+  const [tugas, setTugas] = useState<any[]>([]);
+  const [tugasLoading, setTugasLoading] = useState(false);
+  const [tugasError, setTugasError] = useState('');
+  const [showTugasModal, setShowTugasModal] = useState(false);
+  const [tugasForm, setTugasForm] = useState({ judul_tugas: '', deskripsi: '', deadline: '', nilai_maksimal: 100, file_soal: null as File | null });
+  const [tugasSaving, setTugasSaving] = useState(false);
+  const [selectedTugas, setSelectedTugas] = useState<any | null>(null);
+  const [submissions, setSubmissions] = useState<any[]>([]);
+  const [submissionsLoading, setSubmissionsLoading] = useState(false);
+  const [gradeForm, setGradeForm] = useState<Record<number, { nilai: string; feedback: string }>>({});
+  const [gradeSaving, setGradeSaving] = useState<number | null>(null);
 
   useEffect(() => {
     if (viewer?.tipe_materi === 'pdf' && viewer?.file_materi) {
@@ -216,6 +230,72 @@ export function Courses() {
     catch (e: any) { alert(e.message); }
   };
 
+  // ── Tugas handlers ─────────────────────────────────────────────────────
+  const fetchTugas = useCallback(async () => {
+    if (!selectedCourse) return;
+    setTugasLoading(true);
+    try {
+      const res = await api.getTugas(`id_kursus=${selectedCourse.id}`);
+      setTugas(res.data);
+    } catch (e: any) { setTugasError(e.message); }
+    finally { setTugasLoading(false); }
+  }, [selectedCourse]);
+
+  useEffect(() => {
+    if (selectedCourse && activeDetailTab === 'tugas') fetchTugas();
+  }, [selectedCourse, activeDetailTab]);
+
+  const handleSaveTugas = async () => {
+    if (!tugasForm.judul_tugas.trim()) { setTugasError('Judul tugas tidak boleh kosong'); return; }
+    if (!tugasForm.deadline) { setTugasError('Deadline wajib diisi'); return; }
+    if (!selectedCourse) return;
+    setTugasSaving(true); setTugasError('');
+    try {
+      const fd = new FormData();
+      fd.append('id_kursus', String(selectedCourse.id));
+      fd.append('judul_tugas', tugasForm.judul_tugas);
+      fd.append('deskripsi', tugasForm.deskripsi);
+      fd.append('deadline', tugasForm.deadline);
+      fd.append('nilai_maksimal', String(tugasForm.nilai_maksimal));
+      if (tugasForm.file_soal) fd.append('file_soal', tugasForm.file_soal);
+      await api.createTugas(fd);
+      setShowTugasModal(false);
+      setTugasForm({ judul_tugas: '', deskripsi: '', deadline: '', nilai_maksimal: 100, file_soal: null });
+      fetchTugas();
+    } catch (e: any) { setTugasError(e.message); }
+    finally { setTugasSaving(false); }
+  };
+
+  const handleDeleteTugas = async (id: number) => {
+    if (!await confirm('Hapus tugas ini? Semua pengumpulan akan ikut terhapus.')) return;
+    try { await api.deleteTugas(id); fetchTugas(); }
+    catch (e: any) { alert(e.message); }
+  };
+
+  const openTugasDetail = async (t: any) => {
+    setSelectedTugas(t);
+    setSubmissionsLoading(true);
+    try {
+      const res = await api.getSubmissions(t.id);
+      setSubmissions(res.data);
+      const initial: Record<number, { nilai: string; feedback: string }> = {};
+      res.data.forEach((s: any) => { initial[s.id] = { nilai: s.nilai ?? '', feedback: s.feedback ?? '' }; });
+      setGradeForm(initial);
+    } catch { /* silent */ }
+    finally { setSubmissionsLoading(false); }
+  };
+
+  const handleGrade = async (subId: number) => {
+    const g = gradeForm[subId];
+    if (!g || g.nilai === '') return;
+    setGradeSaving(subId);
+    try {
+      await api.gradeTugas(subId, { nilai: Number(g.nilai), feedback: g.feedback });
+      setSubmissions(prev => prev.map(s => s.id === subId ? { ...s, nilai: Number(g.nilai), feedback: g.feedback } : s));
+    } catch (e: any) { alert(e.message); }
+    finally { setGradeSaving(null); }
+  };
+
   // ── Course Detail View ─────────────────────────────────────────────────
   if (selectedCourse) {
     return (
@@ -250,11 +330,25 @@ export function Courses() {
           </div>
         </div>
 
+        {/* Tab Switcher */}
+        <div className="flex gap-1 border-b border-gray-200 dark:border-white/10">
+          {(['materi', 'tugas'] as const).map(tab => (
+            <button key={tab} onClick={() => setActiveDetailTab(tab)}
+              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+                activeDetailTab === tab
+                  ? 'border-indigo-600 text-indigo-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+              }`}>
+              {tab === 'materi' ? <BookOpen className="w-4 h-4" /> : <ClipboardList className="w-4 h-4" />}
+              {tab === 'materi' ? 'Materi' : 'Tugas'}
+            </button>
+          ))}
+        </div>
+
         {/* Materials Section */}
-        <div>
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Materi Kursus</h3>
-            <div className="flex items-center gap-3 w-full sm:w-auto">
+        {activeDetailTab === 'materi' && <div>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 mt-2">
+            <div className="flex items-center gap-3 w-full sm:w-auto ml-auto">
               <div className="relative flex-1 sm:w-72">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <input type="text" placeholder="Cari materi..." className="w-full pl-9 pr-4 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm bg-white dark:bg-[#161b22] dark:text-white dark:placeholder-gray-500"
@@ -316,7 +410,184 @@ export function Courses() {
               )}
             </div>
           )}
-        </div>
+        </div>}
+
+        {/* Tugas Section */}
+        {activeDetailTab === 'tugas' && <div className="space-y-4 mt-2">
+          <div className="flex justify-end">
+            <button onClick={() => { setTugasError(''); setTugasForm({ judul_tugas: '', deskripsi: '', deadline: '', nilai_maksimal: 100, file_soal: null }); setShowTugasModal(true); }}
+              className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors text-sm">
+              <Plus className="w-4 h-4" /><span>Buat Tugas</span>
+            </button>
+          </div>
+
+          {tugasLoading ? (
+            <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" /></div>
+          ) : selectedTugas ? (
+            /* Submissions View */
+            <div className="space-y-4">
+              <button onClick={() => setSelectedTugas(null)} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 dark:hover:text-white transition-colors">
+                <ChevronLeft className="w-4 h-4" /> Kembali ke daftar tugas
+              </button>
+              <div className="bg-white dark:bg-[#161b22] rounded-xl border border-gray-200 dark:border-white/10 p-5">
+                <div className="flex flex-wrap gap-4 items-start justify-between mb-1">
+                  <div>
+                    <h4 className="font-semibold text-gray-900 dark:text-white text-lg">{selectedTugas.judul}</h4>
+                    {selectedTugas.deskripsi && <p className="text-sm text-gray-500 mt-1">{selectedTugas.deskripsi}</p>}
+                  </div>
+                  <div className="flex gap-3 text-sm text-gray-500 dark:text-gray-400">
+                    <span className="flex items-center gap-1"><Clock className="w-4 h-4" /> {new Date(selectedTugas.deadline).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}</span>
+                    <span className="flex items-center gap-1"><Star className="w-4 h-4" /> Maks: {selectedTugas.nilai_maksimal}</span>
+                    <span className="flex items-center gap-1"><Users className="w-4 h-4" /> {submissions.length} / {selectedTugas.total} kumpul</span>
+                  </div>
+                </div>
+                {selectedTugas.file_soal_url && (
+                  <a href={selectedTugas.file_soal_url} target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 mt-3 text-sm text-indigo-600 hover:text-indigo-800">
+                    <Download className="w-4 h-4" /> Download Soal PDF
+                  </a>
+                )}
+              </div>
+
+              {submissionsLoading ? (
+                <div className="flex justify-center py-10"><div className="w-7 h-7 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" /></div>
+              ) : submissions.length === 0 ? (
+                <p className="text-center text-gray-400 py-10 text-sm">Belum ada pengumpulan</p>
+              ) : (
+                <div className="bg-white dark:bg-[#161b22] rounded-xl border border-gray-200 dark:border-white/10 overflow-hidden">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-50 dark:bg-white/5 text-gray-500 text-xs uppercase">
+                      <tr>
+                        <th className="px-5 py-3 text-left">Peserta</th>
+                        <th className="px-5 py-3 text-left">Waktu Kumpul</th>
+                        <th className="px-5 py-3 text-left">File</th>
+                        <th className="px-5 py-3 text-left w-28">Nilai</th>
+                        <th className="px-5 py-3 text-left">Feedback</th>
+                        <th className="px-5 py-3 w-20"></th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100 dark:divide-white/5">
+                      {submissions.map(s => (
+                        <tr key={s.id} className="hover:bg-gray-50 dark:hover:bg-white/3">
+                          <td className="px-5 py-3">
+                            <p className="font-medium text-gray-900 dark:text-white">{s.peserta}</p>
+                            <p className="text-xs text-gray-400">{s.email}</p>
+                          </td>
+                          <td className="px-5 py-3 text-gray-500 text-xs whitespace-nowrap">
+                            {new Date(s.tanggal_kumpul).toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' })}
+                          </td>
+                          <td className="px-5 py-3">
+                            {s.file_url && <a href={s.file_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-indigo-600 hover:underline text-xs"><Download className="w-3.5 h-3.5" />Unduh</a>}
+                          </td>
+                          <td className="px-5 py-3">
+                            <input type="number" min={0} max={selectedTugas.nilai_maksimal}
+                              className="w-20 px-2 py-1 border border-gray-300 dark:border-white/10 rounded-lg text-sm bg-white dark:bg-[#0f1117] dark:text-white"
+                              value={gradeForm[s.id]?.nilai ?? s.nilai ?? ''}
+                              onChange={e => setGradeForm(f => ({ ...f, [s.id]: { ...f[s.id], nilai: e.target.value } }))} />
+                          </td>
+                          <td className="px-5 py-3">
+                            <input type="text" placeholder="Feedback..."
+                              className="w-full px-2 py-1 border border-gray-300 dark:border-white/10 rounded-lg text-sm bg-white dark:bg-[#0f1117] dark:text-white"
+                              value={gradeForm[s.id]?.feedback ?? s.feedback ?? ''}
+                              onChange={e => setGradeForm(f => ({ ...f, [s.id]: { ...f[s.id], feedback: e.target.value } }))} />
+                          </td>
+                          <td className="px-5 py-3">
+                            <button onClick={() => handleGrade(s.id)} disabled={gradeSaving === s.id}
+                              className="flex items-center gap-1 px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs disabled:opacity-50 whitespace-nowrap">
+                              <CheckCircle className="w-3.5 h-3.5" />
+                              {gradeSaving === s.id ? '...' : 'Simpan'}
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          ) : (
+            /* Tugas List */
+            tugas.length === 0 ? (
+              <div className="text-center py-16 text-gray-400 text-sm">Belum ada tugas untuk kursus ini</div>
+            ) : (
+              <div className="space-y-3">
+                {tugas.map(t => (
+                  <div key={t.id} onClick={() => openTugasDetail(t)}
+                    className="bg-white dark:bg-[#161b22] rounded-xl border border-gray-200 dark:border-white/10 p-5 hover:border-indigo-300 hover:shadow-sm transition-all cursor-pointer group">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-semibold text-gray-900 dark:text-white group-hover:text-indigo-600 transition-colors">{t.judul}</h4>
+                        {t.deskripsi && <p className="text-sm text-gray-500 mt-1 line-clamp-1">{t.deskripsi}</p>}
+                        <div className="flex flex-wrap gap-3 mt-2 text-xs text-gray-400">
+                          <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> Deadline: {new Date(t.deadline).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}</span>
+                          <span className="flex items-center gap-1"><Star className="w-3.5 h-3.5" /> Maks: {t.nilai_maksimal}</span>
+                          <span className="flex items-center gap-1"><Users className="w-3.5 h-3.5" /> {t.submissions}/{t.total} kumpul</span>
+                          {t.file_soal_url && <span className="flex items-center gap-1 text-indigo-400"><FileText className="w-3.5 h-3.5" /> Ada soal PDF</span>}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${t.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{t.status === 'Active' ? 'Aktif' : 'Selesai'}</span>
+                        <button onClick={e => { e.stopPropagation(); handleDeleteTugas(t.id); }}
+                          className="p-1.5 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all rounded-lg hover:bg-red-50">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )
+          )}
+        </div>}
+
+        {/* Tugas Modal */}
+        {showTugasModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+            <div className="bg-white dark:bg-[#161b22] rounded-xl shadow-2xl w-full max-w-md">
+              <div className="flex items-center justify-between p-6 border-b dark:border-white/10">
+                <h3 className="text-lg font-semibold dark:text-white">Buat Tugas Baru</h3>
+                <button onClick={() => setShowTugasModal(false)}><X className="w-5 h-5 text-gray-400" /></button>
+              </div>
+              <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+                {tugasError && <p className="text-red-500 text-sm bg-red-50 p-2 rounded">{tugasError}</p>}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Judul Tugas</label>
+                  <input className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white dark:bg-[#161b22] dark:text-white"
+                    value={tugasForm.judul_tugas} onChange={e => setTugasForm(f => ({ ...f, judul_tugas: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Deskripsi</label>
+                  <textarea rows={3} className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none resize-none bg-white dark:bg-[#161b22] dark:text-white"
+                    value={tugasForm.deskripsi} onChange={e => setTugasForm(f => ({ ...f, deskripsi: e.target.value }))} />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Deadline</label>
+                    <input type="datetime-local" className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white dark:bg-[#161b22] dark:text-white"
+                      value={tugasForm.deadline} onChange={e => setTugasForm(f => ({ ...f, deadline: e.target.value }))} />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nilai Maksimal</label>
+                    <input type="number" min={1} max={1000} className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white dark:bg-[#161b22] dark:text-white"
+                      value={tugasForm.nilai_maksimal} onChange={e => setTugasForm(f => ({ ...f, nilai_maksimal: Number(e.target.value) }))} />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">File Soal PDF <span className="text-gray-400 font-normal">(opsional, maks 50 MB)</span></label>
+                  <input type="file" accept=".pdf" className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg text-sm bg-white dark:bg-[#161b22] dark:text-gray-300"
+                    onChange={e => setTugasForm(f => ({ ...f, file_soal: e.target.files?.[0] ?? null }))} />
+                  {tugasForm.file_soal && <p className="text-xs text-green-600 mt-1">✓ {tugasForm.file_soal.name}</p>}
+                </div>
+              </div>
+              <div className="flex gap-3 p-6 border-t dark:border-white/10">
+                <button onClick={() => setShowTugasModal(false)} className="flex-1 py-2 border border-gray-300 dark:border-white/10 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5">Batal</button>
+                <button onClick={handleSaveTugas} disabled={tugasSaving} className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50">
+                  {tugasSaving ? 'Menyimpan...' : 'Simpan'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Viewer Modal */}
         {viewer && (

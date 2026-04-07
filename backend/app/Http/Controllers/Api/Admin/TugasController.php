@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Tugas;
 use App\Models\PengumpulanTugas;
+use App\Models\PesertaKursus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -26,7 +27,6 @@ class TugasController extends Controller
         }
 
         if ($request->status) {
-            // 'Active' = deadline belum lewat, 'Completed' = semua sudah kumpul
             if ($request->status === 'Active') {
                 $query->where('deadline', '>=', now());
             } elseif ($request->status === 'Completed') {
@@ -52,13 +52,21 @@ class TugasController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'id_kursus'   => 'required|exists:kursus,id_kursus',
-            'judul_tugas' => 'required|string|max:200',
-            'deskripsi'   => 'nullable|string',
-            'deadline'    => 'required|date|after:now',
+            'id_kursus'      => 'required|exists:kursus,id_kursus',
+            'judul_tugas'    => 'required|string|max:200',
+            'deskripsi'      => 'nullable|string',
+            'deadline'       => 'required|date|after:now',
+            'nilai_maksimal' => 'nullable|integer|min:1|max:1000',
+            'file_soal'      => 'nullable|file|max:51200|mimes:pdf',
         ]);
 
-        $tugas = Tugas::create($request->only(['id_kursus', 'judul_tugas', 'deskripsi', 'deadline']));
+        $data = $request->only(['id_kursus', 'judul_tugas', 'deskripsi', 'deadline', 'nilai_maksimal']);
+
+        if ($request->hasFile('file_soal')) {
+            $data['file_soal'] = $request->file('file_soal')->store('tugas/soal', 'public');
+        }
+
+        $tugas = Tugas::create($data);
 
         return response()->json([
             'message' => 'Tugas berhasil dibuat.',
@@ -84,12 +92,23 @@ class TugasController extends Controller
         $tugas = Tugas::findOrFail($id);
 
         $request->validate([
-            'judul_tugas' => 'sometimes|string|max:200',
-            'deskripsi'   => 'nullable|string',
-            'deadline'    => 'sometimes|date',
+            'judul_tugas'    => 'sometimes|string|max:200',
+            'deskripsi'      => 'nullable|string',
+            'deadline'       => 'sometimes|date',
+            'nilai_maksimal' => 'nullable|integer|min:1|max:1000',
+            'file_soal'      => 'nullable|file|max:51200|mimes:pdf',
         ]);
 
-        $tugas->update($request->only(['judul_tugas', 'deskripsi', 'deadline']));
+        $data = $request->only(['judul_tugas', 'deskripsi', 'deadline', 'nilai_maksimal']);
+
+        if ($request->hasFile('file_soal')) {
+            if ($tugas->file_soal) {
+                Storage::disk('public')->delete($tugas->file_soal);
+            }
+            $data['file_soal'] = $request->file('file_soal')->store('tugas/soal', 'public');
+        }
+
+        $tugas->update($data);
 
         return response()->json([
             'message' => 'Tugas berhasil diperbarui.',
@@ -102,14 +121,17 @@ class TugasController extends Controller
      */
     public function destroy($id)
     {
-        Tugas::findOrFail($id)->delete();
+        $tugas = Tugas::findOrFail($id);
+        if ($tugas->file_soal) {
+            Storage::disk('public')->delete($tugas->file_soal);
+        }
+        $tugas->delete();
 
         return response()->json(['message' => 'Tugas berhasil dihapus.']);
     }
 
     /**
      * GET /api/tugas/{id}/submissions
-     * Daftar pengumpulan tugas
      */
     public function submissions($id)
     {
@@ -133,12 +155,12 @@ class TugasController extends Controller
 
     /**
      * POST /api/tugas/{id}/submit
-     * Peserta kumpulkan tugas
+     * Peserta kumpulkan tugas (accessible by student)
      */
     public function submit(Request $request, $id)
     {
         $request->validate([
-            'file_tugas'  => 'required|file|max:51200|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,zip,txt',
+            'file_tugas' => 'required|file|max:51200|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,zip,txt',
         ]);
 
         Tugas::findOrFail($id);
@@ -147,7 +169,7 @@ class TugasController extends Controller
 
         $path = $request->file('file_tugas')->store("tugas/{$id}", 'public');
 
-        $submission = PengumpulanTugas::updateOrCreate(
+        PengumpulanTugas::updateOrCreate(
             ['id_tugas' => $id, 'id_pengguna' => $idPengguna],
             ['file_tugas' => $path, 'tanggal_kumpul' => now()]
         );
@@ -160,12 +182,11 @@ class TugasController extends Controller
 
     /**
      * PATCH /api/tugas/submissions/{subId}/grade
-     * Trainer beri nilai & feedback
      */
     public function grade(Request $request, $subId)
     {
         $request->validate([
-            'nilai'    => 'required|integer|min:0|max:100',
+            'nilai'    => 'required|integer|min:0|max:1000',
             'feedback' => 'nullable|string',
         ]);
 
@@ -181,6 +202,50 @@ class TugasController extends Controller
         ]);
     }
 
+    /**
+     * GET /api/tugas/saya
+     * List tugas untuk peserta yang login (by enrolled courses)
+     */
+    public function myTugas(Request $request)
+    {
+        $idPengguna = $request->user()->id_pengguna;
+
+        // Ambil id_kursus yang diikuti peserta
+        $idKursus = PesertaKursus::where('id_pengguna', $idPengguna)
+            ->pluck('id_kursus');
+
+        $tugas = Tugas::with(['kursus', 'pengumpulan' => fn($q) => $q->where('id_pengguna', $idPengguna)])
+            ->whereIn('id_kursus', $idKursus)
+            ->orderBy('deadline')
+            ->get()
+            ->map(fn($t) => $this->formatTugasPeserta($t, $idPengguna));
+
+        return response()->json(['data' => $tugas]);
+    }
+
+    /**
+     * GET /api/tugas/{id}/my-submission
+     */
+    public function mySubmission(Request $request, $id)
+    {
+        $idPengguna = $request->user()->id_pengguna;
+        $tugas      = Tugas::with('kursus')->findOrFail($id);
+        $sub        = PengumpulanTugas::where('id_tugas', $id)
+            ->where('id_pengguna', $idPengguna)
+            ->first();
+
+        return response()->json([
+            'tugas'      => $this->formatTugasPeserta($tugas, $idPengguna),
+            'submission' => $sub ? [
+                'id'             => $sub->id_pengumpulan,
+                'file_url'       => asset("storage/{$sub->file_tugas}"),
+                'tanggal_kumpul' => $sub->tanggal_kumpul,
+                'nilai'          => $sub->nilai,
+                'feedback'       => $sub->feedback,
+            ] : null,
+        ]);
+    }
+
     // ─── Helpers ─────────────────────────────────────────────────────────────
 
     private function formatTugas($t)
@@ -190,15 +255,40 @@ class TugasController extends Controller
         $isCompleted = $t->deadline && now()->isAfter($t->deadline);
 
         return [
-            'id'          => $t->id_tugas,
-            'judul'       => $t->judul_tugas,
-            'deskripsi'   => $t->deskripsi,
-            'kursus'      => $t->kursus->judul_kursus ?? null,
-            'id_kursus'   => $t->id_kursus,
-            'deadline'    => $t->deadline,
-            'submissions' => $submissions,
-            'total'       => $total,
-            'status'      => $isCompleted ? 'Completed' : 'Active',
+            'id'             => $t->id_tugas,
+            'judul'          => $t->judul_tugas,
+            'deskripsi'      => $t->deskripsi,
+            'kursus'         => $t->kursus->judul_kursus ?? null,
+            'id_kursus'      => $t->id_kursus,
+            'deadline'       => $t->deadline,
+            'nilai_maksimal' => $t->nilai_maksimal ?? 100,
+            'file_soal_url'  => $t->file_soal ? asset("storage/{$t->file_soal}") : null,
+            'submissions'    => $submissions,
+            'total'          => $total,
+            'status'         => $isCompleted ? 'Completed' : 'Active',
+        ];
+    }
+
+    private function formatTugasPeserta($t, $idPengguna)
+    {
+        $sub = $t->pengumpulan->firstWhere('id_pengguna', $idPengguna)
+            ?? $t->pengumpulan->first();
+
+        return [
+            'id'             => $t->id_tugas,
+            'judul'          => $t->judul_tugas,
+            'deskripsi'      => $t->deskripsi,
+            'kursus'         => $t->kursus->judul_kursus ?? null,
+            'id_kursus'      => $t->id_kursus,
+            'deadline'       => $t->deadline,
+            'nilai_maksimal' => $t->nilai_maksimal ?? 100,
+            'file_soal_url'  => $t->file_soal ? asset("storage/{$t->file_soal}") : null,
+            'sudah_kumpul'   => $sub !== null,
+            'tanggal_kumpul' => $sub?->tanggal_kumpul,
+            'nilai'          => $sub?->nilai,
+            'feedback'       => $sub?->feedback,
+            'file_jawaban'   => $sub?->file_tugas ? asset("storage/{$sub->file_tugas}") : null,
+            'id_pengumpulan' => $sub?->id_pengumpulan,
         ];
     }
 

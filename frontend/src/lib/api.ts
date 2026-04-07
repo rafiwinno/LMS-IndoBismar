@@ -91,14 +91,19 @@ export const api = {
   createMateri: (data: FormData) => apiFetch('/materi', { method: 'POST', body: data }),
   deleteMateri: (id: number) => apiFetch(`/materi/${id}`, { method: 'DELETE' }),
 
-  // Tugas
+  // Tugas (admin/trainer)
   getTugas: (params?: string) => apiFetch(`/tugas${params ? '?' + params : ''}`),
-  createTugas: (data: any) => apiFetch('/tugas', { method: 'POST', body: JSON.stringify(data) }),
-  updateTugas: (id: number, data: any) => apiFetch(`/tugas/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  createTugas: (data: FormData) => apiFetch('/tugas', { method: 'POST', body: data }),
+  updateTugas: (id: number, data: FormData) => apiFetch(`/tugas/${id}`, { method: 'PUT', body: data }),
   deleteTugas: (id: number) => apiFetch(`/tugas/${id}`, { method: 'DELETE' }),
   getSubmissions: (id: number) => apiFetch(`/tugas/${id}/submissions`),
   gradeTugas: (subId: number, data: any) =>
     apiFetch(`/tugas/submissions/${subId}/grade`, { method: 'PATCH', body: JSON.stringify(data) }),
+  // Tugas (student)
+  getMyTugas: () => apiFetch('/tugas/saya'),
+  getMySubmission: (tugasId: number) => apiFetch(`/tugas/${tugasId}/my-submission`),
+  submitTugas: (tugasId: number, data: FormData) =>
+    apiFetch(`/tugas/${tugasId}/submit`, { method: 'POST', body: data }),
 
   // Kuis
   getKuis: (params?: string) => apiFetch(`/kuis${params ? '?' + params : ''}`),

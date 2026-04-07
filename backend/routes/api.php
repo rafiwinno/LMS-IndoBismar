@@ -32,6 +32,11 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Upload dokumen oleh peserta (setelah login, tidak perlu role admin)
     Route::post('/peserta/saya/dokumen', [PesertaController::class, 'uploadDokumen']);
+
+    // Tugas peserta (student dapat akses)
+    Route::get('/tugas/saya',                        [TugasController::class, 'myTugas']);
+    Route::get('/tugas/{id}/my-submission',          [TugasController::class, 'mySubmission']);
+    Route::post('/tugas/{id}/submit',                [TugasController::class, 'submit']);
 });
 
 // ─── Protected Routes (admin, superadmin, trainer only) ──────────────────────
@@ -82,8 +87,7 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         Route::put('/{id}',       [TugasController::class, 'update']);
         Route::delete('/{id}',    [TugasController::class, 'destroy']);
         // Pengumpulan tugas
-        Route::get('/{id}/submissions',       [TugasController::class, 'submissions']);
-        Route::post('/{id}/submit',           [TugasController::class, 'submit']);
+        Route::get('/{id}/submissions',            [TugasController::class, 'submissions']);
         Route::patch('/submissions/{subId}/grade', [TugasController::class, 'grade']);
     });
 
