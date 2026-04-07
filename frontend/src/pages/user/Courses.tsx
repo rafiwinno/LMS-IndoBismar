@@ -4,11 +4,14 @@ import { Link, useSearchParams } from 'react-router-dom';
 import API from '../../api/api';
 import { CoursesSkeleton } from '../../components/ui/Skeleton';
 
+const STORAGE_URL = (import.meta.env.VITE_API_URL as string).replace('/api', '/storage');
+
 interface Kursus {
   id_kursus: number;
   judul_kursus: string;
   deskripsi: string;
   nama_trainer: string;
+  gambar_kursus: string | null;
 }
 
 export default function Courses() {
@@ -18,11 +21,18 @@ export default function Courses() {
 
   const search = searchParams.get('search') ?? '';
 
-  useEffect(() => {
+  const fetchCourses = () => {
     API.get('/user/kursus')
       .then(res => setCourses(res.data.data))
       .catch(err => console.error(err))
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchCourses();
+    const handleFocus = () => fetchCourses();
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
   }, []);
 
   const filtered = courses.filter(c =>
@@ -56,8 +66,16 @@ export default function Courses() {
               to={`/courses/${course.id_kursus}`}
               className="bg-white dark:bg-[#161b27] rounded-2xl shadow-sm border border-gray-200 dark:border-white/8 hover:shadow-md transition-shadow group flex flex-col h-full overflow-hidden"
             >
-              <div className="h-32 bg-gray-100 dark:bg-white/5 flex items-center justify-center">
-                <BookOpen size={48} className="text-gray-300 dark:text-gray-600" />
+              <div className="h-32 bg-gray-100 dark:bg-white/5 flex items-center justify-center overflow-hidden">
+                {course.gambar_kursus ? (
+                  <img
+                    src={`${STORAGE_URL}/${course.gambar_kursus}`}
+                    alt={course.judul_kursus}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <BookOpen size={48} className="text-gray-300 dark:text-gray-600" />
+                )}
               </div>
               <div className="p-5 flex-1 flex flex-col">
                 <h3 className="font-bold text-gray-900 dark:text-white mb-2 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors line-clamp-2">

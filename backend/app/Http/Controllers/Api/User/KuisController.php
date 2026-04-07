@@ -44,6 +44,15 @@ class KuisController extends Controller
             return response()->json(['message' => 'Kuis tidak ditemukan'], 404);
         }
 
+        // Cek waktu
+        if ($kuis->waktu_mulai && now()->lt($kuis->waktu_mulai)) {
+            return response()->json(['message' => 'Kuis belum dimulai'], 403);
+        }
+
+        if ($kuis->waktu_selesai && now()->gt($kuis->waktu_selesai)) {
+            return response()->json(['message' => 'Waktu kuis sudah berakhir'], 403);
+        }
+
         // Cek apakah sudah pernah mengerjakan
         $sudahKerjakan = DB::table('attempt_kuis')
             ->where('id_pengguna', $id_pengguna)
@@ -121,6 +130,14 @@ class KuisController extends Controller
 
         if (!$kuis) {
             return response()->json(['message' => 'Kuis tidak ditemukan'], 404);
+        }
+
+        if ($kuis->waktu_mulai && now()->lt($kuis->waktu_mulai)) {
+            return response()->json(['message' => 'Kuis belum dimulai'], 403);
+        }
+
+        if ($kuis->waktu_selesai && now()->gt($kuis->waktu_selesai)) {
+            return response()->json(['message' => 'Waktu kuis sudah berakhir'], 403);
         }
 
         $pertanyaan = DB::table('pertanyaan')

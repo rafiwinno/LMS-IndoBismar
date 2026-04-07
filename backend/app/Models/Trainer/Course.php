@@ -17,6 +17,7 @@ class Course extends Model
         'id_cabang',
         'judul_kursus',
         'deskripsi',
+        'gambar_kursus',
         'status',
     ];
 

@@ -30,6 +30,7 @@ export default function Quiz() {
   const [kuis, setKuis] = useState<KuisDetail | null>(null);
   const [pertanyaan, setPertanyaan] = useState<Pertanyaan[]>([]);
   const [loading, setLoading] = useState(true);
+  const [accessError, setAccessError] = useState('');
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<Record<number, number | string>>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -43,7 +44,11 @@ export default function Quiz() {
         setKuis(res.data.kuis);
         setPertanyaan(res.data.pertanyaan);
       })
-      .catch(err => console.error(err))
+      .catch(err => {
+        const msg = err.response?.data?.message;
+        if (err.response?.status === 403 && msg) setAccessError(msg);
+        else console.error(err);
+      })
       .finally(() => setLoading(false));
 
     API.get('/user/kuis')
@@ -107,6 +112,17 @@ export default function Quiz() {
   if (loading) return (
     <div className="text-center text-gray-500 dark:text-gray-400 py-12">
       Memuat kuis...
+    </div>
+  );
+
+  if (accessError) return (
+    <div className="max-w-md mx-auto mt-20 text-center bg-white dark:bg-[#161b27] rounded-2xl p-8 shadow-sm border border-gray-200 dark:border-white/8">
+      <Clock size={40} className="mx-auto mb-4 text-amber-500" />
+      <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2">{accessError}</h2>
+      <Link to={fromCourse ? `/courses/${fromCourse}` : '/tasks'}
+        className="mt-4 inline-flex items-center gap-1 text-sm text-red-600 hover:underline">
+        <ChevronLeft size={16} /> Kembali
+      </Link>
     </div>
   );
 

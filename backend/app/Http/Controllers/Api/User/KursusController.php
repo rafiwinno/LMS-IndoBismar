@@ -13,7 +13,7 @@ class KursusController extends Controller
         $kursus = DB::table('kursus')
             ->leftJoin('pengguna as trainer', 'kursus.id_trainer', '=', 'trainer.id_pengguna')
             ->select('kursus.id_kursus', 'kursus.judul_kursus', 'kursus.deskripsi',
-                     'trainer.nama as nama_trainer')
+                     'kursus.gambar_kursus', 'trainer.nama as nama_trainer')
             ->get();
 
         return response()->json(['data' => $kursus]);
@@ -27,7 +27,7 @@ class KursusController extends Controller
             ->leftJoin('pengguna as trainer', 'kursus.id_trainer', '=', 'trainer.id_pengguna')
             ->where('kursus.id_kursus', $id_kursus)
             ->select('kursus.id_kursus', 'kursus.judul_kursus', 'kursus.deskripsi',
-                     'kursus.id_trainer', 'trainer.nama as nama_trainer')
+                     'kursus.gambar_kursus', 'kursus.id_trainer', 'trainer.nama as nama_trainer')
             ->first();
 
         if (!$kursus) {
