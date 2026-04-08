@@ -38,7 +38,7 @@ class Pengguna extends Authenticatable
 
     public function cabang()
     {
-        return $this->belongsTo(Cabang::class, 'id_cabang', 'id');
+        return $this->belongsTo(Cabang::class, 'id_cabang', 'id_cabang');
     }
 
     public function dataPkl()
@@ -49,6 +49,18 @@ class Pengguna extends Authenticatable
     public function pesertaKursus()
     {
         return $this->hasMany(PesertaKursus::class, 'id_pengguna', 'id_pengguna');
+    }
+
+    // Kursus yang diajar trainer ini
+    public function kursus()
+    {
+        return $this->hasMany(Kursus::class, 'id_trainer', 'id_pengguna');
+    }
+
+    // Jadwal trainer
+    public function jadwal()
+    {
+        return $this->hasMany(JadwalTrainer::class, 'id_trainer', 'id_pengguna');
     }
 
     public function penilaianPkl()

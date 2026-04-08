@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
   PlayCircle, FileText, CheckCircle, Circle,
   ChevronLeft, ChevronDown, ChevronRight,
-  BookOpen, Award, Clock, AlertCircle
+  BookOpen, Award, Clock, AlertCircle, ClipboardList, Upload,
 } from 'lucide-react';
 import API from '../../api/api';
 
@@ -23,6 +23,15 @@ interface KuisItem {
   waktu_selesai: string;
   skor: number | null;
   status_attempt: 'sudah' | 'belum';
+}
+
+interface TugasItem {
+  id_tugas: number;
+  judul_tugas: string;
+  deskripsi: string | null;
+  deadline: string;
+  nilai: number | null;
+  status_pengumpulan: 'sudah' | 'belum';
 }
 
 interface Kursus {
@@ -47,25 +56,54 @@ export default function CourseDetail() {
   const [activeMateri, setActiveMateri] = useState<Materi | null>(null);
   const [openBab, setOpenBab] = useState<Record<string, boolean>>({});
   const [markingDone, setMarkingDone] = useState(false);
+  const [tugasList, setTugasList] = useState<TugasItem[]>([]);
+  const [uploadingTugas, setUploadingTugas] = useState<number | null>(null);
+  const [uploadFiles, setUploadFiles] = useState<Record<number, File>>({});
+  const [uploadMsg, setUploadMsg] = useState<Record<number, { ok: boolean; msg: string }>>({});
 
   const fetchData = () => {
-    API.get(`/user/kursus/${id}`)
-      .then(res => {
-        setKursus(res.data.kursus);
-        setMateri(res.data.materi);
-        setKuisList(res.data.kuis ?? []);
+    setLoading(true);
+    Promise.all([
+      API.get(`/user/kursus/${id}`),
+      API.get('/user/tugas'),
+    ]).then(([kursusRes, tugasRes]) => {
+        setKursus(kursusRes.data.kursus);
+        setMateri(kursusRes.data.materi);
+        setKuisList(kursusRes.data.kuis ?? []);
         const babKeys: Record<string, boolean> = {};
-        res.data.materi.forEach((m: Materi) => {
+        kursusRes.data.materi.forEach((m: Materi) => {
           const key = m.sub_bab ?? 'Materi Lainnya';
           babKeys[key] = true;
         });
         setOpenBab(babKeys);
+        // Filter tugas for this course
+        const allTugas: TugasItem[] = tugasRes.data.data ?? [];
+        setTugasList(allTugas.filter((t: any) => String(t.id_kursus) === String(id)));
       })
       .catch(err => console.error(err))
       .finally(() => setLoading(false));
   };
 
   useEffect(() => { fetchData(); }, [id]);
+
+  const handleUploadTugas = async (id_tugas: number) => {
+    const file = uploadFiles[id_tugas];
+    if (!file) return;
+    setUploadingTugas(id_tugas);
+    setUploadMsg(m => ({ ...m, [id_tugas]: { ok: false, msg: '' } }));
+    try {
+      const fd = new FormData();
+      fd.append('file_tugas', file);
+      await API.post(`/user/tugas/${id_tugas}/kumpul`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+      setUploadMsg(m => ({ ...m, [id_tugas]: { ok: true, msg: 'Tugas berhasil dikumpulkan!' } }));
+      setUploadFiles(f => { const n = { ...f }; delete n[id_tugas]; return n; });
+      fetchData();
+    } catch (err: any) {
+      setUploadMsg(m => ({ ...m, [id_tugas]: { ok: false, msg: err.response?.data?.message || 'Gagal mengumpulkan.' } }));
+    } finally {
+      setUploadingTugas(null);
+    }
+  };
 
   const grouped = materi.reduce((acc, item) => {
     const key = item.sub_bab ?? 'Materi Lainnya';
@@ -286,6 +324,64 @@ export default function CourseDetail() {
           </div>
         </div>
       </div>
+
+      {/* Section Tugas */}
+      {tugasList.length > 0 && (
+        <div className="bg-white dark:bg-[#161b27] rounded-2xl shadow-sm border border-gray-200 dark:border-white/8 overflow-hidden">
+          <div className="p-6 border-b border-gray-100 dark:border-white/8">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <ClipboardList size={20} className="text-indigo-500" /> Tugas
+            </h2>
+          </div>
+          <div className="divide-y divide-gray-100 dark:divide-white/8">
+            {tugasList.map(t => (
+              <div key={t.id_tugas} className="p-5">
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="font-semibold text-gray-900 dark:text-white">{t.judul_tugas}</p>
+                    {t.deskripsi && <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{t.deskripsi}</p>}
+                    <div className="flex items-center gap-1.5 text-xs text-gray-400 mt-1.5">
+                      <Clock size={12} />
+                      Deadline: {new Date(t.deadline).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    </div>
+                  </div>
+                  <div className="flex-shrink-0">
+                    {t.status_pengumpulan === 'sudah' ? (
+                      <div className="text-right">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">
+                          <CheckCircle size={12} /> Dikumpulkan
+                        </span>
+                        {t.nilai !== null && <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400 mt-1">Nilai: {t.nilai}</p>}
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <label className="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-indigo-300 dark:border-indigo-500/50 text-indigo-600 dark:text-indigo-400 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-colors">
+                          <Upload size={12} />
+                          {uploadFiles[t.id_tugas] ? uploadFiles[t.id_tugas].name.slice(0, 14) + '…' : 'Pilih File'}
+                          <input type="file" className="hidden"
+                            accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.txt"
+                            onChange={e => { const f = e.target.files?.[0]; if (f) setUploadFiles(prev => ({ ...prev, [t.id_tugas]: f })); }} />
+                        </label>
+                        <button
+                          disabled={!uploadFiles[t.id_tugas] || uploadingTugas === t.id_tugas}
+                          onClick={() => handleUploadTugas(t.id_tugas)}
+                          className="px-3 py-1.5 text-xs font-medium bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50 transition-colors">
+                          {uploadingTugas === t.id_tugas ? 'Mengirim...' : 'Kumpulkan'}
+                        </button>
+                      </div>
+                    )}
+                    {uploadMsg[t.id_tugas]?.msg && (
+                      <p className={`text-xs mt-1 ${uploadMsg[t.id_tugas].ok ? 'text-emerald-600' : 'text-red-500'}`}>
+                        {uploadMsg[t.id_tugas].msg}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Section Kuis */}
       <div className="bg-white dark:bg-[#161b27] rounded-2xl shadow-sm border border-gray-200 dark:border-white/8 overflow-hidden">

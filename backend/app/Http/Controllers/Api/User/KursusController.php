@@ -10,10 +10,18 @@ class KursusController extends Controller
 {
     public function index(Request $request)
     {
+        $id_pengguna = $request->user()->id_pengguna;
+
         $kursus = DB::table('kursus')
+            ->join('peserta_kursus', function ($join) use ($id_pengguna) {
+                $join->on('peserta_kursus.id_kursus', '=', 'kursus.id_kursus')
+                     ->where('peserta_kursus.id_pengguna', '=', $id_pengguna);
+            })
             ->leftJoin('pengguna as trainer', 'kursus.id_trainer', '=', 'trainer.id_pengguna')
+            ->where('kursus.status', 'publish')
             ->select('kursus.id_kursus', 'kursus.judul_kursus', 'kursus.deskripsi',
-                     'kursus.gambar_kursus', 'trainer.nama as nama_trainer')
+                     'kursus.status', 'trainer.nama as nama_trainer',
+                     'peserta_kursus.status as status_progress')
             ->get();
 
         return response()->json(['data' => $kursus]);
@@ -23,11 +31,20 @@ class KursusController extends Controller
     {
         $id_pengguna = $request->user()->id_pengguna;
 
+        $enrolled = DB::table('peserta_kursus')
+            ->where('id_pengguna', $id_pengguna)
+            ->where('id_kursus', $id_kursus)
+            ->exists();
+
+        if (!$enrolled) {
+            return response()->json(['message' => 'Kamu tidak terdaftar di kursus ini.'], 403);
+        }
+
         $kursus = DB::table('kursus')
             ->leftJoin('pengguna as trainer', 'kursus.id_trainer', '=', 'trainer.id_pengguna')
             ->where('kursus.id_kursus', $id_kursus)
             ->select('kursus.id_kursus', 'kursus.judul_kursus', 'kursus.deskripsi',
-                     'kursus.gambar_kursus', 'kursus.id_trainer', 'trainer.nama as nama_trainer')
+                     'kursus.status', 'kursus.id_trainer', 'trainer.nama as nama_trainer')
             ->first();
 
         if (!$kursus) {

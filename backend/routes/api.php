@@ -133,11 +133,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/peserta/saya/dokumen', [AdminPesertaController::class, 'uploadDokumen']);
 
     // Kursus (admin)
-    Route::get('/kursus',                  [AdminKursusController::class, 'index']);
-    Route::post('/kursus',                 [AdminKursusController::class, 'store']);
-    Route::put('/kursus/{id}',             [AdminKursusController::class, 'update']);
-    Route::delete('/kursus/{id}',          [AdminKursusController::class, 'destroy']);
-    Route::patch('/kursus/{id}/status',    [AdminKursusController::class, 'updateStatus']);
+    Route::get('/kursus',                                     [AdminKursusController::class, 'index']);
+    Route::post('/kursus',                                    [AdminKursusController::class, 'store']);
+    Route::put('/kursus/{id}',                                [AdminKursusController::class, 'update']);
+    Route::delete('/kursus/{id}',                             [AdminKursusController::class, 'destroy']);
+    Route::patch('/kursus/{id}/status',                       [AdminKursusController::class, 'updateStatus']);
+    Route::get('/kursus/{id}/peserta',                        [AdminKursusController::class, 'peserta']);
+    Route::post('/kursus/{id}/enroll',                        [AdminKursusController::class, 'enroll']);
+    Route::delete('/kursus/{id}/peserta/{id_pengguna}',       [AdminKursusController::class, 'unenroll']);
 
     // Materi
     Route::get('/materi',        [AdminMateriController::class, 'index']);
@@ -165,12 +168,15 @@ Route::middleware('auth:sanctum')->group(function () {
     // All specific paths BEFORE /trainer/{id} wildcard
 
     // Courses
-    Route::get('/trainer/courses',                [TrainerCourseController::class, 'index']);
-    Route::post('/trainer/courses',               [TrainerCourseController::class, 'store']);
-    Route::get('/trainer/courses/{id}',           [TrainerCourseController::class, 'show']);
-    Route::put('/trainer/courses/{id}',           [TrainerCourseController::class, 'update']);
-    Route::delete('/trainer/courses/{id}',        [TrainerCourseController::class, 'destroy']);
-    Route::patch('/trainer/courses/{id}/publish', [TrainerCourseController::class, 'publish']);
+    Route::get('/trainer/courses',                              [TrainerCourseController::class, 'index']);
+    Route::post('/trainer/courses',                             [TrainerCourseController::class, 'store']);
+    Route::get('/trainer/courses/{id}',                         [TrainerCourseController::class, 'show']);
+    Route::put('/trainer/courses/{id}',                         [TrainerCourseController::class, 'update']);
+    Route::delete('/trainer/courses/{id}',                      [TrainerCourseController::class, 'destroy']);
+    Route::patch('/trainer/courses/{id}/publish',               [TrainerCourseController::class, 'publish']);
+    Route::get('/trainer/courses/{id}/peserta',                 [TrainerCourseController::class, 'peserta']);
+    Route::post('/trainer/courses/{id}/enroll',                 [TrainerCourseController::class, 'enroll']);
+    Route::delete('/trainer/courses/{id}/peserta/{id_pengguna}',[TrainerCourseController::class, 'unenroll']);
 
     // Assignments (nested under course)
     Route::get('/trainer/courses/{id}/assignments',  [TrainerAssignmentController::class, 'index']);
@@ -199,6 +205,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Progress peserta
     Route::get('/trainer/peserta/progress',       [TrainerProgressController::class, 'index']);
+    Route::get('/trainer/peserta/semua',          [TrainerProgressController::class, 'allPesertaCabang']);
     Route::get('/trainer/peserta',                [TrainerProgressController::class, 'index']);
 
     // Feedback

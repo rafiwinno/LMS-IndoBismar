@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Eye, Mail, MapPin, BookOpen, TrendingUp, Plus, Edit2, Trash2, X, CheckCircle, Clock, FileText, CheckCircle2, XCircle, ExternalLink } from 'lucide-react';
+import { Search, Eye, Mail, MapPin, BookOpen, TrendingUp, Plus, Edit2, Trash2, X, CheckCircle, Clock, FileText, CheckCircle2, XCircle, ExternalLink, UserPlus, UserMinus } from 'lucide-react';
 import { api } from '../../lib/api';
 import { confirm } from '../../lib/confirm';
 import { useToast } from '../../lib/toast';
@@ -43,6 +43,11 @@ export function Participants() {
   const [reviewPeserta, setReviewPeserta] = useState<any>(null);
   const [catatanTolak, setCatatanTolak] = useState('');
   const [verifying, setVerifying] = useState(false);
+
+  // Enrollment state
+  const [allKursus, setAllKursus] = useState<any[]>([]);
+  const [selectedKursusId, setSelectedKursusId] = useState<number | ''>('');
+  const [enrolling, setEnrolling] = useState(false);
 
   const fetchPeserta = async (p = 1, search = '') => {
     setLoading(true);
@@ -123,14 +128,50 @@ export function Participants() {
   const openDetail = async (p: Peserta) => {
     setLoadingDetail(true);
     setDetailPeserta({ ...p, kursus: [] });
+    setSelectedKursusId('');
     try {
-      const res = await api.getPesertaDetail(p.id);
-      setDetailPeserta(res);
+      const [detail, kursusRes] = await Promise.all([
+        api.getPesertaDetail(p.id),
+        api.getKursus('status=publish&per_page=100'),
+      ]);
+      setDetailPeserta(detail);
+      setAllKursus(kursusRes.data ?? []);
     } catch (e: any) {
       toast.error(e.message);
       setDetailPeserta(null);
     } finally {
       setLoadingDetail(false);
+    }
+  };
+
+  const handleEnroll = async () => {
+    if (!detailPeserta || !selectedKursusId) return;
+    setEnrolling(true);
+    try {
+      await api.enrollPeserta(Number(selectedKursusId), detailPeserta.id);
+      toast.success('Peserta berhasil didaftarkan ke kursus.');
+      setSelectedKursusId('');
+      const [detail] = await Promise.all([api.getPesertaDetail(detailPeserta.id)]);
+      setDetailPeserta(detail);
+      fetchPeserta(page, searchTerm);
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setEnrolling(false);
+    }
+  };
+
+  const handleUnenroll = async (kursusId: number) => {
+    if (!detailPeserta) return;
+    if (!await confirm('Keluarkan peserta dari kursus ini?')) return;
+    try {
+      await api.unenrollPeserta(kursusId, detailPeserta.id);
+      toast.success('Peserta dikeluarkan dari kursus.');
+      const detail = await api.getPesertaDetail(detailPeserta.id);
+      setDetailPeserta(detail);
+      fetchPeserta(page, searchTerm);
+    } catch (e: any) {
+      toast.error(e.message);
     }
   };
 
@@ -233,7 +274,7 @@ export function Participants() {
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end space-x-2">
-                        {(p.surat_siswa_url || p.surat_ortu_url) && (
+                        {(p.surat_siswa_url || p.surat_ortu_url || p.status_dokumen != null) && (
                           <button onClick={() => { setReviewPeserta(p); setCatatanTolak(''); }} title="Lihat / Review Dokumen"
                             className="text-amber-600 hover:text-amber-800 p-1.5 rounded-md hover:bg-amber-50 transition-colors">
                             <FileText className="w-4 h-4" />
@@ -374,9 +415,35 @@ export function Participants() {
                   </div>
                 )}
 
-                {/* Progress Kursus */}
+                {/* Kursus & Enrollment */}
                 <div className="p-6">
-                  <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Progress Kursus</h4>
+                  <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Kursus Terdaftar</h4>
+
+                  {/* Enroll form */}
+                  <div className="flex gap-2 mb-4">
+                    <select
+                      value={selectedKursusId}
+                      onChange={e => setSelectedKursusId(e.target.value === '' ? '' : Number(e.target.value))}
+                      className="flex-1 text-sm border border-gray-200 dark:border-white/10 rounded-lg px-3 py-2 bg-white dark:bg-[#0d0f14] text-gray-800 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                      <option value="">-- Pilih kursus untuk didaftarkan --</option>
+                      {allKursus
+                        .filter(k => !detailPeserta.kursus?.some((dk: any) => dk.id === k.id))
+                        .map((k: any) => (
+                          <option key={k.id} value={k.id}>{k.judul}</option>
+                        ))
+                      }
+                    </select>
+                    <button
+                      onClick={handleEnroll}
+                      disabled={!selectedKursusId || enrolling}
+                      className="flex items-center gap-1.5 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm rounded-lg transition-colors"
+                    >
+                      <UserPlus className="w-4 h-4" />
+                      {enrolling ? 'Mendaftarkan...' : 'Daftarkan'}
+                    </button>
+                  </div>
+
                   {detailPeserta.kursus?.length === 0 ? (
                     <p className="text-center text-gray-400 py-4 text-sm">Belum terdaftar di kursus manapun.</p>
                   ) : (
@@ -386,16 +453,25 @@ export function Participants() {
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                               <BookOpen className="w-4 h-4 text-indigo-400 flex-shrink-0" />
-                              <span className="text-sm font-medium text-gray-800">{k.judul}</span>
+                              <span className="text-sm font-medium text-gray-800 dark:text-white">{k.judul}</span>
                             </div>
-                            <span className={`flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${k.status === 'selesai' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
-                              {k.status === 'selesai' && <CheckCircle className="w-3 h-3" />}
-                              {k.status === 'selesai' ? 'Selesai' : 'Belum selesai'}
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className={`flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${k.status === 'selesai' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                                {k.status === 'selesai' && <CheckCircle className="w-3 h-3" />}
+                                {k.status === 'selesai' ? 'Selesai' : 'Belum selesai'}
+                              </span>
+                              <button
+                                onClick={() => handleUnenroll(k.id)}
+                                title="Keluarkan dari kursus"
+                                className="p-1 text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                              >
+                                <UserMinus className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           </div>
                           <div className="flex gap-4 text-xs text-gray-500 pl-6">
-                            <span>Materi: <span className="font-medium text-gray-700">{k.materi_selesai}/{k.materi_total}</span></span>
-                            <span>Kuis: <span className="font-medium text-gray-700">{k.kuis_selesai}/{k.kuis_total}</span></span>
+                            <span>Materi: <span className="font-medium text-gray-700 dark:text-gray-300">{k.materi_selesai}/{k.materi_total}</span></span>
+                            <span>Kuis: <span className="font-medium text-gray-700 dark:text-gray-300">{k.kuis_selesai}/{k.kuis_total}</span></span>
                           </div>
                         </li>
                       ))}

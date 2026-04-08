@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Trainer;
 
 use App\Http\Controllers\Controller;
+use App\Models\Pengguna;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -42,5 +43,19 @@ class ProgressController extends Controller
         });
 
         return response()->json(['data' => $data]);
+    }
+
+    public function allPesertaCabang(Request $request)
+    {
+        $cabangId = $request->user()->id_cabang;
+
+        $peserta = Pengguna::where('id_role', 4)
+            ->where('id_cabang', $cabangId)
+            ->where('status', 'aktif')
+            ->select('id_pengguna', 'nama', 'email')
+            ->orderBy('nama')
+            ->get();
+
+        return response()->json(['data' => $peserta]);
     }
 }

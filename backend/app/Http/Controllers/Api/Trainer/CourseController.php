@@ -7,13 +7,16 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Trainer\Course;
+use App\Models\PesertaKursus;
+use App\Models\Pengguna;
 
 class CourseController extends Controller
 {
-    // 1. List course MILIK trainer yang login (bukan semua course)
+    // 1. List course milik trainer yang login
     public function index(Request $request)
     {
         $trainerId = $request->user()->id_pengguna;
+
         $courses = Cache::remember("trainer_courses_{$trainerId}", 60, function () use ($trainerId) {
             return Course::where('id_trainer', $trainerId)->get();
         });
@@ -118,6 +121,89 @@ class CourseController extends Controller
         $course->delete();
 
         return response()->json(['message' => 'Course berhasil dihapus']);
+    }
+
+    // 6. Daftar peserta yang enrolled ke course ini
+    public function peserta(Request $request, $id)
+    {
+        $course = Course::findOrFail($id);
+
+        if ($course->id_trainer !== $request->user()->id_pengguna) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $peserta = PesertaKursus::with('pengguna.dataPkl')
+            ->where('id_kursus', $id)
+            ->get()
+            ->map(fn($pk) => [
+                'id'             => $pk->pengguna->id_pengguna,
+                'nama'           => $pk->pengguna->nama,
+                'email'          => $pk->pengguna->email,
+                'asal_sekolah'   => $pk->pengguna->dataPkl->asal_sekolah ?? null,
+                'status'         => $pk->status,
+                'tanggal_daftar' => $pk->tanggal_daftar,
+            ]);
+
+        return response()->json(['data' => $peserta]);
+    }
+
+    // 7. Enroll peserta ke course (trainer bisa enroll user di cabangnya)
+    public function enroll(Request $request, $id)
+    {
+        $course = Course::findOrFail($id);
+
+        if ($course->id_trainer !== $request->user()->id_pengguna) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $request->validate([
+            'id_pengguna' => 'required|exists:pengguna,id_pengguna',
+        ]);
+
+        $peserta = Pengguna::where('id_pengguna', $request->id_pengguna)
+            ->where('id_cabang', $request->user()->id_cabang)
+            ->where('id_role', 4)
+            ->first();
+
+        if (!$peserta) {
+            return response()->json(['message' => 'Peserta tidak ditemukan di cabang ini.'], 404);
+        }
+
+        $existing = PesertaKursus::where('id_kursus', $id)
+            ->where('id_pengguna', $request->id_pengguna)
+            ->first();
+
+        if ($existing) {
+            return response()->json(['message' => 'Peserta sudah terdaftar di kursus ini.'], 409);
+        }
+
+        PesertaKursus::create([
+            'id_kursus'   => $id,
+            'id_pengguna' => $request->id_pengguna,
+            'status'      => 'belum_mulai',
+        ]);
+
+        return response()->json(['message' => 'Peserta berhasil didaftarkan ke kursus.'], 201);
+    }
+
+    // 8. Unenroll peserta dari course
+    public function unenroll(Request $request, $id, $id_pengguna)
+    {
+        $course = Course::findOrFail($id);
+
+        if ($course->id_trainer !== $request->user()->id_pengguna) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $deleted = PesertaKursus::where('id_kursus', $id)
+            ->where('id_pengguna', $id_pengguna)
+            ->delete();
+
+        if (!$deleted) {
+            return response()->json(['message' => 'Peserta tidak terdaftar di kursus ini.'], 404);
+        }
+
+        return response()->json(['message' => 'Peserta berhasil dikeluarkan dari kursus.']);
     }
 
     // 6. Publish course (dengan cek kepemilikan)

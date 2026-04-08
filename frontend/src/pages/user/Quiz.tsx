@@ -36,13 +36,21 @@ export default function Quiz() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [hasil, setHasil] = useState<{ nilai: number; benar: number; total: number; ada_essay?: boolean } | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(1800);
+  const [timeLeft, setTimeLeft] = useState<number | null>(null);
 
   useEffect(() => {
     API.get(`/user/kuis/${id}`)
       .then(res => {
-        setKuis(res.data.kuis);
+        const kuisData = res.data.kuis;
+        setKuis(kuisData);
         setPertanyaan(res.data.pertanyaan);
+
+        if (kuisData?.waktu_selesai) {
+          const sisa = Math.max(0, Math.floor(
+            (new Date(kuisData.waktu_selesai).getTime() - Date.now()) / 1000
+          ));
+          setTimeLeft(sisa);
+        }
       })
       .catch(err => {
         const msg = err.response?.data?.message;
@@ -62,8 +70,9 @@ export default function Quiz() {
   }, [id]);
 
   useEffect(() => {
+    if (timeLeft === null) return;
     if (timeLeft > 0 && !isSubmitted) {
-      const timer = setTimeout(() => setTimeLeft(t => t - 1), 1000);
+      const timer = setTimeout(() => setTimeLeft(t => (t ?? 1) - 1), 1000);
       return () => clearTimeout(timer);
     } else if (timeLeft === 0 && !isSubmitted) {
       handleSubmit();
@@ -190,12 +199,12 @@ export default function Quiz() {
       <div className="bg-white dark:bg-[#161b27] rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-white/8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <h1 className="text-xl font-bold text-gray-900 dark:text-white">{kuis.judul_kuis}</h1>
         <div className={`flex items-center gap-2 px-4 py-2 rounded-lg font-mono text-lg font-bold ${
-          timeLeft < 300
+          timeLeft !== null && timeLeft < 300
             ? 'bg-rose-100 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400 animate-pulse'
             : 'bg-gray-100 dark:bg-white/8 text-gray-800 dark:text-gray-200'
         }`}>
           <Clock size={20} />
-          {formatTime(timeLeft)}
+          {timeLeft === null ? '--:--' : formatTime(timeLeft)}
         </div>
       </div>
 

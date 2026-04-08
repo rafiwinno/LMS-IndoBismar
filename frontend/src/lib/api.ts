@@ -86,6 +86,13 @@ export const api = {
   updateStatusKursus: (id: number, status: string) =>
     apiFetch(`/kursus/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
 
+  // Enrollment (admin cabang)
+  getKursusPeserta: (kursusId: number) => apiFetch(`/kursus/${kursusId}/peserta`),
+  enrollPeserta: (kursusId: number, id_pengguna: number) =>
+    apiFetch(`/kursus/${kursusId}/enroll`, { method: 'POST', body: JSON.stringify({ id_pengguna }) }),
+  unenrollPeserta: (kursusId: number, id_pengguna: number) =>
+    apiFetch(`/kursus/${kursusId}/peserta/${id_pengguna}`, { method: 'DELETE' }),
+
   // Materi
   getMateri: (params?: string) => apiFetch(`/materi${params ? '?' + params : ''}`),
   createMateri: (data: FormData) => apiFetch('/materi', { method: 'POST', body: data }),
@@ -112,8 +119,12 @@ export const api = {
 
   // Trainer
   getTrainer: (params?: string) => apiFetch(`/trainer${params ? '?' + params : ''}`),
+  getTrainerDetail: (id: number) => apiFetch(`/trainer/${id}`),
   createTrainer: (data: any) => apiFetch('/trainer', { method: 'POST', body: JSON.stringify(data) }),
+  updateTrainer: (id: number, data: any) => apiFetch(`/trainer/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteTrainer: (id: number) => apiFetch(`/trainer/${id}`, { method: 'DELETE' }),
+  updateStatusTrainer: (id: number, status: string) =>
+    apiFetch(`/trainer/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
   getAllJadwal: (params?: string) => apiFetch(`/trainer/jadwal/all${params ? '?' + params : ''}`),
   createJadwal: (data: any) => apiFetch('/trainer/jadwal', { method: 'POST', body: JSON.stringify(data) }),
   updateJadwal: (id: number, data: any) => apiFetch(`/trainer/jadwal/${id}`, { method: 'PUT', body: JSON.stringify(data) }),

@@ -5,13 +5,14 @@ namespace App\Http\Controllers\Api\User;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class TugasController extends Controller
 {
     // Semua tugas dari kursus yang diikuti peserta
     public function index(Request $request)
     {
-        $id_pengguna = $request->id_pengguna;
+        $id_pengguna = $request->user()->id_pengguna;
 
         $tugas = DB::table('tugas')
             ->join('peserta_kursus', 'tugas.id_kursus', '=', 'peserta_kursus.id_kursus')
@@ -23,6 +24,7 @@ class TugasController extends Controller
             ->where('peserta_kursus.id_pengguna', $id_pengguna)
             ->select(
                 'tugas.id_tugas',
+                'tugas.id_kursus',
                 'tugas.judul_tugas',
                 'tugas.deskripsi',
                 'tugas.deadline',
@@ -40,7 +42,7 @@ class TugasController extends Controller
     // Peserta kumpulkan tugas
     public function kumpul(Request $request, $id_tugas)
     {
-        $id_pengguna = $request->id_pengguna;
+        $id_pengguna = $request->user()->id_pengguna;
 
         // Cek apakah tugas ada
         $tugas = DB::table('tugas')->where('id_tugas', $id_tugas)->first();
@@ -68,13 +70,18 @@ class TugasController extends Controller
             return response()->json(['message' => 'Kamu sudah mengumpulkan tugas ini'], 409);
         }
 
+        $request->validate([
+            'file_tugas' => 'required|file|max:51200|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,zip,txt',
+        ]);
+
+        $path = $request->file('file_tugas')->store("tugas/{$id_tugas}", 'public');
+
         // Simpan pengumpulan tugas
         DB::table('pengumpulan_tugas')->insert([
-            'id_pengguna'       => $id_pengguna,
-            'id_tugas'          => $id_tugas,
-            'jawaban'           => $request->jawaban,
-            'file_jawaban'      => $request->file_jawaban ?? null,
-            'tanggal_kumpul'    => now(),
+            'id_pengguna'    => $id_pengguna,
+            'id_tugas'       => $id_tugas,
+            'file_tugas'     => $path,
+            'tanggal_kumpul' => now(),
         ]);
 
         return response()->json(['message' => 'Tugas berhasil dikumpulkan'], 201);
