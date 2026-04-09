@@ -7,13 +7,14 @@
 // ============================================================
 
 export interface Course {
-  id_kursus:    number;
-  id_trainer:   number;
-  id_cabang:    number;
-  judul_kursus: string;
-  deskripsi:    string | null;
-  status:       'draft' | 'publish';
-  dibuat_pada:  string;
+  id_kursus:     number;
+  id_trainer:    number;
+  id_cabang:     number;
+  judul_kursus:  string;
+  deskripsi:     string | null;
+  gambar_kursus: string | null;
+  status:        'draft' | 'publish';
+  dibuat_pada:   string;
 }
 
 export interface Material {

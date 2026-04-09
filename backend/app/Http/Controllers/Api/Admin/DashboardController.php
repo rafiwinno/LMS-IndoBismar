@@ -3,9 +3,121 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Models\Pengguna;
+use App\Models\Kursus;
+use App\Models\Materi;
+use App\Models\Tugas;
+use App\Models\AttemptKuis;
+use App\Models\PesertaKursus;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
-    //
+    public function index()
+    {
+        // ── Stat Cards — 5 simple queries ────────────────────────────────────
+        $totalPeserta = Pengguna::where('id_role', 4)->where('status', 'aktif')->count();
+        $totalKursus  = Kursus::where('status', 'publish')->count();
+        $totalMateri  = Materi::count();
+        $totalTugas   = Tugas::count();
+        $avgScore     = AttemptKuis::where('status', 'selesai')->avg('skor') ?? 0;
+
+        // ── Kuis selesai per minggu — 1 GROUP BY query ───────────────────────
+        $weekStart = now()->subWeeks(5)->startOfWeek();
+        $weeklyCounts = DB::table('attempt_kuis')
+            ->where('status', 'selesai')
+            ->where('waktu_selesai', '>=', $weekStart)
+            ->selectRaw('YEARWEEK(waktu_selesai, 1) as yw, COUNT(*) as total')
+            ->groupBy('yw')
+            ->pluck('total', 'yw');
+
+        $progressData = collect(range(5, 0))->map(function ($weekBack) use ($weeklyCounts) {
+            $yw = now()->subWeeks($weekBack)->startOfWeek()->format('oW'); // ISO year+week
+            return [
+                'name'     => 'Week ' . (6 - $weekBack),
+                'progress' => (int) ($weeklyCounts->get((int) $yw, 0)),
+            ];
+        });
+
+        // ── Completion rate per kursus — withCount, no row loading ───────────
+        $courseData = Kursus::withCount([
+                'pesertaKursus',
+                'pesertaKursus as selesai_count' => fn($q) => $q->where('status', 'selesai'),
+            ])
+            ->where('status', 'publish')
+            ->take(5)
+            ->get()
+            ->map(fn($k) => [
+                'name'       => $k->judul_kursus,
+                'completion' => $k->peserta_kursus_count > 0
+                    ? round(($k->selesai_count / $k->peserta_kursus_count) * 100)
+                    : 0,
+            ]);
+
+        // ── Materi dibuka per hari — 1 query grouped by date ─────────────────
+        $days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        $dayStart    = now()->subDays(6)->startOfDay();
+        $dailyCounts = DB::table('progress_materi')
+            ->where('waktu_update', '>=', $dayStart)
+            ->selectRaw('DATE(waktu_update) as tgl, COUNT(*) as total')
+            ->groupBy('tgl')
+            ->pluck('total', 'tgl');
+
+        $submissionData = collect(range(6, 0))->map(function ($dayBack) use ($days, $dailyCounts) {
+            $date = now()->subDays($dayBack)->toDateString();
+            return [
+                'name' => $days[now()->subDays($dayBack)->dayOfWeek],
+                'rate' => (int) ($dailyCounts->get($date, 0)),
+            ];
+        });
+
+        // ── Recent Activity ──────────────────────────────────────────────────
+        $recentActivity = collect();
+
+        // Tugas dikumpulkan
+        $submissions = DB::table('pengumpulan_tugas as pt')
+            ->join('pengguna as p', 'p.id_pengguna', '=', 'pt.id_pengguna')
+            ->join('tugas as t', 't.id_tugas', '=', 'pt.id_tugas')
+            ->select('p.nama as user', DB::raw("'submitted assignment' as action"), 't.judul_tugas as target', 'pt.tanggal_kumpul as time')
+            ->orderBy('pt.tanggal_kumpul', 'desc')
+            ->limit(3)
+            ->get();
+
+        // Kuis selesai
+        $attempts = DB::table('attempt_kuis as ak')
+            ->join('pengguna as p', 'p.id_pengguna', '=', 'ak.id_pengguna')
+            ->join('kuis as k', 'k.id_kuis', '=', 'ak.id_kuis')
+            ->select('p.nama as user', DB::raw("'completed exam' as action"), 'k.judul_kuis as target', 'ak.waktu_selesai as time')
+            ->where('ak.status', 'selesai')
+            ->orderBy('ak.waktu_selesai', 'desc')
+            ->limit(3)
+            ->get();
+
+        $recentActivity = $recentActivity
+            ->concat($submissions)
+            ->concat($attempts)
+            ->sortByDesc('time')
+            ->take(5)
+            ->values()
+            ->map(fn($a) => [
+                'user'   => $a->user,
+                'action' => $a->action,
+                'target' => $a->target,
+                'time'   => $a->time,
+            ]);
+
+        return response()->json([
+            'stats' => [
+                'total_peserta'   => $totalPeserta,
+                'total_kursus'    => $totalKursus,
+                'total_materi'    => $totalMateri,
+                'total_tugas'     => $totalTugas,
+                'average_score'   => round($avgScore, 1),
+            ],
+            'progress_data'    => $progressData,
+            'course_data'      => $courseData,
+            'submission_data'  => $submissionData,
+            'recent_activity'  => $recentActivity,
+        ]);
+    }
 }

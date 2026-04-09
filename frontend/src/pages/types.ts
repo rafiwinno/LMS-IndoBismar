@@ -23,10 +23,10 @@ function mapRole(id_role: number): UserRole {
   }
 }
 
-// Ambil user dari localStorage
+// Ambil user dari sessionStorage
 export function getUser(): AuthUser | null {
   try {
-    const raw = localStorage.getItem('user');
+    const raw = sessionStorage.getItem('user');
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     return {
@@ -38,15 +38,24 @@ export function getUser(): AuthUser | null {
   }
 }
 
-// Ambil token dari localStorage
+// Ambil token dari sessionStorage
 export function getToken(): string | null {
-  return localStorage.getItem('token');
+  return sessionStorage.getItem('token');
+}
+
+// Simpan token & user ke sessionStorage
+export function saveToken(token: string): void {
+  sessionStorage.setItem('token', token);
+}
+
+export function saveUser(user: object): void {
+  sessionStorage.setItem('user', JSON.stringify(user));
 }
 
 // Logout: bersihkan storage
 export function logout(): void {
-  localStorage.removeItem('token');
-  localStorage.removeItem('user');
+  sessionStorage.removeItem('token');
+  sessionStorage.removeItem('user');
 }
 
 // Tentukan path dashboard berdasarkan role

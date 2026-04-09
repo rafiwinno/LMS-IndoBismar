@@ -1,15 +1,11 @@
-import api from './axiosInstance';
+import API from "./api";
 
-export const loginPeserta = (data: { email: string; password: string }) =>
-  api.post('/login/peserta', data);
+export const loginPeserta = async (email: string, password: string) => {
+    const res = await API.post("/login/peserta", { email, password });
+    return res.data;
+}
 
-export const loginStaff = (data: { username: string; password: string }) =>
-  api.post('/login/staff', data);
-
-export const register = (data: {
-  nama: string;
-  username: string;
-  email: string;
-  password: string;
-  nomor_hp: string;
-}) => api.post('/register', data);
+export const logoutUser = async () => {
+    const res = await API.post("/logout");
+    return res.data;
+};

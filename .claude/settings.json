@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run:*)",
+      "Bash(npx vite:*)",
+      "Bash(node_modules/.bin/vite)",
+      "Bash(npm install:*)",
+      "Bash(php artisan tinker '--execute=:*)",
+      "Read(//c/Kampus Semester 6/PKL - IndoBismar/**)",
+      "Bash(php artisan:*)",
+      "Bash(npx tsc:*)",
+      "Bash(sed -i \"s/import { removeUser } from '..\\\\/pages\\\\/types';/import { logout } from '..\\\\/pages\\\\/types';/\" \"c:/Kampus Semester 6/PKL  - IndoBismar/LMS_IndoBismar/frontend/src/hooks/useInactivityLogout.ts\")",
+      "Bash(sed -i 's/removeUser\\(\\);/logout\\(\\);/' \"c:/Kampus Semester 6/PKL  - IndoBismar/LMS_IndoBismar/frontend/src/hooks/useInactivityLogout.ts\")",
+      "Bash(sed -i \"s/import { getUser, getDashboardPath, removeUser } from '..\\\\/pages\\\\/types';/import { getUser, getDashboardPath, logout } from '..\\\\/pages\\\\/types';/\" \"c:/Kampus Semester 6/PKL  - IndoBismar/LMS_IndoBismar/frontend/src/pages/Unauthorized.tsx\")",
+      "Bash(sed -i 's/removeUser\\(\\);/logout\\(\\);/' \"c:/Kampus Semester 6/PKL  - IndoBismar/LMS_IndoBismar/frontend/src/pages/Unauthorized.tsx\")"
+    ],
+    "additionalDirectories": [
+      "c:\\Kampus Semester 6\\PKL  - IndoBismar\\LMS_IndoBismar\\frontend\\src\\services"
+    ]
+  }
+}

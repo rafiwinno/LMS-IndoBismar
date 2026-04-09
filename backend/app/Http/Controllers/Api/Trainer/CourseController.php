@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Trainer;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
 use App\Models\Trainer\Course;
 
 class CourseController extends Controller
@@ -23,21 +24,26 @@ class CourseController extends Controller
     // 2. Buat course baru
     public function store(Request $request)
     {
-        // FIX: tambah validasi
         $request->validate([
-            'judul_kursus' => 'required|string|max:200',
-            'deskripsi'    => 'nullable|string',
+            'judul_kursus'  => 'required|string|max:200',
+            'deskripsi'     => 'nullable|string',
+            'gambar_kursus' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
 
         $user = $request->user();
 
-        // FIX: gunakan id_trainer (sesuai kolom di tabel kursus), bukan id_pengguna
+        $gambar = null;
+        if ($request->hasFile('gambar_kursus')) {
+            $gambar = $request->file('gambar_kursus')->store('kursus', 'public');
+        }
+
         $course = Course::create([
-            'id_trainer'   => $user->id_pengguna,
-            'id_cabang'    => $user->id_cabang,
-            'judul_kursus' => $request->judul_kursus,
-            'deskripsi'    => $request->deskripsi,
-            'status'       => 'draft',
+            'id_trainer'    => $user->id_pengguna,
+            'id_cabang'     => $user->id_cabang,
+            'judul_kursus'  => $request->judul_kursus,
+            'deskripsi'     => $request->deskripsi,
+            'gambar_kursus' => $gambar,
+            'status'        => 'draft',
         ]);
 
         Cache::forget("trainer_courses_{$user->id_pengguna}");
@@ -53,7 +59,6 @@ class CourseController extends Controller
     {
         $course = Course::findOrFail($id);
 
-        // FIX: cek kepemilikan
         if ($course->id_trainer !== $request->user()->id_pengguna) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
@@ -66,21 +71,27 @@ class CourseController extends Controller
     {
         $course = Course::findOrFail($id);
 
-        // FIX: cek kepemilikan
         if ($course->id_trainer !== $request->user()->id_pengguna) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        // FIX: tambah validasi
         $request->validate([
-            'judul_kursus' => 'sometimes|required|string|max:200',
-            'deskripsi'    => 'nullable|string',
+            'judul_kursus'  => 'sometimes|required|string|max:200',
+            'deskripsi'     => 'nullable|string',
+            'gambar_kursus' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
 
-        $course->update([
-            'judul_kursus' => $request->judul_kursus ?? $course->judul_kursus,
-            'deskripsi'    => $request->deskripsi    ?? $course->deskripsi,
-        ]);
+        if ($request->hasFile('gambar_kursus')) {
+            // Hapus gambar lama
+            if ($course->gambar_kursus) {
+                Storage::disk('public')->delete($course->gambar_kursus);
+            }
+            $course->gambar_kursus = $request->file('gambar_kursus')->store('kursus', 'public');
+        }
+
+        $course->judul_kursus = $request->judul_kursus ?? $course->judul_kursus;
+        $course->deskripsi    = $request->has('deskripsi') ? $request->deskripsi : $course->deskripsi;
+        $course->save();
 
         Cache::forget("trainer_courses_{$request->user()->id_pengguna}");
 
@@ -95,9 +106,12 @@ class CourseController extends Controller
     {
         $course = Course::findOrFail($id);
 
-        // FIX: cek kepemilikan
         if ($course->id_trainer !== $request->user()->id_pengguna) {
             return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        if ($course->gambar_kursus) {
+            Storage::disk('public')->delete($course->gambar_kursus);
         }
 
         Cache::forget("trainer_courses_{$request->user()->id_pengguna}");
@@ -111,7 +125,6 @@ class CourseController extends Controller
     {
         $course = Course::findOrFail($id);
 
-        // FIX: cek kepemilikan
         if ($course->id_trainer !== $request->user()->id_pengguna) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
