@@ -1,2 +1,92 @@
 @import "tailwindcss";
 @variant dark (&:where(.dark, .dark *));
+
+/* ─── Design System: Light mode ─────────────────────────────────────────── */
+:root {
+  --color-bg-page:    #f8fafc;
+  --color-bg-card:    #ffffff;
+  --color-bg-sidebar: #ffffff;
+  --color-bg-topbar:  #ffffff;
+  --color-bg-muted:   #f1f5f9;
+
+  --color-text-primary:   #0f172a;
+  --color-text-secondary: #334155;
+  --color-text-label:     #475569;
+  --color-text-muted:     #94a3b8;
+
+  --color-border-theme:  #e2e8f0;
+  --color-border-subtle: #e2e8f0;
+  --color-border-muted:  #f1f5f9;
+
+  --shadow-card:    0 1px 3px 0 rgb(0 0 0 / 0.07), 0 1px 2px -1px rgb(0 0 0 / 0.07);
+  --shadow-topbar:  0 1px 0 0 #e2e8f0;
+}
+
+/* ─── Design System: Dark mode ──────────────────────────────────────────── */
+.dark {
+  --color-bg-page:    #0d1117;
+  --color-bg-card:    #161b22;
+  --color-bg-sidebar: #161b22;
+  --color-bg-topbar:  #161b22;
+  --color-bg-muted:   #1c2128;
+
+  --color-text-primary:   #f0f6fc;
+  --color-text-secondary: #c9d1d9;
+  --color-text-label:     #8b949e;
+  --color-text-muted:     #6e7681;
+
+  --color-border-theme:  #30363d;
+  --color-border-subtle: #21262d;
+  --color-border-muted:  #1c2128;
+
+  --shadow-card:   0 1px 3px 0 rgb(0 0 0 / 0.3);
+  --shadow-topbar: 0 1px 0 0 #30363d;
+}
+
+/* ─── Base: ensure text color follows theme everywhere ─────────────────── */
+html {
+  background-color: var(--color-bg-page);
+  color: var(--color-text-primary);
+}
+
+/* Input, select, textarea don't inherit color in all browsers */
+input, select, textarea, button {
+  color: inherit;
+}
+
+/* Red buttons always white text */
+.bg-red-500, .bg-red-600, .bg-red-700,
+.hover\:bg-red-600:hover, .hover\:bg-red-700:hover {
+  color: #ffffff !important;
+}
+
+/* ─── Utility classes ───────────────────────────────────────────────────── */
+.bg-page    { background-color: var(--color-bg-page); }
+.bg-card    { background-color: var(--color-bg-card); }
+.bg-sidebar { background-color: var(--color-bg-sidebar); }
+.bg-topbar  { background-color: var(--color-bg-topbar); }
+.bg-muted   { background-color: var(--color-bg-muted); }
+
+.text-primary   { color: var(--color-text-primary); }
+.text-secondary { color: var(--color-text-secondary); }
+.text-label     { color: var(--color-text-label); }
+.text-muted     { color: var(--color-text-muted); }
+
+.border-theme  { border-color: var(--color-border-theme); }
+.border-subtle { border-color: var(--color-border-subtle); }
+.border-muted  { border-color: var(--color-border-muted); }
+
+.shadow-card   { box-shadow: var(--shadow-card); }
+.shadow-topbar { box-shadow: var(--shadow-topbar); }
+
+.card {
+  background-color: var(--color-bg-card);
+  color: var(--color-text-primary);
+  box-shadow: var(--shadow-card);
+  border: 1px solid var(--color-border-subtle);
+}
+
+.bg-card    { color: var(--color-text-primary); }
+.bg-sidebar { color: var(--color-text-primary); }
+.bg-topbar  { color: var(--color-text-primary); }
+.bg-page    { color: var(--color-text-primary); }

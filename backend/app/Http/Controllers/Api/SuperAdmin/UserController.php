@@ -44,9 +44,9 @@ class UserController extends Controller
         }
 
         $perPage = $request->per_page ?? 10;
-        $users   = $query->orderBy('id', 'desc')->paginate($perPage);
+        $users   = $query->orderBy('id_pengguna', 'desc')->paginate($perPage);
 
-        $userIds = $users->pluck('id');
+        $userIds = $users->pluck('id_pengguna');
 
         // Ambil log terakhir per user (login terbaru apapun statusnya)
         $latestLogs = LoginLog::whereIn('user_id', $userIds)
@@ -63,7 +63,7 @@ class UserController extends Controller
         $roleNames = [1 => 'superadmin', 2 => 'admin', 3 => 'trainer', 4 => 'user'];
 
         $mapped = $users->getCollection()->map(function($u) use ($latestLogs, $onlineThreshold, $roleNames) {
-            $log       = $latestLogs[$u->id] ?? null;
+            $log       = $latestLogs[$u->id_pengguna] ?? null;
             $lastLogin = $log?->last_login_at ?? null;
             $loggedOut = $log?->logged_out_at ?? null;
 
@@ -80,7 +80,7 @@ class UserController extends Controller
                 : null;
 
             return [
-                'id'          => $u->id,
+                'id'          => $u->id_pengguna,
                 'nama'        => $u->nama,
                 'username'    => $u->username,
                 'email'       => $u->email,
@@ -111,7 +111,7 @@ class UserController extends Controller
             'email'     => 'nullable|email|unique:pengguna,email',
             'password'  => 'required|string|min:6',
             'id_role'   => 'required|in:2,3,4',
-            'id_cabang' => 'required|exists:cabang,id',
+            'id_cabang' => 'required|exists:cabang,id_cabang',
             'status'    => 'in:aktif,nonaktif',
         ]);
 
@@ -137,11 +137,11 @@ class UserController extends Controller
 
         $request->validate([
             'nama'      => 'required|string|max:255',
-            'username'  => 'required|string|unique:pengguna,username,' . $id,
-            'email'     => 'nullable|email|unique:pengguna,email,' . $id,
+            'username'  => 'required|string|unique:pengguna,username,' . $id . ',id_pengguna',
+            'email'     => 'nullable|email|unique:pengguna,email,' . $id . ',id_pengguna',
             'password'  => 'nullable|string|min:6',
             'id_role'   => 'required|in:2,3,4',
-            'id_cabang' => 'required|exists:cabang,id',
+            'id_cabang' => 'required|exists:cabang,id_cabang',
             'status'    => 'in:aktif,nonaktif',
         ]);
 
@@ -176,7 +176,7 @@ class UserController extends Controller
     public function branches()
     {
         return response()->json(
-            Cabang::where('status', 'aktif')->select('id', 'nama_cabang', 'kota')->get()
+            Cabang::where('status', 'aktif')->select('id_cabang as id', 'nama_cabang', 'kota')->get()
         );
     }
 }

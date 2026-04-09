@@ -368,7 +368,7 @@ export default function Users() {
     setToast({msg,type}); setTimeout(()=>setToast(null),3000);
   };
 
-  useEffect(()=>{ api.get('/superadmin/branches').then(r=>setBranches(r.data)).catch(()=>{}); },[]);
+  useEffect(()=>{ api.get('/superadmin/branches').then(r=>setBranches(r.data.data ?? r.data)).catch(()=>{}); },[]);
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);

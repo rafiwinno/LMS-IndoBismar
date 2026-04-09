@@ -39,7 +39,7 @@ class BranchController extends Controller
             $query->where('kota', $request->kota);
         }
 
-        $branches = $query->orderBy('id')->get();
+        $branches = $query->orderBy('id_cabang')->get();
 
         $userCounts = Pengguna::selectRaw('id_cabang, COUNT(*) as total')
             ->groupBy('id_cabang')
@@ -56,15 +56,15 @@ class BranchController extends Controller
 
         $mapped = $branches->map(function ($b) use ($userCounts, $admins) {
             return [
-                'id'          => $b->id,
+                'id'          => $b->id_cabang,
                 'nama_cabang' => $b->nama_cabang,
                 'kode'        => $b->kode ?? '-',
                 'kota'        => $b->kota,
                 'alamat'      => $b->alamat ?? '-',
                 'telepon'     => $b->telepon ?? '-',
                 'status'      => $b->status,
-                'admin'       => $admins[$b->id] ?? '-',
-                'total_users' => $userCounts[$b->id] ?? 0,
+                'admin'       => $admins[$b->id_cabang] ?? '-',
+                'total_users' => $userCounts[$b->id_cabang] ?? 0,
             ];
         });
 
@@ -88,7 +88,7 @@ class BranchController extends Controller
 
         $mapped = $pengguna->map(function ($p) {
             return [
-                'id'       => $p->id,
+                'id'       => $p->id_pengguna,
                 'nama'     => $p->nama,
                 'username' => $p->username,
                 'email'    => $p->email,
@@ -140,7 +140,7 @@ class BranchController extends Controller
 
         $request->validate([
             'nama_cabang' => 'required|string|max:255',
-            'kode'        => 'nullable|string|max:20|unique:cabang,kode,' . $id,
+            'kode'        => 'nullable|string|max:20|unique:cabang,kode,' . $id . ',id_cabang',
             'kota'        => 'required|string|max:100',
             'alamat'      => 'nullable|string',
             'telepon'     => 'nullable|string|max:20',

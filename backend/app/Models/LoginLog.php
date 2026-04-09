@@ -23,6 +23,6 @@ class LoginLog extends Model
 
     public function pengguna()
     {
-        return $this->belongsTo(Pengguna::class, 'user_id', 'id');
+        return $this->belongsTo(Pengguna::class, 'user_id', 'id_pengguna');
     }
 }

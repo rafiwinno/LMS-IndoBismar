@@ -186,7 +186,7 @@ export default function Dashboard() {
     dashboardService.getData().then(d => { setData(d); setLastUpdated(new Date()); })
       .catch(() => setError('Gagal memuat data.')).finally(() => setLoading(false));
   }, []);
-  useEffect(() => { api.get('/superadmin/branches').then(r => setBranches(r.data)).catch(() => {}); }, []);
+  useEffect(() => { api.get('/superadmin/branches').then(r => setBranches(r.data.data ?? r.data)).catch(() => {}); }, []);
 
   const fetchRecap = useCallback(async (start: string, end: string, cab: string) => {
     setRecapLoading(true); setRecapError('');

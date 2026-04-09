@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Notifikasi;
+use App\Models\LoginLog;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 
@@ -107,6 +108,12 @@ class AuthController extends Controller
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
+        LoginLog::create([
+            'user_id'      => $user->id_pengguna,
+            'ip_address'   => $request->ip(),
+            'logged_in_at' => now(),
+        ]);
+
         return response()->json([
             'message' => 'Login berhasil',
             'token'   => $token,
@@ -117,7 +124,15 @@ class AuthController extends Controller
     // LOGOUT
     public function logout(Request $request)
     {
-        $request->user()->currentAccessToken()->delete();
+        $user = $request->user();
+
+        // Update logged_out_at pada log login terakhir
+        LoginLog::where('user_id', $user->id_pengguna)
+            ->whereNull('logged_out_at')
+            ->latest('logged_in_at')
+            ->first()?->update(['logged_out_at' => now()]);
+
+        $user->currentAccessToken()->delete();
 
         return response()->json([
             'message' => 'Logout berhasil'

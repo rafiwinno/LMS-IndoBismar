@@ -10,6 +10,16 @@ export default function Login() {
   const [mode, setMode] = useState<Mode>('main');
   const navigate = useNavigate();
 
+  // Login page selalu light mode — hapus class dark dari html saat mount,
+  // kembalikan saat unmount sesuai preferensi yang tersimpan
+  useEffect(() => {
+    const stored = localStorage.getItem('lms_dark') === 'true';
+    document.documentElement.classList.remove('dark');
+    return () => {
+      if (stored) document.documentElement.classList.add('dark');
+    };
+  }, []);
+
   const handleLogin = (user: any, token: string) => {
     saveToken(token);
     saveUser(user);

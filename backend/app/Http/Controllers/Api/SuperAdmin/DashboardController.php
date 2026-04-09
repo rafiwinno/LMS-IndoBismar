@@ -46,7 +46,7 @@ class DashboardController extends Controller
         $request->validate([
             'start'     => 'required|date',
             'end'       => 'required|date|after_or_equal:start',
-            'cabang_id' => 'nullable|integer|exists:cabang,id',
+            'cabang_id' => 'nullable|integer|exists:cabang,id_cabang',
         ]);
 
         $start    = Carbon::parse($request->start, 'Asia/Jakarta')->startOfDay();
@@ -87,7 +87,7 @@ class DashboardController extends Controller
 
         // ── Breakdown per cabang ───────────────────────────────────────────
         $branches = Cabang::where('status', 'aktif')
-            ->when($cabangId, fn($q) => $q->where('id', $cabangId))
+            ->when($cabangId, fn($q) => $q->where('id_cabang', $cabangId))
             ->get();
 
         $branchBreakdown = $branches->map(function ($cabang) use ($start, $end) {
@@ -99,7 +99,7 @@ class DashboardController extends Controller
                 ->distinct('user_id')
                 ->count('user_id');
             return [
-                'id'           => $cabang->id,
+                'id'           => $cabang->id_cabang,
                 'nama_cabang'  => $cabang->nama_cabang,
                 'kota'         => $cabang->kota,
                 'total_logins' => $logins,
