@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { Plus, Pencil, Trash2, Globe, BookOpen, Check, Loader2, ImageIcon, X } from 'lucide-react';
-import { getCourses, createCourse, updateCourse, deleteCourse, publishCourse } from '../../api/courseApi';
+import { Plus, Pencil, Trash2, Globe, BookOpen, Check, Loader2, ImageIcon, X, Users, UserPlus, UserMinus } from 'lucide-react';
+import { getCourses, createCourse, updateCourse, deleteCourse, publishCourse, getCoursePeserta, enrollPesertaToCourse, unenrollPesertaFromCourse, getAllPesertaCabang } from '../../api/courseApi';
 import { Link } from 'react-router-dom';
 import type { Course } from '../types/trainer';
 import Modal from '../../components/ui/Modal';
@@ -27,6 +27,14 @@ export default function TrainerCourses() {
   const [error, setError]             = useState('');
   const [pageError, setPageError]     = useState('');
   const fileInputRef                  = useRef<HTMLInputElement>(null);
+
+  // Peserta management
+  const [pesertaModal, setPesertaModal]       = useState<Course | null>(null);
+  const [enrolledPeserta, setEnrolledPeserta] = useState<any[]>([]);
+  const [allPeserta, setAllPeserta]           = useState<any[]>([]);
+  const [pesertaLoading, setPesertaLoading]   = useState(false);
+  const [selectedPesertaId, setSelectedPesertaId] = useState<number | ''>('');
+  const [enrollingPeserta, setEnrollingPeserta]   = useState(false);
 
   const load = async () => {
     try {
@@ -127,6 +135,52 @@ export default function TrainerCourses() {
     }
   };
 
+  const openPesertaModal = async (c: Course) => {
+    setPesertaModal(c);
+    setPesertaLoading(true);
+    setSelectedPesertaId('');
+    try {
+      const [enrolled, all] = await Promise.all([
+        getCoursePeserta(c.id_kursus),
+        getAllPesertaCabang(),
+      ]);
+      setEnrolledPeserta(enrolled.data ?? []);
+      setAllPeserta(all.data ?? []);
+    } catch {
+      alert('Gagal memuat data peserta.');
+    } finally {
+      setPesertaLoading(false);
+    }
+  };
+
+  const handleEnrollPeserta = async () => {
+    if (!pesertaModal || !selectedPesertaId) return;
+    setEnrollingPeserta(true);
+    try {
+      await enrollPesertaToCourse(pesertaModal.id_kursus, Number(selectedPesertaId));
+      setSelectedPesertaId('');
+      const res = await getCoursePeserta(pesertaModal.id_kursus);
+      setEnrolledPeserta(res.data ?? []);
+      load();
+    } catch (e: any) {
+      alert(e.response?.data?.message || 'Gagal mendaftarkan peserta.');
+    } finally {
+      setEnrollingPeserta(false);
+    }
+  };
+
+  const handleUnenrollPeserta = async (id_pengguna: number) => {
+    if (!pesertaModal || !confirm('Keluarkan peserta dari kursus ini?')) return;
+    try {
+      await unenrollPesertaFromCourse(pesertaModal.id_kursus, id_pengguna);
+      const res = await getCoursePeserta(pesertaModal.id_kursus);
+      setEnrolledPeserta(res.data ?? []);
+      load();
+    } catch {
+      alert('Gagal mengeluarkan peserta.');
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -210,6 +264,13 @@ export default function TrainerCourses() {
                   </td>
                   <td className="px-5 py-4">
                     <div className="flex items-center justify-end gap-1">
+                      <button
+                        onClick={() => openPesertaModal(c)}
+                        title="Kelola Peserta"
+                        className="p-2 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
+                      >
+                        <Users size={16} />
+                      </button>
                       {c.status !== 'publish' && (
                         <button
                           onClick={() => handlePublish(c.id_kursus)}
@@ -341,6 +402,79 @@ export default function TrainerCourses() {
             </div>
           </div>
         </Modal>
+      )}
+
+      {/* Peserta Management Modal */}
+      {pesertaModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white dark:bg-[#161b22] rounded-xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col">
+            <div className="flex items-center justify-between p-5 border-b border-gray-100 dark:border-white/8">
+              <div>
+                <h3 className="font-semibold text-gray-900 dark:text-white">Kelola Peserta</h3>
+                <p className="text-xs text-gray-400 mt-0.5 truncate max-w-xs">{pesertaModal.judul_kursus}</p>
+              </div>
+              <button onClick={() => setPesertaModal(null)}>
+                <X size={18} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" />
+              </button>
+            </div>
+
+            <div className="p-5 border-b border-gray-100 dark:border-white/8">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Tambah Peserta</p>
+              <div className="flex gap-2">
+                <select
+                  value={selectedPesertaId}
+                  onChange={e => setSelectedPesertaId(e.target.value === '' ? '' : Number(e.target.value))}
+                  className="flex-1 text-sm border border-gray-200 dark:border-white/10 rounded-lg px-3 py-2 bg-white dark:bg-[#0d0f14] text-gray-800 dark:text-white outline-none focus:ring-2 focus:ring-red-500"
+                >
+                  <option value="">-- Pilih peserta --</option>
+                  {allPeserta
+                    .filter(p => !enrolledPeserta.some(ep => ep.id === p.id_pengguna))
+                    .map((p: any) => (
+                      <option key={p.id_pengguna} value={p.id_pengguna}>{p.nama}</option>
+                    ))
+                  }
+                </select>
+                <button
+                  onClick={handleEnrollPeserta}
+                  disabled={!selectedPesertaId || enrollingPeserta}
+                  className="flex items-center gap-1.5 px-3 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white text-sm rounded-lg transition-colors"
+                >
+                  <UserPlus size={15} />
+                  {enrollingPeserta ? '...' : 'Daftarkan'}
+                </button>
+              </div>
+            </div>
+
+            <div className="overflow-y-auto flex-1 p-5">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+                Terdaftar ({enrolledPeserta.length})
+              </p>
+              {pesertaLoading ? (
+                <div className="flex justify-center py-8"><Loader2 size={20} className="animate-spin text-gray-400" /></div>
+              ) : enrolledPeserta.length === 0 ? (
+                <p className="text-center text-gray-400 text-sm py-8">Belum ada peserta terdaftar.</p>
+              ) : (
+                <ul className="space-y-2">
+                  {enrolledPeserta.map((p: any) => (
+                    <li key={p.id} className="flex items-center justify-between p-3 border border-gray-100 dark:border-white/8 rounded-lg">
+                      <div>
+                        <p className="text-sm font-medium text-gray-800 dark:text-white">{p.nama}</p>
+                        <p className="text-xs text-gray-400">{p.email}</p>
+                      </div>
+                      <button
+                        onClick={() => handleUnenrollPeserta(p.id)}
+                        title="Keluarkan dari kursus"
+                        className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                      >
+                        <UserMinus size={15} />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

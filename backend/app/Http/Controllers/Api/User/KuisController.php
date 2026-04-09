@@ -101,15 +101,30 @@ class KuisController extends Controller
             'status'      => $status,
         ]);
 
-        // Simpan detail jawaban
+        // Simpan detail jawaban beserta skor per soal
         foreach ($jawaban as $item) {
-            $row = [
+            $skorItem = 0;
+            if (!empty($item['id_pilihan'])) {
+                $pilihanBenar = DB::table('pilihan_jawaban')
+                    ->where('id_pilihan', $item['id_pilihan'])
+                    ->where('id_pertanyaan', $item['id_pertanyaan'])
+                    ->where('benar', 1)
+                    ->exists();
+                if ($pilihanBenar) {
+                    $bobot = DB::table('pertanyaan')
+                        ->where('id_pertanyaan', $item['id_pertanyaan'])
+                        ->value('bobot_nilai');
+                    $skorItem = $bobot ?? 0;
+                }
+            }
+
+            DB::table('jawaban_kuis')->insert([
                 'id_attempt'    => $id_attempt,
                 'id_pertanyaan' => $item['id_pertanyaan'],
                 'id_pilihan'    => $item['id_pilihan'] ?? null,
                 'jawaban_text'  => $item['jawaban_text'] ?? null,
-            ];
-            DB::table('jawaban_kuis')->insert($row);
+                'skor'          => $skorItem,
+            ]);
         }
 
         return response()->json([

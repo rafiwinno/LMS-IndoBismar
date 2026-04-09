@@ -19,12 +19,12 @@ class NotifikasiController extends Controller
             ->limit(50)
             ->get()
             ->map(fn($n) => [
-                'id'           => $n->id_notif,
+                'id_notif'     => $n->id_notif,
                 'judul'        => $n->judul,
                 'pesan'        => $n->pesan,
                 'tipe'         => $n->tipe,
                 'id_referensi' => $n->id_referensi,
-                'dibaca'       => $n->dibaca,
+                'dibaca'       => (bool) $n->dibaca,
                 'dibuat_pada'  => $n->dibuat_pada,
             ]);
 

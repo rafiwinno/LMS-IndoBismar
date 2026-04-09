@@ -12,11 +12,19 @@ class DashboardController extends Controller
     {
         $id_pengguna = $request->user()->id_pengguna;
 
-        // Total kursus yang tersedia
-        $totalKursus = DB::table('kursus')->count();
+        // Total kursus yang didaftarkan ke user ini
+        $totalKursus = DB::table('peserta_kursus')
+            ->where('id_pengguna', $id_pengguna)
+            ->count();
 
-        // Total kuis yang tersedia
-        $totalKuis = DB::table('kuis')->count();
+        // Total kuis dari kursus yang user ikuti
+        $enrolledKursusIds = DB::table('peserta_kursus')
+            ->where('id_pengguna', $id_pengguna)
+            ->pluck('id_kursus');
+
+        $totalKuis = DB::table('kuis')
+            ->whereIn('id_kursus', $enrolledKursusIds)
+            ->count();
 
         // Kuis yang sudah dikerjakan peserta
         $kuisSelesai = DB::table('attempt_kuis')

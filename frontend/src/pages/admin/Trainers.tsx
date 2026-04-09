@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Mail, BookOpen, Calendar as CalendarIcon, Clock, Plus, Trash2, X, Edit2, UserPlus } from 'lucide-react';
+import { Search, Mail, BookOpen, Calendar as CalendarIcon, Clock, Plus, Trash2, X, Edit2, UserPlus, Eye, CheckCircle, FileText } from 'lucide-react';
 import { api } from '../../lib/api';
 import { toast } from '../../lib/toast';
 import { confirm } from '../../lib/confirm';
 
 interface Trainer {
-  id: number; nama: string; email: string; nomor_hp: string;
+  id: number; nama: string; username: string; email: string; nomor_hp: string;
   status: string; courses: number;
 }
 
@@ -29,11 +29,18 @@ export function Trainers() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
-  // Create Trainer
+  // Create / Edit Trainer
   const [showCreateTrainer, setShowCreateTrainer] = useState(false);
+  const [editTrainer, setEditTrainer] = useState<Trainer | null>(null);
   const [trainerForm, setTrainerForm] = useState({ nama: '', username: '', email: '', password: '', nomor_hp: '' });
   const [trainerError, setTrainerError] = useState('');
   const [savingTrainer, setSavingTrainer] = useState(false);
+
+  // Detail Trainer
+  const [detailTrainer, setDetailTrainer] = useState<any>(null);
+  const [loadingDetail, setLoadingDetail] = useState(false);
+  const [assignKursusId, setAssignKursusId] = useState('');
+  const [assigningKursus, setAssigningKursus] = useState(false);
 
   const fetchTrainers = async (search = '') => {
     setLoading(true);
@@ -106,13 +113,54 @@ export function Trainers() {
   const handleCreateTrainer = async () => {
     setSavingTrainer(true); setTrainerError('');
     try {
-      await api.createTrainer(trainerForm);
-      toast.success('Trainer berhasil ditambahkan.');
+      if (editTrainer) {
+        const payload: any = { nama: trainerForm.nama, email: trainerForm.email, nomor_hp: trainerForm.nomor_hp };
+        if (trainerForm.password) payload.password = trainerForm.password;
+        await api.updateTrainer(editTrainer.id, payload);
+        toast.success('Data trainer berhasil diperbarui.');
+      } else {
+        await api.createTrainer(trainerForm);
+        toast.success('Trainer berhasil ditambahkan.');
+      }
       setShowCreateTrainer(false);
+      setEditTrainer(null);
       setTrainerForm({ nama: '', username: '', email: '', password: '', nomor_hp: '' });
       fetchTrainers(searchTerm);
     } catch (e: any) { setTrainerError(e.message); }
     finally { setSavingTrainer(false); }
+  };
+
+  const openEditTrainer = (t: Trainer) => {
+    setEditTrainer(t);
+    setTrainerForm({ nama: t.nama, username: t.username, email: t.email || '', password: '', nomor_hp: t.nomor_hp || '' });
+    setTrainerError('');
+    setShowCreateTrainer(true);
+  };
+
+  const openDetail = async (t: Trainer) => {
+    setLoadingDetail(true);
+    setDetailTrainer({ ...t, kursus_list: [], jadwal: [] });
+    setAssignKursusId('');
+    try {
+      const res = await api.getTrainerDetail(t.id);
+      setDetailTrainer(res);
+    } catch (e: any) { toast.error(e.message); setDetailTrainer(null); }
+    finally { setLoadingDetail(false); }
+  };
+
+  const handleAssignKursus = async () => {
+    if (!assignKursusId || !detailTrainer) return;
+    setAssigningKursus(true);
+    try {
+      await api.updateKursus(Number(assignKursusId), { id_trainer: detailTrainer.id });
+      toast.success('Trainer berhasil ditambahkan sebagai pengajar kursus.');
+      setAssignKursusId('');
+      // Refresh detail dan list kursus
+      const [res] = await Promise.all([api.getTrainerDetail(detailTrainer.id), fetchKursus()]);
+      setDetailTrainer(res);
+      fetchTrainers(searchTerm);
+    } catch (e: any) { toast.error(e.message); }
+    finally { setAssigningKursus(false); }
   };
 
   const filteredTrainers = trainers.filter(t =>
@@ -145,7 +193,7 @@ export function Trainers() {
               value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
           </div>
           {activeTab === 'list' && (
-            <button onClick={() => { setTrainerError(''); setTrainerForm({ nama: '', username: '', email: '', password: '', nomor_hp: '' }); setShowCreateTrainer(true); }}
+            <button onClick={() => { setEditTrainer(null); setTrainerError(''); setTrainerForm({ nama: '', username: '', email: '', password: '', nomor_hp: '' }); setShowCreateTrainer(true); }}
               className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors whitespace-nowrap">
               <UserPlus className="w-5 h-5" /><span className="hidden sm:inline">Tambah Trainer</span>
             </button>
@@ -186,12 +234,16 @@ export function Trainers() {
                     <span>{t.courses} Kursus</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <button onClick={() => setActiveTab('schedule')}
-                      className="text-indigo-600 hover:text-indigo-900 p-1 rounded-md hover:bg-indigo-50 transition-colors" title="Lihat Jadwal">
-                      <CalendarIcon className="w-4 h-4" />
+                    <button onClick={() => openDetail(t)}
+                      className="text-green-600 hover:text-green-900 p-1 rounded-md hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors" title="Lihat Detail">
+                      <Eye className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => openEditTrainer(t)}
+                      className="text-indigo-600 hover:text-indigo-900 p-1 rounded-md hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors" title="Edit Trainer">
+                      <Edit2 className="w-4 h-4" />
                     </button>
                     <button onClick={() => handleDeleteTrainer(t.id, t.nama)}
-                      className="text-red-500 hover:text-red-700 p-1 rounded-md hover:bg-red-50 transition-colors" title="Hapus Trainer">
+                      className="text-red-500 hover:text-red-700 p-1 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors" title="Hapus Trainer">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
@@ -351,18 +403,18 @@ export function Trainers() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="bg-white dark:bg-[#161b22] rounded-xl shadow-2xl w-full max-w-md">
             <div className="flex items-center justify-between p-6 border-b dark:border-white/10">
-              <h3 className="text-lg font-semibold dark:text-white">Tambah Trainer Baru</h3>
-              <button onClick={() => setShowCreateTrainer(false)}><X className="w-5 h-5 text-gray-400 dark:text-gray-500" /></button>
+              <h3 className="text-lg font-semibold dark:text-white">{editTrainer ? 'Edit Trainer' : 'Tambah Trainer Baru'}</h3>
+              <button onClick={() => { setShowCreateTrainer(false); setEditTrainer(null); }}><X className="w-5 h-5 text-gray-400 dark:text-gray-500" /></button>
             </div>
             <div className="p-6 space-y-4">
-              {trainerError && <p className="text-red-500 text-sm bg-red-50 p-2 rounded">{trainerError}</p>}
+              {trainerError && <p className="text-red-500 text-sm bg-red-50 dark:bg-red-900/20 p-2 rounded">{trainerError}</p>}
               {[
-                { key: 'nama',     label: 'Nama Lengkap', type: 'text',     placeholder: 'Nama trainer' },
-                { key: 'username', label: 'Username',     type: 'text',     placeholder: 'username unik' },
-                { key: 'email',    label: 'Email',        type: 'email',    placeholder: 'email@example.com' },
-                { key: 'password', label: 'Password',     type: 'password', placeholder: 'Min. 8 karakter' },
-                { key: 'nomor_hp', label: 'Nomor HP',     type: 'tel',      placeholder: '08xxxxxxxxxx' },
-              ].map(({ key, label, type, placeholder }) => (
+                { key: 'nama',     label: 'Nama Lengkap', type: 'text',     placeholder: 'Nama trainer',   hide: false },
+                { key: 'username', label: 'Username',     type: 'text',     placeholder: 'username unik',  hide: !!editTrainer },
+                { key: 'email',    label: 'Email',        type: 'email',    placeholder: 'email@example.com', hide: false },
+                { key: 'password', label: editTrainer ? 'Password Baru (kosongkan jika tidak diubah)' : 'Password', type: 'password', placeholder: 'Min. 8 karakter', hide: false },
+                { key: 'nomor_hp', label: 'Nomor HP',     type: 'tel',      placeholder: '08xxxxxxxxxx',   hide: false },
+              ].filter(f => !f.hide).map(({ key, label, type, placeholder }) => (
                 <div key={key}>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{label}</label>
                   <input type={type} placeholder={placeholder}
@@ -373,11 +425,121 @@ export function Trainers() {
               ))}
             </div>
             <div className="flex gap-3 p-6 border-t dark:border-white/10">
-              <button onClick={() => setShowCreateTrainer(false)} className="flex-1 py-2 border border-gray-300 dark:border-white/10 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5">Batal</button>
+              <button onClick={() => { setShowCreateTrainer(false); setEditTrainer(null); }} className="flex-1 py-2 border border-gray-300 dark:border-white/10 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5">Batal</button>
               <button onClick={handleCreateTrainer} disabled={savingTrainer} className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50">
-                {savingTrainer ? 'Menyimpan...' : 'Tambah Trainer'}
+                {savingTrainer ? 'Menyimpan...' : editTrainer ? 'Simpan Perubahan' : 'Tambah Trainer'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      {/* Modal Detail Trainer */}
+      {detailTrainer && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white dark:bg-[#161b22] rounded-xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col">
+            <div className="flex items-center justify-between p-6 border-b dark:border-white/10">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
+                  <span className="text-indigo-600 font-bold text-sm">{initials(detailTrainer.nama)}</span>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold dark:text-white leading-tight">{detailTrainer.nama}</h3>
+                  <p className="text-xs text-gray-400">@{detailTrainer.username}</p>
+                </div>
+              </div>
+              <button onClick={() => setDetailTrainer(null)}><X className="w-5 h-5 text-gray-400 dark:text-gray-500 hover:text-gray-600" /></button>
+            </div>
+
+            {loadingDetail ? (
+              <div className="flex justify-center py-16"><div className="w-6 h-6 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" /></div>
+            ) : (
+              <div className="overflow-y-auto flex-1 p-6 space-y-5">
+                {/* Info */}
+                <div>
+                  <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Info Akun</h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      { label: 'Email',    value: detailTrainer.email    || '-' },
+                      { label: 'Nomor HP', value: detailTrainer.nomor_hp || '-' },
+                      { label: 'Status',   value: detailTrainer.status },
+                      { label: 'Total Kursus', value: `${detailTrainer.courses ?? 0} kursus` },
+                    ].map(({ label, value }) => (
+                      <div key={label}>
+                        <p className="text-xs text-gray-400">{label}</p>
+                        <p className="text-sm font-medium text-gray-800 dark:text-white">{value}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Kursus */}
+                <div>
+                  <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Kursus yang Diajar</h4>
+                  {detailTrainer.kursus_list?.length === 0 ? (
+                    <p className="text-sm text-gray-400 text-center py-4">Belum ada kursus.</p>
+                  ) : (
+                    <ul className="space-y-2">
+                      {detailTrainer.kursus_list?.map((k: any) => (
+                        <li key={k.id} className="flex items-center justify-between p-3 border border-gray-100 dark:border-white/8 rounded-lg">
+                          <div className="flex items-center gap-2">
+                            <BookOpen className="w-4 h-4 text-indigo-400 flex-shrink-0" />
+                            <span className="text-sm font-medium text-gray-800 dark:text-white">{k.judul}</span>
+                          </div>
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${k.status === 'publish' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'}`}>
+                            {k.status === 'publish' ? 'Published' : 'Draft'}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+
+                {/* Assign ke Kursus */}
+                <div>
+                  <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Tambah sebagai Pengajar Kursus</h4>
+                  <div className="flex gap-2">
+                    <select
+                      className="flex-1 px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white dark:bg-[#161b22] dark:text-white text-sm"
+                      value={assignKursusId}
+                      onChange={e => setAssignKursusId(e.target.value)}
+                    >
+                      <option value="">-- Pilih Kursus --</option>
+                      {kursus
+                        .filter(k => !detailTrainer.kursus_list?.some((dk: any) => dk.id === k.id))
+                        .map(k => <option key={k.id} value={k.id}>{k.judul}</option>)
+                      }
+                    </select>
+                    <button
+                      onClick={handleAssignKursus}
+                      disabled={!assignKursusId || assigningKursus}
+                      className="flex items-center gap-1.5 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm disabled:opacity-50 whitespace-nowrap transition-colors"
+                    >
+                      <Plus className="w-4 h-4" />
+                      {assigningKursus ? 'Menyimpan...' : 'Assign'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Jadwal */}
+                {detailTrainer.jadwal?.length > 0 && (
+                  <div>
+                    <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Jadwal Terbaru</h4>
+                    <ul className="space-y-2">
+                      {detailTrainer.jadwal?.slice(0, 5).map((j: any) => (
+                        <li key={j.id} className="flex items-center gap-3 p-3 border border-gray-100 dark:border-white/8 rounded-lg">
+                          <CalendarIcon className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-800 dark:text-white truncate">{j.kursus}</p>
+                            <p className="text-xs text-gray-400">{j.tanggal} · {j.jam}</p>
+                          </div>
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${j.tipe === 'Online' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}`}>{j.tipe}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}

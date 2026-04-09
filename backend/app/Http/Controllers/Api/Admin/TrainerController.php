@@ -11,8 +11,11 @@ class TrainerController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Pengguna::with(['role', 'kursus'])
-            ->whereHas('role', fn($q) => $q->where('nama_role', 'trainer'));
+        $admin = $request->user();
+
+        $query = Pengguna::with(['kursus'])
+            ->where('id_role', 3)
+            ->where('id_cabang', $admin->id_cabang);
 
         if ($request->search) {
             $query->where('nama', 'like', "%{$request->search}%");
@@ -25,12 +28,19 @@ class TrainerController extends Controller
 
     public function show($id)
     {
-        $trainer = Pengguna::with(['role', 'kursus', 'jadwal.kursus'])
+        $trainer = Pengguna::with(['kursus', 'jadwal.kursus'])
             ->findOrFail($id);
 
         return response()->json(array_merge(
             $this->formatTrainer($trainer),
-            ['jadwal' => $trainer->jadwal->map(fn($j) => $this->formatJadwal($j))]
+            [
+                'jadwal'  => $trainer->jadwal->map(fn($j) => $this->formatJadwal($j)),
+                'kursus_list' => $trainer->kursus->map(fn($k) => [
+                    'id'     => $k->id_kursus,
+                    'judul'  => $k->judul_kursus,
+                    'status' => $k->status,
+                ]),
+            ]
         ));
     }
 
@@ -168,12 +178,13 @@ class TrainerController extends Controller
     private function formatTrainer($t)
     {
         return [
-            'id'      => $t->id_pengguna,
-            'nama'    => $t->nama,
-            'email'   => $t->email,
-            'nomor_hp'=> $t->nomor_hp,
-            'status'  => $t->status,
-            'courses' => $t->kursus->count(),
+            'id'       => $t->id_pengguna,
+            'nama'     => $t->nama,
+            'username' => $t->username,
+            'email'    => $t->email,
+            'nomor_hp' => $t->nomor_hp,
+            'status'   => $t->status,
+            'courses'  => $t->kursus->count(),
         ];
     }
 

@@ -178,6 +178,21 @@ class KursusController extends Controller
         return response()->json(['message' => 'Peserta berhasil didaftarkan ke kursus.'], 201);
     }
 
+    public function unenroll(Request $request, $id, $id_pengguna)
+    {
+        Kursus::findOrFail($id);
+
+        $deleted = PesertaKursus::where('id_kursus', $id)
+            ->where('id_pengguna', $id_pengguna)
+            ->delete();
+
+        if (!$deleted) {
+            return response()->json(['message' => 'Peserta tidak terdaftar di kursus ini.'], 404);
+        }
+
+        return response()->json(['message' => 'Peserta berhasil dikeluarkan dari kursus.']);
+    }
+
     // ─── Helpers ─────────────────────────────────────────────────────────────
 
     private function formatKursus($k)

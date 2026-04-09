@@ -24,3 +24,15 @@ export const deleteCourse = (id: number) =>
 
 export const publishCourse = (id: number) =>
   api.patch(`/trainer/courses/${id}/publish`);
+
+export const getAllPesertaCabang = () =>
+  api.get('/trainer/peserta/semua');
+
+export const getCoursePeserta = (id: number) =>
+  api.get(`/trainer/courses/${id}/peserta`);
+
+export const enrollPesertaToCourse = (courseId: number, id_pengguna: number) =>
+  api.post(`/trainer/courses/${courseId}/enroll`, { id_pengguna });
+
+export const unenrollPesertaFromCourse = (courseId: number, id_pengguna: number) =>
+  api.delete(`/trainer/courses/${courseId}/peserta/${id_pengguna}`);

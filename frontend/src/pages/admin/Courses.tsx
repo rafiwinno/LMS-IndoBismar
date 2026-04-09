@@ -2,14 +2,14 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Plus, Search, Edit2, Trash2, X, ChevronLeft,
   FileText, File, Youtube, ExternalLink,
-  Link, BookOpen,
+  Link, BookOpen, ClipboardList, HelpCircle, Clock, Users, Award,
 } from 'lucide-react';
 import { api } from '../../lib/api';
 import { confirm } from '../../lib/confirm';
 
 interface Kursus {
   id: number; judul: string; deskripsi: string;
-  status: string; trainer: string; cabang: string; participants: number;
+  status: string; trainer: string; id_trainer: number | null; cabang: string; participants: number;
 }
 
 interface Materi {
@@ -52,6 +52,8 @@ export function Courses() {
   // ── Course detail / materials state ───────────────────────────────────
   const skipSearchEffect = useRef(false);
   const [selectedCourse, setSelectedCourse] = useState<Kursus | null>(null);
+  const [courseTugas, setCourseTugas] = useState<any[]>([]);
+  const [courseKuis, setCourseKuis] = useState<any[]>([]);
   const [materi, setMateri] = useState<Materi[]>([]);
   const [materiLoading, setMateriLoading] = useState(false);
   const [materiSearch, setMateriSearch] = useState('');
@@ -120,6 +122,13 @@ export function Courses() {
       setMateriSearch('');
       setViewer(null);
       fetchMateri('');
+      // Fetch tugas & kuis for this course
+      api.getTugas(`id_kursus=${selectedCourse.id}&per_page=100`)
+        .then(res => setCourseTugas(res.data ?? []))
+        .catch(() => setCourseTugas([]));
+      api.getKuis(`id_kursus=${selectedCourse.id}`)
+        .then(res => setCourseKuis(res.data ?? []))
+        .catch(() => setCourseKuis([]));
     }
   }, [selectedCourse]);
 
@@ -137,7 +146,7 @@ export function Courses() {
   const openEdit = (k: Kursus, e: React.MouseEvent) => {
     e.stopPropagation();
     setEditData(k);
-    setForm({ judul_kursus: k.judul, deskripsi: k.deskripsi || '', id_trainer: '', id_cabang: 1, status: k.status });
+    setForm({ judul_kursus: k.judul, deskripsi: k.deskripsi || '', id_trainer: k.id_trainer ? String(k.id_trainer) : '', id_cabang: 1, status: k.status });
     setError('');
     setShowModal(true);
   };
@@ -146,10 +155,12 @@ export function Courses() {
     setSaving(true); setError('');
     try {
       if (editData) {
-        await api.updateKursus(editData.id, { judul_kursus: form.judul_kursus, deskripsi: form.deskripsi, status: form.status });
+        const payload: any = { judul_kursus: form.judul_kursus, deskripsi: form.deskripsi, status: form.status };
+        if (form.id_trainer) payload.id_trainer = Number(form.id_trainer);
+        await api.updateKursus(editData.id, payload);
       } else {
-        if (!form.id_trainer) { setError('Pilih trainer dulu'); setSaving(false); return; }
-        await api.createKursus(form);
+        if (!form.id_trainer) { setError('Pilih trainer terlebih dahulu'); setSaving(false); return; }
+        await api.createKursus({ ...form, id_trainer: Number(form.id_trainer) });
       }
       setShowModal(false);
       fetchKursus(page, searchTerm);
@@ -224,7 +235,7 @@ export function Courses() {
         <div className="flex items-center gap-4">
           <button onClick={() => setSelectedCourse(null)} className="flex items-center gap-2 text-gray-500 hover:text-gray-800 transition-colors">
             <ChevronLeft className="w-5 h-5" />
-            <span className="text-sm">Kembali ke Daftar Kursus</span>
+            <span className="text-sm">Kembali ke Daftar Course</span>
           </button>
         </div>
 
@@ -253,7 +264,7 @@ export function Courses() {
         {/* Materials Section */}
         <div>
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Materi Kursus</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Materi Course</h3>
             <div className="flex items-center gap-3 w-full sm:w-auto">
               <div className="relative flex-1 sm:w-72">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -312,8 +323,64 @@ export function Courses() {
                 );
               })}
               {materi.length === 0 && (
-                <div className="col-span-full text-center py-16 text-gray-400">Belum ada materi untuk kursus ini</div>
+                <div className="col-span-full text-center py-16 text-gray-400">Belum ada materi untuk course ini</div>
               )}
+            </div>
+          )}
+        </div>
+
+        {/* Tugas Section */}
+        <div className="bg-white dark:bg-[#161b22] rounded-xl shadow-sm border border-gray-200 dark:border-white/10 overflow-hidden">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-white/10">
+            <h3 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+              <ClipboardList className="w-5 h-5 text-indigo-500" /> Tugas
+            </h3>
+          </div>
+          {courseTugas.length === 0 ? (
+            <div className="py-10 text-center text-sm text-gray-400">Belum ada tugas untuk course ini.</div>
+          ) : (
+            <div className="divide-y divide-gray-100 dark:divide-white/8">
+              {courseTugas.map((t: any) => (
+                <div key={t.id} className="flex items-center justify-between px-6 py-4">
+                  <div>
+                    <p className="font-medium text-gray-900 dark:text-white text-sm">{t.judul}</p>
+                    <div className="flex items-center gap-3 mt-1 text-xs text-gray-400">
+                      <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{new Date(t.deadline).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                      <span className="flex items-center gap-1"><Users className="w-3 h-3" />{t.submissions}/{t.total} dikumpulkan</span>
+                    </div>
+                  </div>
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${t.status === 'Active' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-gray-100 dark:bg-white/8 text-gray-500 dark:text-gray-400'}`}>
+                    {t.status === 'Active' ? 'Aktif' : 'Selesai'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Kuis Section */}
+        <div className="bg-white dark:bg-[#161b22] rounded-xl shadow-sm border border-gray-200 dark:border-white/10 overflow-hidden">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-white/10">
+            <h3 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+              <HelpCircle className="w-5 h-5 text-purple-500" /> Kuis
+            </h3>
+          </div>
+          {courseKuis.length === 0 ? (
+            <div className="py-10 text-center text-sm text-gray-400">Belum ada kuis untuk course ini.</div>
+          ) : (
+            <div className="divide-y divide-gray-100 dark:divide-white/8">
+              {courseKuis.map((k: any) => (
+                <div key={k.id} className="flex items-center justify-between px-6 py-4">
+                  <div>
+                    <p className="font-medium text-gray-900 dark:text-white text-sm">{k.judul}</p>
+                    <div className="flex items-center gap-3 mt-1 text-xs text-gray-400">
+                      <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{k.waktu_selesai ? new Date(k.waktu_selesai).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}</span>
+                      <span className="flex items-center gap-1"><Users className="w-3 h-3" />{k.participants ?? 0} peserta</span>
+                      <span className="flex items-center gap-1"><Award className="w-3 h-3" />Rata-rata: {k.avg_score ?? 0}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -476,11 +543,11 @@ export function Courses() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="relative w-full sm:w-96">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-          <input type="text" placeholder="Cari kursus dan trainer" className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white dark:bg-[#161b22] dark:text-white dark:placeholder-gray-500"
+          <input type="text" placeholder="Cari course dan trainer" className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white dark:bg-[#161b22] dark:text-white dark:placeholder-gray-500"
             value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
         </div>
         <button onClick={openAdd} className="flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors">
-          <Plus className="w-5 h-5" /><span>Buat Kursus</span>
+          <Plus className="w-5 h-5" /><span>Buat Course</span>
         </button>
       </div>
 
@@ -492,7 +559,7 @@ export function Courses() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-gray-50 dark:bg-[#161b22] border-b border-gray-200 dark:border-white/10 text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  <th className="px-6 py-4">Judul Kursus</th>
+                  <th className="px-6 py-4">Judul Course</th>
                   <th className="px-6 py-4">Trainer</th>
                   <th className="px-6 py-4">Status</th>
                   <th className="px-6 py-4">Peserta</th>
@@ -522,14 +589,14 @@ export function Courses() {
                   </tr>
                 ))}
                 {kursus.length === 0 && (
-                  <tr><td colSpan={5} className="px-6 py-10 text-center text-gray-400">Belum ada kursus</td></tr>
+                  <tr><td colSpan={5} className="px-6 py-10 text-center text-gray-400">Belum ada course</td></tr>
                 )}
               </tbody>
             </table>
           </div>
           {meta && (
             <div className="px-6 py-4 border-t border-gray-200 dark:border-white/10 flex items-center justify-between">
-              <span className="text-sm text-gray-500 dark:text-gray-400">Total {meta.total} kursus</span>
+              <span className="text-sm text-gray-500 dark:text-gray-400">Total {meta.total} course</span>
               <div className="flex space-x-2">
                 <button disabled={page <= 1} onClick={() => { setPage(p => p - 1); fetchKursus(page - 1, searchTerm); }} className="px-3 py-1 border border-gray-300 dark:border-white/10 rounded-md text-sm dark:text-gray-300 disabled:opacity-50">Prev</button>
                 <span className="px-3 py-1 text-sm text-gray-600 dark:text-gray-400">{page} / {meta.last_page}</span>
@@ -545,13 +612,13 @@ export function Courses() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="bg-white dark:bg-[#161b22] rounded-xl shadow-2xl w-full max-w-md">
             <div className="flex items-center justify-between p-6 border-b dark:border-white/10">
-              <h3 className="text-lg font-semibold dark:text-white">{editData ? 'Edit Kursus' : 'Buat Kursus Baru'}</h3>
+              <h3 className="text-lg font-semibold dark:text-white">{editData ? 'Edit Course' : 'Buat Course Baru'}</h3>
               <button onClick={() => setShowModal(false)}><X className="w-5 h-5 text-gray-400 dark:text-gray-500" /></button>
             </div>
             <div className="p-6 space-y-4">
               {error && <p className="text-red-500 text-sm bg-red-50 p-2 rounded">{error}</p>}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Judul Kursus</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Judul Course</label>
                 <input className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white dark:bg-[#161b22] dark:text-white"
                   value={form.judul_kursus} onChange={e => setForm(f => ({ ...f, judul_kursus: e.target.value }))} />
               </div>
@@ -560,16 +627,14 @@ export function Courses() {
                 <textarea rows={3} className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none resize-none bg-white dark:bg-[#161b22] dark:text-white"
                   value={form.deskripsi} onChange={e => setForm(f => ({ ...f, deskripsi: e.target.value }))} />
               </div>
-              {!editData && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Trainer</label>
-                  <select className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white dark:bg-[#161b22] dark:text-white"
-                    value={form.id_trainer} onChange={e => setForm(f => ({ ...f, id_trainer: e.target.value }))}>
-                    <option value="">-- Pilih Trainer --</option>
-                    {trainers.map(t => <option key={t.id} value={t.id}>{t.nama}</option>)}
-                  </select>
-                </div>
-              )}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Trainer</label>
+                <select className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white dark:bg-[#161b22] dark:text-white"
+                  value={form.id_trainer} onChange={e => setForm(f => ({ ...f, id_trainer: e.target.value }))}>
+                  <option value="">-- Pilih Trainer --</option>
+                  {trainers.map(t => <option key={t.id} value={t.id}>{t.nama}</option>)}
+                </select>
+              </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
                 <select className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white dark:bg-[#161b22] dark:text-white"

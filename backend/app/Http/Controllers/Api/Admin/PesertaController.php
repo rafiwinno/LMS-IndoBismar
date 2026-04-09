@@ -209,7 +209,8 @@ class PesertaController extends Controller
 
         $peserta = Pengguna::with('dataPkl')->findOrFail($id);
 
-        if (! $peserta->dataPkl) {
+        $dokumen = DB::table('dokumen_verifikasi')->where('id_pengguna', $id)->first();
+        if (! $dokumen && ! $peserta->dataPkl) {
             return response()->json(['message' => 'Data dokumen tidak ditemukan.'], 404);
         }
 
@@ -218,12 +219,24 @@ class PesertaController extends Controller
         $statusDok  = $disetujui ? 'disetujui' : 'ditolak';
         $statusUser = $disetujui ? 'aktif' : 'pending';
 
-        $peserta->dataPkl->update([
-            'status_dokumen'  => $statusDok,
-            'catatan_dokumen' => $request->catatan,
-            'diperiksa_oleh'  => $admin->id_pengguna,
-            'diperiksa_pada'  => now(),
-        ]);
+        // Update status di dokumen_verifikasi
+        if ($dokumen) {
+            DB::table('dokumen_verifikasi')->where('id_pengguna', $id)->update([
+                'status'              => $statusDok,
+                'diverifikasi_oleh'   => $admin->id_pengguna,
+                'tanggal_verifikasi'  => now(),
+            ]);
+        }
+
+        // Simpan catatan di data_peserta_pkl jika ada
+        if ($peserta->dataPkl) {
+            $peserta->dataPkl->update([
+                'status_dokumen'  => $statusDok,
+                'catatan_dokumen' => $request->catatan,
+                'diperiksa_oleh'  => $admin->id_pengguna,
+                'diperiksa_pada'  => now(),
+            ]);
+        }
 
         $peserta->update(['status' => $statusUser]);
 
@@ -316,8 +329,15 @@ class PesertaController extends Controller
         $selesai     = $p->pesertaKursus->where('status', 'selesai')->count();
         $progress    = $kursusCount > 0 ? round(($selesai / $kursusCount) * 100) : 0;
 
-        $suratSiswa = $p->dataPkl->surat_siswa ?? null;
-        $suratOrtu  = $p->dataPkl->surat_ortu  ?? null;
+        // Baca dokumen dari dokumen_verifikasi (diupload peserta via portal)
+        $dokumen = DB::table('dokumen_verifikasi')
+            ->where('id_pengguna', $p->id_pengguna)
+            ->first();
+
+        $suratSiswa = $dokumen->surat_siswa      ?? null;
+        $suratOrtu  = $dokumen->surat_orang_tua  ?? null;
+        $statusDok  = $dokumen->status            ?? ($p->dataPkl->status_dokumen ?? null);
+        $catatan    = $p->dataPkl->catatan_dokumen ?? null;
 
         return [
             'id'               => $p->id_pengguna,
@@ -331,8 +351,8 @@ class PesertaController extends Controller
             'status'           => $p->status,
             'cabang'           => $p->cabang->nama_cabang ?? null,
             'join_date'        => $p->dibuat_pada,
-            'status_dokumen'   => $p->dataPkl->status_dokumen   ?? null,
-            'catatan_dokumen'  => $p->dataPkl->catatan_dokumen  ?? null,
+            'status_dokumen'   => $statusDok,
+            'catatan_dokumen'  => $catatan,
             'surat_siswa_url'  => $suratSiswa ? Storage::disk('public')->url($suratSiswa) : null,
             'surat_ortu_url'   => $suratOrtu  ? Storage::disk('public')->url($suratOrtu)  : null,
         ];

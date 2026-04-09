@@ -284,7 +284,7 @@ class KuisController extends Controller
                         'pertanyaan'      => $j->pertanyaan?->pertanyaan,
                         'bobot_nilai'     => $j->pertanyaan?->bobot_nilai,
                         'jawaban_dipilih' => $j->pilihan?->teks_jawaban,
-                        'benar'           => $j->skor > 0,
+                        'benar'           => $j->skor > 0 || (bool)($j->pilihan?->benar),
                         'jawaban_benar'   => $j->pertanyaan?->pilihanJawaban->firstWhere('benar', true)?->teks_jawaban,
                     ])->values(),
             ]),
