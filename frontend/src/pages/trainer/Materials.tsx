@@ -35,7 +35,7 @@ function getYouTubeId(url: string): string | null {
   return match ? match[1] : null;
 }
 
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000';
+const STORAGE_URL = (import.meta.env.VITE_API_URL as string ?? 'http://127.0.0.1:8000/api').replace('/api', '/storage');
 const labelCls = 'block text-sm font-medium text-gray-800 dark:text-gray-200 mb-1.5';
 
 export default function Materials() {
@@ -182,7 +182,7 @@ export default function Materials() {
             const meta   = typeMeta[m.tipe_materi] ?? typeMeta.dokumen;
             const ytId   = m.tipe_materi === 'video' && m.file_materi ? getYouTubeId(m.file_materi) : null;
             const fileUrl = m.file_materi
-              ? (m.file_materi.startsWith('http') ? m.file_materi : `${API_URL}/storage/${m.file_materi}`)
+              ? (m.file_materi.startsWith('http') ? m.file_materi : `${STORAGE_URL}/${m.file_materi}`)
               : null;
 
             return (

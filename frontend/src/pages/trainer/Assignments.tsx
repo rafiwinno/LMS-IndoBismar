@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000';
+const STORAGE_URL = (import.meta.env.VITE_API_URL as string ?? 'http://127.0.0.1:8000/api').replace('/api', '/storage');
 import {
   Plus, Pencil, Trash2, X, ChevronDown, ChevronRight,
   Users, Star, Loader2, AlertCircle, Clock, Award,
@@ -287,7 +287,7 @@ function TugasTab() {
                       )}
                       <span className="flex items-center gap-1"><Award size={11} />Maks {a.nilai_maksimal}</span>
                       {a.file_tugas && (
-                        <a href={`${API_URL}/storage/${a.file_tugas}`} target="_blank" rel="noreferrer"
+                        <a href={`${STORAGE_URL}/${a.file_tugas}`} target="_blank" rel="noreferrer"
                           className="flex items-center gap-1 text-red-600 dark:text-red-400 hover:underline">
                           Lihat file tugas
                         </a>
@@ -325,7 +325,7 @@ function TugasTab() {
                               <p className="text-xs text-gray-400 dark:text-gray-500">{new Date(s.tanggal_kumpul).toLocaleDateString('id-ID')}</p>
                             </div>
                             {s.file_tugas && (
-                              <a href={`${API_URL}/storage/${s.file_tugas}`} target="_blank" rel="noreferrer"
+                              <a href={`${STORAGE_URL}/${s.file_tugas}`} target="_blank" rel="noreferrer"
                                 className="text-xs text-red-600 dark:text-red-400 hover:underline font-medium shrink-0">Lihat file</a>
                             )}
                             <div className="flex items-center gap-2 shrink-0">
@@ -367,7 +367,7 @@ function TugasTab() {
               />
               {editTarget?.file_tugas && !fileTugas && (
                 <a
-                  href={`${API_URL}/storage/${editTarget.file_tugas}`}
+                  href={`${STORAGE_URL}/${editTarget.file_tugas}`}
                   target="_blank"
                   rel="noreferrer"
                   className="text-xs text-red-600 dark:text-red-400 hover:underline mt-1 block"

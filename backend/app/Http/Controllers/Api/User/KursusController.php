@@ -53,7 +53,6 @@ class KursusController extends Controller
 
         $materi = DB::table('materi')
             ->where('id_kursus', $id_kursus)
-            ->orderBy('sub_bab')
             ->orderBy('urutan')
             ->get();
 
@@ -98,7 +97,7 @@ class KursusController extends Controller
 
         DB::table('progress_materi')->updateOrInsert(
             ['id_pengguna' => $id_pengguna, 'id_materi' => $id_materi],
-            ['status' => 'selesai', 'updated_at' => now()]
+            ['status' => 'selesai', 'waktu_update' => now()]
         );
 
         return response()->json(['message' => 'Progress disimpan']);

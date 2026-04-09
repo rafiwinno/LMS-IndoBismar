@@ -29,8 +29,9 @@ use App\Http\Controllers\Api\Trainer\AssignmentController  as TrainerAssignmentC
 use App\Http\Controllers\Api\Trainer\SubmissionController  as TrainerSubmissionController;
 use App\Http\Controllers\Api\Trainer\QuizController        as TrainerQuizController;
 use App\Http\Controllers\Api\Trainer\MaterialController    as TrainerMaterialController;
-use App\Http\Controllers\Api\Trainer\FeedbackController    as TrainerFeedbackController;
-use App\Http\Controllers\Api\Trainer\ProgressController    as TrainerProgressController;
+use App\Http\Controllers\Api\Trainer\FeedbackController        as TrainerFeedbackController;
+use App\Http\Controllers\Api\Trainer\ProgressController        as TrainerProgressController;
+use App\Http\Controllers\Api\Trainer\NotificationController    as TrainerNotificationController;
 
 // ── Superadmin Controllers ────────────────────────────────────────────────────
 use App\Http\Controllers\Api\Superadmin\DashboardController as SuperDashboardController;
@@ -207,6 +208,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/trainer/peserta/progress',       [TrainerProgressController::class, 'index']);
     Route::get('/trainer/peserta/semua',          [TrainerProgressController::class, 'allPesertaCabang']);
     Route::get('/trainer/peserta',                [TrainerProgressController::class, 'index']);
+
+    // Notifications
+    Route::get('/trainer/notifications',          [TrainerNotificationController::class, 'index']);
 
     // Feedback
     Route::get('/trainer/feedback',               [TrainerFeedbackController::class, 'index']);

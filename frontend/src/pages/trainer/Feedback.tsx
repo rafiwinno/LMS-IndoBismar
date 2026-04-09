@@ -175,7 +175,7 @@ export default function TrainerFeedback() {
 
   useEffect(() => {
     Promise.allSettled([
-      api.get('/trainer/peserta'),
+      api.get('/trainer/peserta/semua'),
       api.get('/trainer/courses'),
       api.get('/trainer/feedback'),
     ]).then(([pesertaRes, coursesRes, feedbackRes]) => {
