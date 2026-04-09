@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Plus, Pencil, Trash2, Globe, BookOpen, Check, Loader2, ImageIcon, X, Users, UserPlus, UserMinus } from 'lucide-react';
+import { Plus, Pencil, Trash2, Globe, BookOpen, Check, Loader2, ImageIcon, X, Users, UserPlus, UserMinus, ChevronDown, Search } from 'lucide-react';
 import { getCourses, createCourse, updateCourse, deleteCourse, publishCourse, getCoursePeserta, enrollPesertaToCourse, unenrollPesertaFromCourse, getAllPesertaCabang } from '../../api/courseApi';
 import { Link } from 'react-router-dom';
 import type { Course } from '../types/trainer';
@@ -35,6 +35,9 @@ export default function TrainerCourses() {
   const [pesertaLoading, setPesertaLoading]   = useState(false);
   const [selectedPesertaId, setSelectedPesertaId] = useState<number | ''>('');
   const [enrollingPeserta, setEnrollingPeserta]   = useState(false);
+  const [showPesertaDropdown, setShowPesertaDropdown] = useState(false);
+  const [pesertaSearch, setPesertaSearch]             = useState('');
+  const pesertaDropdownRef                            = useRef<HTMLDivElement>(null);
 
   const load = async () => {
     try {
@@ -49,6 +52,16 @@ export default function TrainerCourses() {
   };
 
   useEffect(() => { load(); }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (pesertaDropdownRef.current && !pesertaDropdownRef.current.contains(e.target as Node)) {
+        setShowPesertaDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const resetImageState = () => {
     setImageFile(null);
@@ -139,13 +152,15 @@ export default function TrainerCourses() {
     setPesertaModal(c);
     setPesertaLoading(true);
     setSelectedPesertaId('');
+    setShowPesertaDropdown(false);
+    setPesertaSearch('');
     try {
       const [enrolled, all] = await Promise.all([
         getCoursePeserta(c.id_kursus),
         getAllPesertaCabang(),
       ]);
-      setEnrolledPeserta(enrolled.data ?? []);
-      setAllPeserta(all.data ?? []);
+      setEnrolledPeserta(enrolled.data?.data ?? []);
+      setAllPeserta(all.data?.data ?? []);
     } catch {
       alert('Gagal memuat data peserta.');
     } finally {
@@ -160,7 +175,7 @@ export default function TrainerCourses() {
       await enrollPesertaToCourse(pesertaModal.id_kursus, Number(selectedPesertaId));
       setSelectedPesertaId('');
       const res = await getCoursePeserta(pesertaModal.id_kursus);
-      setEnrolledPeserta(res.data ?? []);
+      setEnrolledPeserta(res.data?.data ?? []);
       load();
     } catch (e: any) {
       alert(e.response?.data?.message || 'Gagal mendaftarkan peserta.');
@@ -174,7 +189,7 @@ export default function TrainerCourses() {
     try {
       await unenrollPesertaFromCourse(pesertaModal.id_kursus, id_pengguna);
       const res = await getCoursePeserta(pesertaModal.id_kursus);
-      setEnrolledPeserta(res.data ?? []);
+      setEnrolledPeserta(res.data?.data ?? []);
       load();
     } catch {
       alert('Gagal mengeluarkan peserta.');
@@ -421,19 +436,71 @@ export default function TrainerCourses() {
             <div className="p-5 border-b border-gray-100 dark:border-white/8">
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Tambah Peserta</p>
               <div className="flex gap-2">
-                <select
-                  value={selectedPesertaId}
-                  onChange={e => setSelectedPesertaId(e.target.value === '' ? '' : Number(e.target.value))}
-                  className="flex-1 text-sm border border-gray-200 dark:border-white/10 rounded-lg px-3 py-2 bg-white dark:bg-[#0d0f14] text-gray-800 dark:text-white outline-none focus:ring-2 focus:ring-red-500"
-                >
-                  <option value="">-- Pilih peserta --</option>
-                  {allPeserta
-                    .filter(p => !enrolledPeserta.some(ep => ep.id === p.id_pengguna))
-                    .map((p: any) => (
-                      <option key={p.id_pengguna} value={p.id_pengguna}>{p.nama}</option>
-                    ))
-                  }
-                </select>
+                {/* Custom peserta dropdown */}
+                <div ref={pesertaDropdownRef} className="flex-1 relative">
+                  <button
+                    type="button"
+                    onClick={() => { setShowPesertaDropdown(v => !v); setPesertaSearch(''); }}
+                    className={`w-full flex items-center justify-between gap-2 px-3 py-2 text-sm rounded-lg border transition-colors
+                      ${showPesertaDropdown
+                        ? 'border-red-500 ring-2 ring-red-500/30 bg-white dark:bg-[#0d0f14]'
+                        : 'border-gray-200 dark:border-white/10 bg-white dark:bg-[#0d0f14] hover:border-gray-300 dark:hover:border-white/20'}
+                      ${selectedPesertaId ? 'text-gray-800 dark:text-white' : 'text-gray-400 dark:text-gray-500'}`}
+                  >
+                    <span className="truncate">
+                      {selectedPesertaId
+                        ? allPeserta.find(p => p.id_pengguna === selectedPesertaId)?.nama ?? 'Pilih peserta'
+                        : 'Pilih peserta'}
+                    </span>
+                    <ChevronDown size={14} className={`shrink-0 transition-transform ${showPesertaDropdown ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {showPesertaDropdown && (
+                    <div className="absolute z-10 mt-1 w-full bg-white dark:bg-[#161b22] border border-gray-200 dark:border-white/10 rounded-lg shadow-lg overflow-hidden">
+                      {/* Search */}
+                      <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-100 dark:border-white/8">
+                        <Search size={13} className="text-gray-400 shrink-0" />
+                        <input
+                          autoFocus
+                          value={pesertaSearch}
+                          onChange={e => setPesertaSearch(e.target.value)}
+                          placeholder="Cari peserta..."
+                          className="w-full text-sm bg-transparent outline-none text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
+                        />
+                      </div>
+                      {/* Options list */}
+                      <ul className="max-h-44 overflow-y-auto py-1">
+                        {allPeserta
+                          .filter(p => !enrolledPeserta.some(ep => ep.id === p.id_pengguna))
+                          .filter(p => p.nama.toLowerCase().includes(pesertaSearch.toLowerCase()))
+                          .map((p: any) => (
+                            <li
+                              key={p.id_pengguna}
+                              onClick={() => {
+                                setSelectedPesertaId(p.id_pengguna);
+                                setShowPesertaDropdown(false);
+                              }}
+                              className={`flex items-center px-3 py-2 text-sm cursor-pointer transition-colors
+                                ${selectedPesertaId === p.id_pengguna
+                                  ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400'
+                                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5'}`}
+                            >
+                              {p.nama}
+                            </li>
+                          ))}
+                        {allPeserta
+                          .filter(p => !enrolledPeserta.some(ep => ep.id === p.id_pengguna))
+                          .filter(p => p.nama.toLowerCase().includes(pesertaSearch.toLowerCase()))
+                          .length === 0 && (
+                          <li className="px-3 py-3 text-sm text-center text-gray-400 dark:text-gray-500">
+                            Tidak ada peserta
+                          </li>
+                        )}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+
                 <button
                   onClick={handleEnrollPeserta}
                   disabled={!selectedPesertaId || enrollingPeserta}
