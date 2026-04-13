@@ -34,7 +34,7 @@ const TrainerProgress    = lazy(() => import('./pages/trainer/Progress'));
 const TrainerFeedback    = lazy(() => import('./pages/trainer/Feedback'));
 
 // ── Superadmin Pages ──────────────────────────────────────────────────────────
-const SuperAdminLayout   = lazy(() => import('./components/superadmin/Header')); // full layout w/ Outlet
+const SuperAdminLayout   = lazy(() => import('./components/superadmin/Layout')); // full layout w/ Outlet
 const SuperAdminDashboard = lazy(() => import('./pages/superadmin/Dashboard'));
 const SuperAdminUsers     = lazy(() => import('./pages/superadmin/Users'));
 const SuperAdminBranches  = lazy(() => import('./pages/superadmin/Branches'));

@@ -16,7 +16,7 @@ interface Submission {
 }
 interface Kursus { id: number; judul: string; }
 
-const inputCls = "w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white dark:bg-[#161b22] dark:text-white text-sm";
+const inputCls = "w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-red-500 outline-none bg-white dark:bg-[#161b22] dark:text-white text-sm";
 
 export function Assignments() {
   const toast = useToast();
@@ -141,7 +141,7 @@ export function Assignments() {
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Kelola tugas dan penilaian pengumpulan peserta</p>
         </div>
         <button onClick={openAdd}
-          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors text-sm">
+          className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors text-sm">
           <Plus className="w-4 h-4" /> Buat Tugas
         </button>
       </div>
@@ -149,12 +149,12 @@ export function Assignments() {
       {/* Filter kursus */}
       <div className="flex items-center gap-2 flex-wrap">
         <button onClick={() => setSelectedKursus(null)}
-          className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-all ${!selectedKursus ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white dark:bg-[#161b22] text-gray-500 dark:text-gray-400 border-gray-200 dark:border-white/10 hover:border-indigo-400'}`}>
+          className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-all ${!selectedKursus ? 'bg-red-600 text-white border-red-600' : 'bg-white dark:bg-[#161b22] text-gray-500 dark:text-gray-400 border-gray-200 dark:border-white/10 hover:border-red-400'}`}>
           Semua
         </button>
         {kursus.map(k => (
           <button key={k.id} onClick={() => setSelectedKursus(k.id)}
-            className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-all ${selectedKursus === k.id ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white dark:bg-[#161b22] text-gray-500 dark:text-gray-400 border-gray-200 dark:border-white/10 hover:border-indigo-400'}`}>
+            className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-all ${selectedKursus === k.id ? 'bg-red-600 text-white border-red-600' : 'bg-white dark:bg-[#161b22] text-gray-500 dark:text-gray-400 border-gray-200 dark:border-white/10 hover:border-red-400'}`}>
             {k.judul}
           </button>
         ))}
@@ -162,7 +162,7 @@ export function Assignments() {
 
       {/* Daftar Tugas */}
       {loading ? (
-        <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" /></div>
+        <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-red-600 border-t-transparent rounded-full animate-spin" /></div>
       ) : tugas.length === 0 ? (
         <div className="text-center py-20 text-gray-400">Belum ada tugas</div>
       ) : (
@@ -173,8 +173,8 @@ export function Assignments() {
               <div className="flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-white/3 transition-colors"
                 onClick={() => toggleExpand(t.id)}>
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="p-2 rounded-lg bg-indigo-100 dark:bg-indigo-500/10 flex-shrink-0">
-                    <FileText className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                  <div className="p-2 rounded-lg bg-red-100 dark:bg-red-500/10 flex-shrink-0">
+                    <FileText className="w-4 h-4 text-red-600 dark:text-red-400" />
                   </div>
                   <div className="min-w-0">
                     <p className="font-semibold text-gray-900 dark:text-white truncate">{t.judul}</p>
@@ -194,7 +194,7 @@ export function Assignments() {
                     {t.status === 'Active' ? 'Aktif' : 'Selesai'}
                   </span>
                   <div className="flex items-center gap-1">
-                    <button onClick={e => openEdit(t, e)} className="p-1.5 text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-md transition-colors">
+                    <button onClick={e => openEdit(t, e)} className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors">
                       <Edit2 className="w-4 h-4" />
                     </button>
                     <button onClick={e => handleDelete(t.id, e)} className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors">
@@ -210,7 +210,7 @@ export function Assignments() {
                 <div className="border-t border-gray-100 dark:border-white/8 px-5 py-4">
                   <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Pengumpulan Peserta</p>
                   {loadingSub === t.id ? (
-                    <div className="flex justify-center py-6"><div className="w-6 h-6 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" /></div>
+                    <div className="flex justify-center py-6"><div className="w-6 h-6 border-4 border-red-600 border-t-transparent rounded-full animate-spin" /></div>
                   ) : !submissions[t.id] || submissions[t.id].length === 0 ? (
                     <p className="text-sm text-gray-400 text-center py-4">Belum ada pengumpulan</p>
                   ) : (
@@ -224,7 +224,7 @@ export function Assignments() {
                           <div className="flex items-center gap-3 flex-shrink-0">
                             {sub.file_url && (
                               <a href={sub.file_url} target="_blank" rel="noopener noreferrer"
-                                className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">
+                                className="text-xs text-red-600 dark:text-red-400 hover:underline">
                                 Lihat File
                               </a>
                             )}
@@ -232,7 +232,7 @@ export function Assignments() {
                               <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">{sub.nilai}</span>
                             ) : null}
                             <button onClick={e => openGrade(sub, e)}
-                              className="flex items-center gap-1 text-xs px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors">
+                              className="flex items-center gap-1 text-xs px-2.5 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors">
                               <Star className="w-3.5 h-3.5" />
                               {sub.nilai !== null ? 'Edit Nilai' : 'Beri Nilai'}
                             </button>
@@ -282,7 +282,7 @@ export function Assignments() {
             </div>
             <div className="flex gap-3 p-6 border-t dark:border-white/10">
               <button onClick={() => setShowModal(false)} className="flex-1 py-2 border border-gray-300 dark:border-white/10 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5">Batal</button>
-              <button onClick={handleSave} disabled={saving} className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50">
+              <button onClick={handleSave} disabled={saving} className="flex-1 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg disabled:opacity-50">
                 {saving ? 'Menyimpan...' : 'Simpan'}
               </button>
             </div>
@@ -302,7 +302,7 @@ export function Assignments() {
               <p className="text-sm text-gray-600 dark:text-gray-400">Peserta: <span className="font-medium text-gray-900 dark:text-white">{grading.peserta}</span></p>
               {grading.file_url && (
                 <a href={grading.file_url} target="_blank" rel="noopener noreferrer"
-                  className="block text-sm text-indigo-600 dark:text-indigo-400 hover:underline">📎 Lihat File Tugas</a>
+                  className="block text-sm text-red-600 dark:text-red-400 hover:underline">📎 Lihat File Tugas</a>
               )}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nilai (0–100)</label>
@@ -317,7 +317,7 @@ export function Assignments() {
             </div>
             <div className="flex gap-3 p-6 border-t dark:border-white/10">
               <button onClick={() => setGrading(null)} className="flex-1 py-2 border border-gray-300 dark:border-white/10 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5">Batal</button>
-              <button onClick={handleGrade} disabled={savingGrade || !gradeForm.nilai} className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50">
+              <button onClick={handleGrade} disabled={savingGrade || !gradeForm.nilai} className="flex-1 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg disabled:opacity-50">
                 {savingGrade ? 'Menyimpan...' : 'Simpan Nilai'}
               </button>
             </div>

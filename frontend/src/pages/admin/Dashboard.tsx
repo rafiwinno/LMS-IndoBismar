@@ -30,7 +30,7 @@ export function Dashboard() {
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <StatCard title="Total Peserta"    value={loading ? null : String(stats.total_peserta ?? 0)}  icon={Users}         color="bg-blue-500" />
-        <StatCard title="Total Kursus"     value={loading ? null : String(stats.total_kursus ?? 0)}   icon={BookOpen}      color="bg-indigo-500" />
+        <StatCard title="Total Kursus"     value={loading ? null : String(stats.total_kursus ?? 0)}   icon={BookOpen}      color="bg-red-500" />
         <StatCard title="Total Materi"     value={loading ? null : String(stats.total_materi ?? 0)}   icon={FileText}      color="bg-emerald-500" />
         <StatCard title="Total Tugas"      value={loading ? null : String(stats.total_tugas ?? 0)}    icon={ClipboardList} color="bg-amber-500" />
         <StatCard title="Rata-rata Nilai"  value={loading ? null : String(stats.average_score ?? 0)}  icon={TrendingUp}    color="bg-purple-500" />

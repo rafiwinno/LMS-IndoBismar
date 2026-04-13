@@ -20,7 +20,7 @@ interface Submission {
   file_url: string | null; tanggal_kumpul: string;
   nilai: number | null; feedback: string | null;
 }
-const tugasInputCls = "w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white dark:bg-[#161b22] dark:text-white text-sm";
+const tugasInputCls = "w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-red-500 outline-none bg-white dark:bg-[#161b22] dark:text-white text-sm";
 
 interface Kuis {
   id: number; judul: string; kursus: string; id_kursus: number;
@@ -333,23 +333,23 @@ export function Exams() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="flex items-center gap-2 flex-wrap">
             <button onClick={() => setSelectedKursusTugas(null)}
-              className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${!selectedKursusTugas ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white dark:bg-[#161b22] text-gray-500 dark:text-gray-400 border-gray-200 dark:border-white/10 hover:border-indigo-400'}`}>
+              className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${!selectedKursusTugas ? 'bg-red-600 text-white border-red-600' : 'bg-white dark:bg-[#161b22] text-gray-500 dark:text-gray-400 border-gray-200 dark:border-white/10 hover:border-red-400'}`}>
               Semua
             </button>
             {kursus.map((k: any) => (
               <button key={k.id} onClick={() => setSelectedKursusTugas(k.id)}
-                className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${selectedKursusTugas === k.id ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white dark:bg-[#161b22] text-gray-500 dark:text-gray-400 border-gray-200 dark:border-white/10 hover:border-indigo-400'}`}>
+                className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${selectedKursusTugas === k.id ? 'bg-red-600 text-white border-red-600' : 'bg-white dark:bg-[#161b22] text-gray-500 dark:text-gray-400 border-gray-200 dark:border-white/10 hover:border-red-400'}`}>
                 {k.judul}
               </button>
             ))}
           </div>
-          <button onClick={openAddTugas} className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors text-sm whitespace-nowrap">
+          <button onClick={openAddTugas} className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors text-sm whitespace-nowrap">
             <Plus className="w-4 h-4" /> Buat Tugas
           </button>
         </div>
 
         {tugasLoading ? (
-          <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" /></div>
+          <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-red-600 border-t-transparent rounded-full animate-spin" /></div>
         ) : tugas.length === 0 ? (
           <div className="text-center py-20 text-gray-400">Belum ada tugas</div>
         ) : (
@@ -359,8 +359,8 @@ export function Exams() {
                 <div className="flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-white/3 transition-colors"
                   onClick={() => toggleExpandTugas(t.id)}>
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="p-2 rounded-lg bg-indigo-100 dark:bg-indigo-500/10 flex-shrink-0">
-                      <FileText className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                    <div className="p-2 rounded-lg bg-red-100 dark:bg-red-500/10 flex-shrink-0">
+                      <FileText className="w-4 h-4 text-red-600 dark:text-red-400" />
                     </div>
                     <div className="min-w-0">
                       <p className="font-semibold text-gray-900 dark:text-white truncate">{t.judul}</p>
@@ -378,7 +378,7 @@ export function Exams() {
                     <span className={`hidden sm:inline text-xs px-2 py-0.5 rounded-full font-medium ${t.status === 'Active' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-gray-100 dark:bg-white/8 text-gray-600 dark:text-gray-400'}`}>
                       {t.status === 'Active' ? 'Aktif' : 'Selesai'}
                     </span>
-                    <button onClick={e => openEditTugas(t, e)} className="p-1.5 text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-md transition-colors"><Edit2 className="w-4 h-4" /></button>
+                    <button onClick={e => openEditTugas(t, e)} className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors"><Edit2 className="w-4 h-4" /></button>
                     <button onClick={e => handleDeleteTugas(t.id, e)} className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors"><Trash2 className="w-4 h-4" /></button>
                     {expandedTugas === t.id ? <ChevronDown className="w-4 h-4 text-gray-400" /> : <ChevronRight className="w-4 h-4 text-gray-400" />}
                   </div>
@@ -387,7 +387,7 @@ export function Exams() {
                   <div className="border-t border-gray-100 dark:border-white/8 px-5 py-4">
                     <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Pengumpulan Peserta</p>
                     {loadingSub === t.id ? (
-                      <div className="flex justify-center py-6"><div className="w-6 h-6 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" /></div>
+                      <div className="flex justify-center py-6"><div className="w-6 h-6 border-4 border-red-600 border-t-transparent rounded-full animate-spin" /></div>
                     ) : !submissions[t.id] || submissions[t.id].length === 0 ? (
                       <p className="text-sm text-gray-400 text-center py-4">Belum ada pengumpulan</p>
                     ) : (
@@ -399,10 +399,10 @@ export function Exams() {
                               <p className="text-xs text-gray-500 dark:text-gray-400">{new Date(sub.tanggal_kumpul).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
                             </div>
                             <div className="flex items-center gap-3 flex-shrink-0">
-                              {sub.file_url && <a href={sub.file_url} target="_blank" rel="noopener noreferrer" className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">Lihat File</a>}
+                              {sub.file_url && <a href={sub.file_url} target="_blank" rel="noopener noreferrer" className="text-xs text-red-600 dark:text-red-400 hover:underline">Lihat File</a>}
                               {sub.nilai !== null && <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">{sub.nilai}</span>}
                               <button onClick={e => openGrade(sub, e)}
-                                className="flex items-center gap-1 text-xs px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors">
+                                className="flex items-center gap-1 text-xs px-2.5 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors">
                                 <Star className="w-3.5 h-3.5" />{sub.nilai !== null ? 'Edit Nilai' : 'Beri Nilai'}
                               </button>
                             </div>
@@ -451,7 +451,7 @@ export function Exams() {
               </div>
               <div className="flex gap-3 p-6 border-t dark:border-white/10">
                 <button onClick={() => setShowTugasModal(false)} className="flex-1 py-2 border border-gray-300 dark:border-white/10 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5">Batal</button>
-                <button onClick={handleSaveTugas} disabled={savingTugas} className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50">
+                <button onClick={handleSaveTugas} disabled={savingTugas} className="flex-1 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg disabled:opacity-50">
                   {savingTugas ? 'Menyimpan...' : 'Simpan'}
                 </button>
               </div>
@@ -469,7 +469,7 @@ export function Exams() {
               </div>
               <div className="p-6 space-y-4">
                 <p className="text-sm text-gray-600 dark:text-gray-400">Peserta: <span className="font-medium text-gray-900 dark:text-white">{grading.peserta}</span></p>
-                {grading.file_url && <a href={grading.file_url} target="_blank" rel="noopener noreferrer" className="block text-sm text-indigo-600 dark:text-indigo-400 hover:underline">📎 Lihat File Tugas</a>}
+                {grading.file_url && <a href={grading.file_url} target="_blank" rel="noopener noreferrer" className="block text-sm text-red-600 dark:text-red-400 hover:underline">📎 Lihat File Tugas</a>}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nilai (0–100)</label>
                   <input type="number" min={0} max={100} className={tugasInputCls} value={gradeForm.nilai} onChange={e => setGradeForm(f => ({ ...f, nilai: e.target.value }))} placeholder="cth: 85" />
@@ -481,7 +481,7 @@ export function Exams() {
               </div>
               <div className="flex gap-3 p-6 border-t dark:border-white/10">
                 <button onClick={() => setGrading(null)} className="flex-1 py-2 border border-gray-300 dark:border-white/10 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5">Batal</button>
-                <button onClick={handleGrade} disabled={savingGrade || !gradeForm.nilai} className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50">
+                <button onClick={handleGrade} disabled={savingGrade || !gradeForm.nilai} className="flex-1 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg disabled:opacity-50">
                   {savingGrade ? 'Menyimpan...' : 'Simpan Nilai'}
                 </button>
               </div>
@@ -496,18 +496,18 @@ export function Exams() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="relative w-full sm:w-96">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-          <input type="text" placeholder="Cari kuis..." className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white dark:bg-[#161b22] dark:text-white dark:placeholder-gray-500"
+          <input type="text" placeholder="Cari kuis..." className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-red-500 outline-none bg-white dark:bg-[#161b22] dark:text-white dark:placeholder-gray-500"
             value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
         </div>
         <button onClick={() => { setForm({ judul_kuis: '', id_kursus: '', waktu_mulai: '', waktu_selesai: '' }); setError(''); setModalMode('create'); }}
-          className="flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors">
+          className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors">
           <Plus className="w-5 h-5" /><span>Buat Kuis</span>
         </button>
       </div>
 
       {/* Table */}
       {loading ? (
-        <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"/></div>
+        <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-red-600 border-t-transparent rounded-full animate-spin"/></div>
       ) : (
         <div className="bg-white dark:bg-[#161b22] rounded-xl shadow-sm border border-gray-200 dark:border-white/10 overflow-hidden">
           <div className="overflow-x-auto">
@@ -528,7 +528,7 @@ export function Exams() {
                   <tr key={k.id} className="hover:bg-gray-50 dark:hover:bg-white/3 transition-colors">
                     <td className="px-6 py-4">
                       <div className="font-medium text-gray-900 dark:text-white flex items-center space-x-2">
-                        <Award className="w-4 h-4 text-indigo-500" /><span>{k.judul}</span>
+                        <Award className="w-4 h-4 text-red-500" /><span>{k.judul}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-gray-600">{k.kursus}</td>
@@ -551,7 +551,7 @@ export function Exams() {
                         <button onClick={() => openSoalEditor(k)} className="text-emerald-600 hover:text-emerald-800 p-1.5 rounded-md hover:bg-emerald-50 transition-colors inline-flex items-center gap-1 text-sm">
                           <Edit3 className="w-4 h-4" /> Soal
                         </button>
-                        <button onClick={() => viewResults(k)} className="text-indigo-600 hover:text-indigo-900 p-1.5 rounded-md hover:bg-indigo-50 transition-colors inline-flex items-center gap-1 text-sm">
+                        <button onClick={() => viewResults(k)} className="text-red-600 hover:text-red-900 p-1.5 rounded-md hover:bg-red-50 transition-colors inline-flex items-center gap-1 text-sm">
                           <Eye className="w-4 h-4" /> Hasil
                         </button>
                         <button onClick={() => handleDelete(k.id)} className="text-red-500 hover:text-red-700 p-1.5 rounded-md hover:bg-red-50 transition-colors"><Trash2 className="w-4 h-4" /></button>
@@ -578,12 +578,12 @@ export function Exams() {
               {error && <p className="text-red-500 text-sm bg-red-50 p-2 rounded">{error}</p>}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Judul Kuis</label>
-                <input className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white dark:bg-[#161b22] dark:text-white"
+                <input className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-red-500 outline-none bg-white dark:bg-[#161b22] dark:text-white"
                   value={form.judul_kuis} onChange={e => setForm(f => ({ ...f, judul_kuis: e.target.value }))} />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Kursus</label>
-                <select className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white dark:bg-[#161b22] dark:text-white"
+                <select className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-red-500 outline-none bg-white dark:bg-[#161b22] dark:text-white"
                   value={form.id_kursus} onChange={e => setForm(f => ({ ...f, id_kursus: e.target.value }))}>
                   <option value="">-- Pilih Kursus --</option>
                   {kursus.map(k => <option key={k.id} value={k.id}>{k.judul}</option>)}
@@ -600,7 +600,7 @@ export function Exams() {
                     </label>
                     <div className="flex items-center gap-2">
                       <input type="date"
-                        className="flex-1 px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm bg-white dark:bg-[#161b22] text-gray-800 dark:text-white"
+                        className="flex-1 px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-red-500 outline-none text-sm bg-white dark:bg-[#161b22] text-gray-800 dark:text-white"
                         value={datePart || ''}
                         onChange={e => setForm(f => ({ ...f, [field]: e.target.value + 'T' + (f[field].split('T')[1] || '00:00') }))} />
                       <TimePickerRoll
@@ -614,7 +614,7 @@ export function Exams() {
             <div className="flex gap-3 p-6 border-t dark:border-white/10">
               <button onClick={closeModal} className="flex-1 py-2 border border-gray-300 dark:border-white/10 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5">Batal</button>
               <button onClick={handleCreateKuis} disabled={saving}
-                className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50 flex items-center justify-center gap-2">
+                className="flex-1 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg disabled:opacity-50 flex items-center justify-center gap-2">
                 {saving ? 'Menyimpan...' : <><span>Lanjut Buat Soal</span><ChevronRight className="w-4 h-4" /></>}
               </button>
             </div>
@@ -641,15 +641,15 @@ export function Exams() {
                 <div className="p-3 space-y-1">
                   {soalList.map((s, i) => (
                     <button key={i} onClick={() => setActiveSoal(i)}
-                      className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center justify-between group ${activeSoal === i ? 'bg-indigo-600 text-white' : 'hover:bg-gray-200 dark:hover:bg-white/10 text-gray-700 dark:text-gray-300'}`}>
+                      className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center justify-between group ${activeSoal === i ? 'bg-red-600 text-white' : 'hover:bg-gray-200 dark:hover:bg-white/10 text-gray-700 dark:text-gray-300'}`}>
                       <span className="font-medium">Soal {i + 1}</span>
                       <div className="flex items-center gap-1">
-                        <span className={`text-xs ${activeSoal === i ? 'text-indigo-200' : 'text-gray-400'}`}>
+                        <span className={`text-xs ${activeSoal === i ? 'text-red-200' : 'text-gray-400'}`}>
                           {s.tipe === 'pilihan_ganda' ? 'PG' : 'ES'}
                         </span>
                         {soalList.length > 1 && (
                           <button onClick={e => { e.stopPropagation(); removeSoal(i); }}
-                            className={`opacity-0 group-hover:opacity-100 transition-opacity ${activeSoal === i ? 'text-indigo-200 hover:text-white' : 'text-gray-400 hover:text-red-500'}`}>
+                            className={`opacity-0 group-hover:opacity-100 transition-opacity ${activeSoal === i ? 'text-red-200 hover:text-white' : 'text-gray-400 hover:text-red-500'}`}>
                             <X className="w-3 h-3" />
                           </button>
                         )}
@@ -657,7 +657,7 @@ export function Exams() {
                     </button>
                   ))}
                 </div>
-                <button onClick={addSoal} className="mx-3 mb-3 py-2 border-2 border-dashed border-gray-300 dark:border-white/20 hover:border-indigo-400 dark:hover:border-indigo-500 rounded-lg text-sm text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center justify-center gap-1 transition-colors">
+                <button onClick={addSoal} className="mx-3 mb-3 py-2 border-2 border-dashed border-gray-300 dark:border-white/20 hover:border-red-400 dark:hover:border-red-500 rounded-lg text-sm text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 flex items-center justify-center gap-1 transition-colors">
                   <PlusCircle className="w-4 h-4" /> Soal Baru
                 </button>
               </div>
@@ -674,7 +674,7 @@ export function Exams() {
                       <div className="flex gap-2">
                         {(['pilihan_ganda', 'essay'] as const).map(t => (
                           <button key={t} onClick={() => updateSoal(activeSoal, 'tipe', t)}
-                            className={`flex-1 py-2 px-3 rounded-lg border text-sm font-medium transition-colors ${currentSoal.tipe === t ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white dark:bg-[#161b22] text-gray-600 dark:text-gray-300 border-gray-300 dark:border-white/10 hover:border-indigo-400'}`}>
+                            className={`flex-1 py-2 px-3 rounded-lg border text-sm font-medium transition-colors ${currentSoal.tipe === t ? 'bg-red-600 text-white border-red-600' : 'bg-white dark:bg-[#161b22] text-gray-600 dark:text-gray-300 border-gray-300 dark:border-white/10 hover:border-red-400'}`}>
                             {t === 'pilihan_ganda' ? '🔘 Pilihan Ganda' : '✏️ Essay'}
                           </button>
                         ))}
@@ -683,7 +683,7 @@ export function Exams() {
                     <div className="w-28">
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Bobot Nilai</label>
                       <input type="number" min="1" max="100"
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-center font-semibold bg-white dark:bg-[#161b22] text-gray-800 dark:text-white"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-red-500 outline-none text-center font-semibold bg-white dark:bg-[#161b22] text-gray-800 dark:text-white"
                         value={currentSoal.bobot_nilai === 0 ? '' : currentSoal.bobot_nilai}
                         onFocus={e => e.target.select()}
                         onChange={e => updateSoal(activeSoal, 'bobot_nilai', parseInt(e.target.value) || 0)} />
@@ -692,9 +692,9 @@ export function Exams() {
 
                   {/* Pertanyaan */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Pertanyaan <span className="text-indigo-600">Soal {activeSoal + 1}</span></label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Pertanyaan <span className="text-red-600">Soal {activeSoal + 1}</span></label>
                     <textarea rows={3} placeholder="Tulis pertanyaan di sini..."
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none resize-none bg-white dark:bg-[#161b22] dark:text-white"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-red-500 outline-none resize-none bg-white dark:bg-[#161b22] dark:text-white"
                       value={currentSoal.pertanyaan}
                       onChange={e => updateSoal(activeSoal, 'pertanyaan', e.target.value)} />
                   </div>
@@ -743,7 +743,7 @@ export function Exams() {
               <div className="flex gap-3">
                 <button onClick={closeModal} className="px-4 py-2 border border-gray-300 dark:border-white/10 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 text-sm">Batal</button>
                 <button onClick={handleSaveSoal} disabled={saving}
-                  className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50 text-sm flex items-center gap-2">
+                  className="px-5 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg disabled:opacity-50 text-sm flex items-center gap-2">
                   <Save className="w-4 h-4" />{saving ? 'Menyimpan...' : 'Simpan Semua Soal'}
                 </button>
               </div>
@@ -761,7 +761,7 @@ export function Exams() {
                 <h3 className="text-lg font-semibold dark:text-white">Hasil: {selectedKuis?.judul}</h3>
                 {results && (
                   <p className="text-sm text-gray-500 mt-0.5">
-                    Rata-rata: <span className="font-medium text-indigo-600">{results.avg_score}</span> · {results.total_peserta} peserta selesai
+                    Rata-rata: <span className="font-medium text-red-600">{results.avg_score}</span> · {results.total_peserta} peserta selesai
                   </p>
                 )}
               </div>
@@ -793,7 +793,7 @@ export function Exams() {
                   ))}
                 </div>
                 <button onClick={() => handleGradeEssay(gradingAttempt.id_attempt)}
-                  className="mt-4 w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium">
+                  className="mt-4 w-full py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium">
                   Simpan Penilaian
                 </button>
               </div>
@@ -867,7 +867,7 @@ export function Exams() {
                         <td className="px-6 py-3">
                           {r.has_essay && (
                             <button onClick={() => { setGradingAttempt(r); setEssayScores({}); }}
-                              className="text-xs text-indigo-600 hover:text-indigo-800 font-medium border border-indigo-200 hover:border-indigo-400 px-2 py-1 rounded-md transition-colors">
+                              className="text-xs text-red-600 hover:text-red-800 font-medium border border-red-200 hover:border-red-400 px-2 py-1 rounded-md transition-colors">
                               Nilai Essay
                             </button>
                           )}

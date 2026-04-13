@@ -65,18 +65,31 @@ export function Courses() {
   const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    if (viewer?.tipe_materi === 'pdf' && viewer?.file_materi) {
-      fetch(viewer.file_materi)
-        .then(r => r.blob())
-        .then(blob => {
-          const url = URL.createObjectURL(blob);
-          setPdfBlobUrl(url);
-        })
-        .catch(() => setPdfBlobUrl(null));
-    } else {
-      if (pdfBlobUrl) { URL.revokeObjectURL(pdfBlobUrl); }
-      setPdfBlobUrl(null);
+    if (!(viewer?.tipe_materi === 'pdf' && viewer?.file_materi)) {
+      setPdfBlobUrl(prev => {
+        if (prev) URL.revokeObjectURL(prev);
+        return null;
+      });
+      return;
     }
+
+    let cancelled = false;
+    let createdUrl: string | null = null;
+
+    fetch(viewer.file_materi)
+      .then(r => r.blob())
+      .then(blob => {
+        if (cancelled) return;
+        createdUrl = URL.createObjectURL(blob);
+        setPdfBlobUrl(createdUrl);
+      })
+      .catch(() => { if (!cancelled) setPdfBlobUrl(null); });
+
+    return () => {
+      cancelled = true;
+      if (createdUrl) URL.revokeObjectURL(createdUrl);
+      setPdfBlobUrl(null);
+    };
   }, [viewer]);
 
   // ── Fetch courses ──────────────────────────────────────────────────────
@@ -139,7 +152,7 @@ export function Courses() {
     }
     const t = setTimeout(() => fetchMateri(materiSearch), 400);
     return () => clearTimeout(t);
-  }, [materiSearch]);
+  }, [materiSearch, fetchMateri, selectedCourse]);
 
   // ── Course CRUD ────────────────────────────────────────────────────────
   const openAdd = () => { setEditData(null); setForm(emptyForm); setError(''); setShowModal(true); };
@@ -243,8 +256,8 @@ export function Courses() {
         <div className="bg-white dark:bg-[#161b22] rounded-xl shadow-sm border border-gray-200 dark:border-white/10 p-6">
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                <BookOpen className="w-6 h-6 text-indigo-600" />
+              <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <BookOpen className="w-6 h-6 text-red-600" />
               </div>
               <div>
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white">{selectedCourse.judul}</h2>
@@ -268,17 +281,17 @@ export function Courses() {
             <div className="flex items-center gap-3 w-full sm:w-auto">
               <div className="relative flex-1 sm:w-72">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <input type="text" placeholder="Cari materi..." className="w-full pl-9 pr-4 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm bg-white dark:bg-[#161b22] dark:text-white dark:placeholder-gray-500"
+                <input type="text" placeholder="Cari materi..." className="w-full pl-9 pr-4 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-red-500 outline-none text-sm bg-white dark:bg-[#161b22] dark:text-white dark:placeholder-gray-500"
                   value={materiSearch} onChange={e => setMateriSearch(e.target.value)} />
               </div>
-              <button onClick={openAddMateri} className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors text-sm whitespace-nowrap">
+              <button onClick={openAddMateri} className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors text-sm whitespace-nowrap">
                 <Plus className="w-4 h-4" /><span>Tambah Materi</span>
               </button>
             </div>
           </div>
 
           {materiLoading ? (
-            <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" /></div>
+            <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-red-600 border-t-transparent rounded-full animate-spin" /></div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {materi.map(m => {
@@ -287,7 +300,7 @@ export function Courses() {
                 const cfg = tipeConfig[m.tipe_materi] ?? tipeConfig.dokumen;
                 return (
                   <div key={m.id_materi} onClick={() => setViewer(m)}
-                    className="bg-white dark:bg-[#161b22] rounded-xl shadow-sm border border-gray-200 dark:border-white/10 overflow-hidden hover:shadow-md hover:border-indigo-300 transition-all cursor-pointer group">
+                    className="bg-white dark:bg-[#161b22] rounded-xl shadow-sm border border-gray-200 dark:border-white/10 overflow-hidden hover:shadow-md hover:border-red-300 transition-all cursor-pointer group">
                     {thumb ? (
                       <div className="relative h-36">
                         <img src={thumb} alt={m.judul_materi} className="w-full h-full object-cover" />
@@ -309,7 +322,7 @@ export function Courses() {
                     )}
                     <div className="p-4">
                       <div className="flex justify-between items-start mb-1">
-                        <h3 className="font-semibold text-gray-900 dark:text-white line-clamp-1 flex-1 mr-2 group-hover:text-indigo-600 transition-colors">{m.judul_materi}</h3>
+                        <h3 className="font-semibold text-gray-900 dark:text-white line-clamp-1 flex-1 mr-2 group-hover:text-red-600 transition-colors">{m.judul_materi}</h3>
                         <button onClick={e => handleDeleteMateri(m.id_materi, e)} className="text-gray-300 hover:text-red-500 p-0.5 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0">
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -333,7 +346,7 @@ export function Courses() {
         <div className="bg-white dark:bg-[#161b22] rounded-xl shadow-sm border border-gray-200 dark:border-white/10 overflow-hidden">
           <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-white/10">
             <h3 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-              <ClipboardList className="w-5 h-5 text-indigo-500" /> Tugas
+              <ClipboardList className="w-5 h-5 text-red-500" /> Tugas
             </h3>
           </div>
           {courseTugas.length === 0 ? (
@@ -396,7 +409,7 @@ export function Courses() {
                   </button>
                   <div className="min-w-0">
                     <h3 className="font-semibold text-gray-900 truncate">{viewer.judul_materi}</h3>
-                    <p className="text-xs text-indigo-600">{selectedCourse.judul}</p>
+                    <p className="text-xs text-red-600">{selectedCourse.judul}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0 ml-4">
@@ -435,7 +448,7 @@ export function Courses() {
                     <File className="w-16 h-16 text-gray-300" />
                     <p className="text-sm text-gray-500">Preview PPT tidak tersedia.</p>
                     <a href={viewer.file_materi} target="_blank" rel="noopener noreferrer"
-                      className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700 transition-colors">
+                      className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 transition-colors">
                       <ExternalLink className="w-4 h-4" /> Download PPT
                     </a>
                   </div>
@@ -469,12 +482,12 @@ export function Courses() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Judul Materi</label>
-                  <input className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white dark:bg-[#161b22] dark:text-white"
+                  <input className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-red-500 outline-none bg-white dark:bg-[#161b22] dark:text-white"
                     value={materiForm.judul_materi} onChange={e => setMateriForm(f => ({ ...f, judul_materi: e.target.value }))} />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tipe</label>
-                  <select className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white dark:bg-[#161b22] dark:text-white"
+                  <select className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-red-500 outline-none bg-white dark:bg-[#161b22] dark:text-white"
                     value={materiForm.tipe_materi}
                     onChange={e => setMateriForm(f => ({ ...f, tipe_materi: e.target.value, file: null, youtube_url: '', drive_url: '' }))}>
                     <option value="pdf">📄 PDF (maks 5 MB)</option>
@@ -526,7 +539,7 @@ export function Courses() {
               </div>
               <div className="flex gap-3 p-6 border-t dark:border-white/10">
                 <button onClick={() => setShowMateriModal(false)} className="flex-1 py-2 border border-gray-300 dark:border-white/10 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5">Batal</button>
-                <button onClick={handleSaveMateri} disabled={materiSaving} className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50">
+                <button onClick={handleSaveMateri} disabled={materiSaving} className="flex-1 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg disabled:opacity-50">
                   {materiSaving ? 'Menyimpan...' : 'Simpan'}
                 </button>
               </div>
@@ -543,16 +556,16 @@ export function Courses() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="relative w-full sm:w-96">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-          <input type="text" placeholder="Cari course dan trainer" className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white dark:bg-[#161b22] dark:text-white dark:placeholder-gray-500"
+          <input type="text" placeholder="Cari course dan trainer" className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-red-500 outline-none bg-white dark:bg-[#161b22] dark:text-white dark:placeholder-gray-500"
             value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
         </div>
-        <button onClick={openAdd} className="flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors">
+        <button onClick={openAdd} className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors">
           <Plus className="w-5 h-5" /><span>Buat Course</span>
         </button>
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" /></div>
+        <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-red-600 border-t-transparent rounded-full animate-spin" /></div>
       ) : (
         <div className="bg-white dark:bg-[#161b22] rounded-xl shadow-sm border border-gray-200 dark:border-white/10 overflow-hidden">
           <div className="overflow-x-auto">
@@ -570,7 +583,7 @@ export function Courses() {
                 {kursus.map(k => (
                   <tr key={k.id} onClick={() => setSelectedCourse(k)} className="hover:bg-gray-50 dark:hover:bg-white/3 transition-colors cursor-pointer">
                     <td className="px-6 py-4">
-                      <div className="font-medium text-gray-900 dark:text-white hover:text-indigo-600 transition-colors">{k.judul}</div>
+                      <div className="font-medium text-gray-900 dark:text-white hover:text-red-600 transition-colors">{k.judul}</div>
                       {k.deskripsi && <div className="text-xs text-gray-500 mt-0.5 truncate max-w-xs">{k.deskripsi}</div>}
                     </td>
                     <td className="px-6 py-4 text-gray-600">{k.trainer || '-'}</td>
@@ -582,7 +595,7 @@ export function Courses() {
                     <td className="px-6 py-4 text-gray-600">{k.participants}</td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end space-x-2">
-                        <button onClick={e => openEdit(k, e)} className="text-indigo-600 hover:text-indigo-900 p-1.5 rounded-md hover:bg-indigo-50 transition-colors"><Edit2 className="w-4 h-4" /></button>
+                        <button onClick={e => openEdit(k, e)} className="text-red-600 hover:text-red-900 p-1.5 rounded-md hover:bg-red-50 transition-colors"><Edit2 className="w-4 h-4" /></button>
                         <button onClick={e => handleDelete(k.id, e)} className="text-red-500 hover:text-red-700 p-1.5 rounded-md hover:bg-red-50 transition-colors"><Trash2 className="w-4 h-4" /></button>
                       </div>
                     </td>
@@ -619,17 +632,17 @@ export function Courses() {
               {error && <p className="text-red-500 text-sm bg-red-50 p-2 rounded">{error}</p>}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Judul Course</label>
-                <input className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white dark:bg-[#161b22] dark:text-white"
+                <input className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-red-500 outline-none bg-white dark:bg-[#161b22] dark:text-white"
                   value={form.judul_kursus} onChange={e => setForm(f => ({ ...f, judul_kursus: e.target.value }))} />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Deskripsi</label>
-                <textarea rows={3} className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none resize-none bg-white dark:bg-[#161b22] dark:text-white"
+                <textarea rows={3} className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-red-500 outline-none resize-none bg-white dark:bg-[#161b22] dark:text-white"
                   value={form.deskripsi} onChange={e => setForm(f => ({ ...f, deskripsi: e.target.value }))} />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Trainer</label>
-                <select className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white dark:bg-[#161b22] dark:text-white"
+                <select className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-red-500 outline-none bg-white dark:bg-[#161b22] dark:text-white"
                   value={form.id_trainer} onChange={e => setForm(f => ({ ...f, id_trainer: e.target.value }))}>
                   <option value="">-- Pilih Trainer --</option>
                   {trainers.map(t => <option key={t.id} value={t.id}>{t.nama}</option>)}
@@ -637,7 +650,7 @@ export function Courses() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
-                <select className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white dark:bg-[#161b22] dark:text-white"
+                <select className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-red-500 outline-none bg-white dark:bg-[#161b22] dark:text-white"
                   value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value }))}>
                   <option value="draft">Draft</option>
                   <option value="publish">Publish</option>
@@ -646,7 +659,7 @@ export function Courses() {
             </div>
             <div className="flex gap-3 p-6 border-t dark:border-white/10">
               <button onClick={() => setShowModal(false)} className="flex-1 py-2 border border-gray-300 dark:border-white/10 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5">Batal</button>
-              <button onClick={handleSave} disabled={saving} className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50">
+              <button onClick={handleSave} disabled={saving} className="flex-1 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg disabled:opacity-50">
                 {saving ? 'Menyimpan...' : 'Simpan'}
               </button>
             </div>

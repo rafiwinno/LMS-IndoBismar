@@ -63,13 +63,13 @@ function RollColumn({ count, value, onChange }: { count: number; value: number; 
               onClick={() => clickItem(i)}
               style={{ height: ITEM_H }}
               className={`flex items-center justify-center cursor-pointer select-none transition-colors ${
-                isSelected ? 'bg-indigo-50 dark:bg-indigo-900/30' : ''
+                isSelected ? 'bg-red-50 dark:bg-red-900/30' : ''
               }`}
             >
               <span
                 className={`font-mono font-semibold transition-all duration-100 ${
                   isSelected
-                    ? 'text-indigo-500 text-xl'
+                    ? 'text-red-500 text-xl'
                     : dist === 1
                     ? 'text-gray-500 dark:text-gray-400 text-base'
                     : dist === 2
@@ -89,7 +89,7 @@ function RollColumn({ count, value, onChange }: { count: number; value: number; 
 
       {/* Border highlight di tengah — pointer-events-none, z di atas scroll */}
       <div
-        className="absolute left-0 right-0 pointer-events-none border-y-2 border-indigo-300"
+        className="absolute left-0 right-0 pointer-events-none border-y-2 border-red-300"
         style={{ top: ITEM_H * 2, height: ITEM_H, zIndex: 2 }}
       />
 
@@ -159,7 +159,7 @@ export function TimePickerRoll({ value, onChange, placeholder = 'HH:MM' }: Props
   return (
     <div ref={containerRef} className="relative">
       {/* Input */}
-      <div className="flex items-center gap-2 border border-gray-300 dark:border-white/10 rounded-lg px-3 py-2 bg-white dark:bg-[#161b22] focus-within:ring-2 focus-within:ring-indigo-500">
+      <div className="flex items-center gap-2 border border-gray-300 dark:border-white/10 rounded-lg px-3 py-2 bg-white dark:bg-[#161b22] focus-within:ring-2 focus-within:ring-red-500">
         <input
           type="text"
           placeholder={placeholder}
@@ -177,7 +177,7 @@ export function TimePickerRoll({ value, onChange, placeholder = 'HH:MM' }: Props
           }}
         />
         <Clock
-          className="w-4 h-4 text-gray-400 cursor-pointer hover:text-indigo-500 transition-colors flex-shrink-0"
+          className="w-4 h-4 text-gray-400 cursor-pointer hover:text-red-500 transition-colors flex-shrink-0"
           onClick={() => {
             if (!open && containerRef.current) {
               const rect = containerRef.current.getBoundingClientRect();
@@ -227,7 +227,7 @@ export function TimePickerRoll({ value, onChange, placeholder = 'HH:MM' }: Props
           </div>
 
           <button
-            className="w-full mt-4 py-2 bg-indigo-600 text-white text-sm rounded-xl hover:bg-indigo-700 transition-colors font-semibold"
+            className="w-full mt-4 py-2 bg-red-600 text-white text-sm rounded-xl hover:bg-red-700 transition-colors font-semibold"
             onClick={() => setOpen(false)}
           >
             Selesai
