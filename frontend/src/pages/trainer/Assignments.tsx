@@ -453,8 +453,10 @@ function KuisTab() {
   };
 
   const reloadQuizzes = async () => {
-    const res = await api.get(`/trainer/courses/${selectedCourse}/quizzes`);
-    setQuizzes(res.data.data ?? []);
+    try {
+      const res = await api.get(`/trainer/courses/${selectedCourse}/quizzes`);
+      setQuizzes(res.data.data ?? []);
+    } catch { /* list tetap stale, tidak menimpa error save */ }
   };
 
   const handleSaveQuiz = async () => {
