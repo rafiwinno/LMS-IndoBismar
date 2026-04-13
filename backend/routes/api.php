@@ -207,7 +207,6 @@ Route::middleware('auth:sanctum')->group(function () {
     // Progress peserta
     Route::get('/trainer/peserta/progress',       [TrainerProgressController::class, 'index']);
     Route::get('/trainer/peserta/semua',          [TrainerProgressController::class, 'allPesertaCabang']);
-    Route::get('/trainer/peserta',                [TrainerProgressController::class, 'index']);
 
     // Notifications
     Route::get('/trainer/notifications',          [TrainerNotificationController::class, 'index']);
