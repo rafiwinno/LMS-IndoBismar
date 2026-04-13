@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { BookOpen, FileText, Globe, Plus, ArrowRight } from 'lucide-react';
+import { BookOpen, FileText, Globe, Plus, ArrowRight, AlertCircle } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getCourses } from '../../api/courseApi';
 import { getUser } from '../types';
@@ -7,13 +7,14 @@ import { getUser } from '../types';
 export default function TrainerDashboard() {
   const [courses, setCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pageError, setPageError] = useState('');
   const user = getUser();
   const navigate = useNavigate();
 
   useEffect(() => {
     getCourses()
       .then((res) => setCourses(res.data))
-      .catch(() => {})
+      .catch(() => setPageError('Gagal memuat data course. Coba refresh halaman.'))
       .finally(() => setLoading(false));
   }, []);
 
@@ -41,6 +42,13 @@ export default function TrainerDashboard() {
           Buat Course
         </button>
       </div>
+
+      {pageError && (
+        <div className="flex items-center gap-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/30 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg text-sm">
+          <AlertCircle size={15} className="shrink-0" />
+          {pageError}
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
