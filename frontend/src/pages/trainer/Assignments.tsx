@@ -433,7 +433,8 @@ function KuisTab() {
 
   useEffect(() => {
     api.get('/trainer/courses')
-      .then((res) => { setCourses(res.data); if (res.data.length > 0) setSelectedCourse(res.data[0].id_kursus); });
+      .then((res) => { setCourses(res.data); if (res.data.length > 0) setSelectedCourse(res.data[0].id_kursus); })
+      .catch(() => setError('Gagal memuat daftar kursus.'));
   }, []);
 
   useEffect(() => {
