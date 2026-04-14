@@ -184,7 +184,7 @@ function UserLoginForm({ onLogin, onSwitchAdmin, onSwitchTrainer, onSwitchRegist
             />
             <button
               type="button" onClick={() => setShowPass(s => !s)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-black hover:text-gray-600 transition-colors"
             >
               {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>

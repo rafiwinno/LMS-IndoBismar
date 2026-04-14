@@ -40,10 +40,11 @@ export default function TrainerHeader({ onMenuClick }: HeaderProps) {
   const [notifs, setNotifs]       = useState<Notif[]>([]);
   const [open, setOpen]           = useState(false);
   const [unread, setUnread]       = useState(0);
+  const [notifError, setNotifError] = useState(false);
   const dropdownRef               = useRef<HTMLDivElement>(null);
 
   const initials = user?.nama
-    ? user.nama.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase()
+    ? user.nama.split(' ').filter(Boolean).map((n: string) => n[0]).slice(0, 2).join('').toUpperCase()
     : 'TR';
 
   const title =
@@ -65,7 +66,7 @@ export default function TrainerHeader({ onMenuClick }: HeaderProps) {
           setUnread(count);
         }
       })
-      .catch(() => {});
+      .catch(() => { setNotifError(true); });
   }, []);
 
   // Tutup dropdown saat klik di luar
@@ -128,7 +129,11 @@ export default function TrainerHeader({ onMenuClick }: HeaderProps) {
               </div>
 
               <div className="max-h-72 overflow-y-auto">
-                {notifs.length === 0 ? (
+                {notifError ? (
+                  <p className="text-sm text-red-400 text-center py-8">
+                    Gagal memuat notifikasi
+                  </p>
+                ) : notifs.length === 0 ? (
                   <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-8">
                     Belum ada notifikasi
                   </p>

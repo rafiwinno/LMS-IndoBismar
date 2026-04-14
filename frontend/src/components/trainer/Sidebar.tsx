@@ -102,7 +102,7 @@ export default function TrainerSidebar({ isOpen, setIsOpen }: SidebarProps) {
           {user && (
             <div className="flex items-center gap-3 px-3 py-3 mb-1 rounded-xl bg-gray-100 dark:bg-white/5">
               <div className="w-9 h-9 rounded-full bg-red-500/20 text-red-600 dark:text-red-400 flex items-center justify-center text-sm font-bold shrink-0">
-                {user.nama.charAt(0).toUpperCase()}
+                {(user.nama?.[0] ?? '?').toUpperCase()}
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{user.nama}</p>
