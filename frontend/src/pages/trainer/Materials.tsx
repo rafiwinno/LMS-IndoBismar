@@ -1,6 +1,6 @@
 import { useParams, Link } from 'react-router-dom';
 import { toast } from '../../lib/toast';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Plus, Trash2, Pencil, FileText, Video, File, ArrowLeft, Loader2, ExternalLink, X as XIcon, ChevronLeft } from 'lucide-react';
 import { getMaterials, createMaterial, updateMaterial, deleteMaterial } from '../../api/MaterialApi';
 import type { Material } from '../types/trainer';
@@ -75,6 +75,17 @@ export default function Materials() {
 
   useEffect(() => { load(); }, [courseId]);
 
+  const materialsWithMeta = useMemo(
+    () => materials.map(m => ({
+      ...m,
+      ytId: m.tipe_materi === 'video' && m.file_materi ? getYouTubeId(m.file_materi) : null,
+      fileUrl: m.file_materi
+        ? (m.file_materi.startsWith('http') ? m.file_materi : `${STORAGE_URL}/${m.file_materi}`)
+        : null,
+    })),
+    [materials]
+  );
+
   const openCreate = () => {
     setEditTarget(null);
     setForm({ judul_materi: '', tipe_materi: 'pdf', urutan: materials.length + 1, link_video: '', file_materi: null });
@@ -84,7 +95,7 @@ export default function Materials() {
 
   const openEdit = (m: Material) => {
     setEditTarget(m);
-    setForm({ judul_materi: m.judul_materi, tipe_materi: m.tipe_materi, urutan: m.urutan, link_video: '', file_materi: null });
+    setForm({ judul_materi: m.judul_materi, tipe_materi: m.tipe_materi, urutan: m.urutan, link_video: m.tipe_materi === 'video' && m.file_materi ? m.file_materi : '', file_materi: null });
     setError('');
     setShowModal(true);
   };
@@ -94,10 +105,16 @@ export default function Materials() {
     setLoading(true);
     try {
       if (editTarget) {
+        if (form.tipe_materi === 'video' && !form.link_video.trim()) {
+          setError('Link video wajib diisi');
+          setLoading(false);
+          return;
+        }
         await updateMaterial(editTarget.id_materi, {
           judul_materi: form.judul_materi,
           tipe_materi:  form.tipe_materi,
           urutan:       form.urutan,
+          ...(form.tipe_materi === 'video' ? { link_video: form.link_video } : {}),
         });
       } else {
         const fd = new FormData();
@@ -179,12 +196,9 @@ export default function Materials() {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {materials.map((m) => {
-            const meta   = typeMeta[m.tipe_materi] ?? typeMeta.dokumen;
-            const ytId   = m.tipe_materi === 'video' && m.file_materi ? getYouTubeId(m.file_materi) : null;
-            const fileUrl = m.file_materi
-              ? (m.file_materi.startsWith('http') ? m.file_materi : `${STORAGE_URL}/${m.file_materi}`)
-              : null;
+          {materialsWithMeta.map((m) => {
+            const meta = typeMeta[m.tipe_materi] ?? typeMeta.dokumen;
+            const { ytId, fileUrl } = m;
 
             return (
               <div
@@ -325,6 +339,7 @@ export default function Materials() {
                 />
               </div>
             </div>
+            {/* Saat CREATE: tampilkan input video atau file sesuai tipe */}
             {!editTarget && (
               form.tipe_materi === 'video' ? (
                 <div>
@@ -350,6 +365,19 @@ export default function Materials() {
                 </div>
               )
             )}
+
+            {/* Saat EDIT VIDEO: tampilkan input link video */}
+            {editTarget && form.tipe_materi === 'video' && (
+              <div>
+                <label className={labelCls}>Link Video</label>
+                <input
+                  value={form.link_video}
+                  onChange={(e) => setForm({ ...form, link_video: e.target.value })}
+                  placeholder="https://youtube.com/..."
+                  className={inputCls}
+                />
+              </div>
+            )}
             {error && (
               <p className="text-sm text-red-600 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/30 px-3 py-2 rounded-lg">
                 {error}
@@ -364,7 +392,7 @@ export default function Materials() {
               </button>
               <button
                 onClick={handleSave}
-                disabled={loading}
+                disabled={loading || !form.judul_materi.trim()}
                 className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white text-sm font-semibold rounded-lg transition-colors"
               >
                 {loading ? 'Menyimpan...' : 'Simpan'}
