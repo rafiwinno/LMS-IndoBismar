@@ -3,6 +3,7 @@ import {
   Plus, Search, Edit2, Trash2, X, ChevronLeft,
   FileText, File, Youtube, ExternalLink,
   Link, BookOpen, ClipboardList, HelpCircle, Clock, Users, Award,
+  UserPlus, UserMinus,
 } from 'lucide-react';
 import { api } from '../../lib/api';
 import { confirm } from '../../lib/confirm';
@@ -16,6 +17,14 @@ interface Materi {
   id_materi: number; judul_materi: string; tipe_materi: string;
   file_materi: string; ukuran: string; kursus: string; id_kursus: number; dibuat_pada: string;
 }
+interface Pilihan { teks_jawaban: string; benar: boolean; }
+interface Soal { pertanyaan: string; tipe: 'pilihan_ganda' | 'essay'; bobot_nilai: number; pilihan: Pilihan[]; }
+
+const emptyPilihan = (): Pilihan[] => [
+  { teks_jawaban: '', benar: false }, { teks_jawaban: '', benar: false },
+  { teks_jawaban: '', benar: false }, { teks_jawaban: '', benar: false },
+];
+const emptySoal = (): Soal => ({ pertanyaan: '', tipe: 'pilihan_ganda', bobot_nilai: 10, pilihan: emptyPilihan() });
 
 const emptyForm = { judul_kursus: '', deskripsi: '', id_trainer: '', id_cabang: 1, status: 'draft' };
 const emptyMateriForm = { judul_materi: '', tipe_materi: 'pdf', file: null as File | null, youtube_url: '', drive_url: '' };
@@ -63,6 +72,33 @@ export function Courses() {
   const [materiError, setMateriError] = useState('');
   const [viewer, setViewer] = useState<Materi | null>(null);
   const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
+
+  // ── Tugas modal state ─────────────────────────────────────────────────
+  const [showTugasModal, setShowTugasModal] = useState(false);
+  const [tugasForm, setTugasForm] = useState({ judul_tugas: '', deskripsi: '', deadline: '' });
+  const [savingTugas, setSavingTugas] = useState(false);
+  const [tugasFormError, setTugasFormError] = useState('');
+
+  // ── Kuis modal state ──────────────────────────────────────────────────
+  const [showKuisModal, setShowKuisModal] = useState(false);
+  const [kuisStep, setKuisStep] = useState<'info' | 'soal'>('info');
+  const [kuisForm, setKuisForm] = useState({ judul_kuis: '', waktu_mulai: '', waktu_selesai: '' });
+  const [createdKuisId, setCreatedKuisId] = useState<number | null>(null);
+  const [createdKuisJudul, setCreatedKuisJudul] = useState('');
+  const [soalList, setSoalList] = useState<Soal[]>([emptySoal()]);
+  const [activeSoal, setActiveSoal] = useState(0);
+  const [savingKuis, setSavingKuis] = useState(false);
+  const [kuisError, setKuisError] = useState('');
+
+  // ── Course peserta state ───────────────────────────────────────────────
+  const [coursePeserta, setCoursePeserta] = useState<any[]>([]);
+  const [pesertaLoading, setPesertaLoading] = useState(false);
+  const [showEnrollModal, setShowEnrollModal] = useState(false);
+  const [allPeserta, setAllPeserta] = useState<any[]>([]);
+  const [enrollSearch, setEnrollSearch] = useState('');
+  const [selectedEnrollId, setSelectedEnrollId] = useState<number | ''>('');
+  const [enrolling, setEnrolling] = useState(false);
+  const [enrollError, setEnrollError] = useState('');
 
   useEffect(() => {
     if (!(viewer?.tipe_materi === 'pdf' && viewer?.file_materi)) {
@@ -129,13 +165,23 @@ export function Courses() {
     finally { setMateriLoading(false); }
   }, [selectedCourse]);
 
+  const fetchCoursePeserta = async (courseId: number) => {
+    setPesertaLoading(true);
+    try {
+      const res = await api.getKursusPeserta(courseId);
+      setCoursePeserta(res.data ?? []);
+    } catch { setCoursePeserta([]); }
+    finally { setPesertaLoading(false); }
+  };
+
   useEffect(() => {
     if (selectedCourse) {
       skipSearchEffect.current = true;
       setMateriSearch('');
       setViewer(null);
+      setCoursePeserta([]);
       fetchMateri('');
-      // Fetch tugas & kuis for this course
+      fetchCoursePeserta(selectedCourse.id);
       api.getTugas(`id_kursus=${selectedCourse.id}&per_page=100`)
         .then(res => setCourseTugas(res.data ?? []))
         .catch(() => setCourseTugas([]));
@@ -240,6 +286,123 @@ export function Courses() {
     catch (e: any) { alert(e.message); }
   };
 
+  // ── Enroll / Unenroll ──────────────────────────────────────────────────
+  const openEnrollModal = async () => {
+    setEnrollSearch(''); setSelectedEnrollId(''); setEnrollError('');
+    try {
+      const res = await api.getPeserta('per_page=200&status=aktif');
+      const enrolled = new Set(coursePeserta.map((p: any) => p.id));
+      setAllPeserta((res.data ?? []).filter((p: any) => !enrolled.has(p.id)));
+    } catch { setAllPeserta([]); }
+    setShowEnrollModal(true);
+  };
+
+  const handleEnroll = async () => {
+    if (!selectedCourse || !selectedEnrollId) return;
+    setEnrolling(true); setEnrollError('');
+    try {
+      await api.enrollPeserta(selectedCourse.id, Number(selectedEnrollId));
+      setShowEnrollModal(false);
+      fetchCoursePeserta(selectedCourse.id);
+      fetchKursus(page, searchTerm);
+    } catch (e: any) { setEnrollError(e.message); }
+    finally { setEnrolling(false); }
+  };
+
+  const handleUnenroll = async (pesertaId: number, nama: string) => {
+    if (!selectedCourse) return;
+    if (!await confirm(`Keluarkan "${nama}" dari course ini?`)) return;
+    try {
+      await api.unenrollPeserta(selectedCourse.id, pesertaId);
+      fetchCoursePeserta(selectedCourse.id);
+      fetchKursus(page, searchTerm);
+    } catch (e: any) { alert(e.message); }
+  };
+
+  // ── Tugas handlers ────────────────────────────────────────────────────
+  const openTugasModal = () => {
+    setTugasForm({ judul_tugas: '', deskripsi: '', deadline: '' });
+    setTugasFormError('');
+    setShowTugasModal(true);
+  };
+
+  const handleSaveTugas = async () => {
+    if (!tugasForm.judul_tugas.trim()) { setTugasFormError('Judul wajib diisi'); return; }
+    if (!tugasForm.deadline) { setTugasFormError('Deadline wajib diisi'); return; }
+    if (!selectedCourse) return;
+    setSavingTugas(true); setTugasFormError('');
+    try {
+      await api.createTugas({ id_kursus: selectedCourse.id, judul_tugas: tugasForm.judul_tugas, deskripsi: tugasForm.deskripsi, deadline: tugasForm.deadline });
+      setShowTugasModal(false);
+      api.getTugas(`id_kursus=${selectedCourse.id}&per_page=100`)
+        .then(res => setCourseTugas(res.data ?? [])).catch(() => {});
+    } catch (e: any) { setTugasFormError(e.message); }
+    finally { setSavingTugas(false); }
+  };
+
+  // ── Kuis handlers ─────────────────────────────────────────────────────
+  const openKuisModal = () => {
+    setKuisForm({ judul_kuis: '', waktu_mulai: '', waktu_selesai: '' });
+    setSoalList([emptySoal()]); setActiveSoal(0);
+    setCreatedKuisId(null); setCreatedKuisJudul('');
+    setKuisError(''); setKuisStep('info');
+    setShowKuisModal(true);
+  };
+
+  const handleCreateKuisInfo = async () => {
+    if (!kuisForm.judul_kuis.trim()) { setKuisError('Judul kuis wajib diisi'); return; }
+    if (!kuisForm.waktu_mulai || !kuisForm.waktu_selesai) { setKuisError('Waktu mulai dan selesai wajib diisi'); return; }
+    if (!selectedCourse) return;
+    setSavingKuis(true); setKuisError('');
+    try {
+      const res = await api.createKuis({ id_kursus: selectedCourse.id, ...kuisForm, pertanyaan: [] });
+      setCreatedKuisId(res.data.id);
+      setCreatedKuisJudul(kuisForm.judul_kuis);
+      setSoalList([emptySoal()]); setActiveSoal(0);
+      setKuisStep('soal');
+    } catch (e: any) { setKuisError(e.message); }
+    finally { setSavingKuis(false); }
+  };
+
+  const handleSaveSoal = async () => {
+    if (!createdKuisId) return;
+    for (let i = 0; i < soalList.length; i++) {
+      const s = soalList[i];
+      if (!s.pertanyaan.trim()) { setKuisError(`Soal ${i + 1}: pertanyaan tidak boleh kosong`); return; }
+      if (s.tipe === 'pilihan_ganda') {
+        if (s.pilihan.some(p => !p.teks_jawaban.trim())) { setKuisError(`Soal ${i + 1}: semua pilihan harus diisi`); return; }
+        if (!s.pilihan.some(p => p.benar)) { setKuisError(`Soal ${i + 1}: tandai satu jawaban benar`); return; }
+      }
+    }
+    setSavingKuis(true); setKuisError('');
+    try {
+      await api.updateKuis(createdKuisId, { ...kuisForm, judul_kuis: createdKuisJudul, pertanyaan: soalList });
+      setShowKuisModal(false);
+      if (selectedCourse) {
+        api.getKuis(`id_kursus=${selectedCourse.id}`)
+          .then(res => setCourseKuis(res.data ?? [])).catch(() => {});
+      }
+    } catch (e: any) { setKuisError(e.message); }
+    finally { setSavingKuis(false); }
+  };
+
+  const addSoal = () => { setSoalList(s => [...s, emptySoal()]); setActiveSoal(soalList.length); };
+  const removeSoal = (i: number) => {
+    setSoalList(s => s.filter((_, idx) => idx !== i));
+    setActiveSoal(prev => Math.max(0, prev >= i ? prev - 1 : prev));
+  };
+  const updateSoal = (i: number, field: keyof Soal, val: any) =>
+    setSoalList(s => s.map((soal, idx) => idx === i ? { ...soal, [field]: val } : soal));
+  const updatePilihan = (si: number, pi: number, field: keyof Pilihan, val: any) =>
+    setSoalList(s => s.map((soal, idx) => {
+      if (idx !== si) return soal;
+      const newPilihan = soal.pilihan.map((p, pIdx) => {
+        if (field === 'benar') return { ...p, benar: pIdx === pi };
+        return pIdx === pi ? { ...p, [field]: val } : p;
+      });
+      return { ...soal, pilihan: newPilihan };
+    }));
+
   // ── Course Detail View ─────────────────────────────────────────────────
   if (selectedCourse) {
     return (
@@ -273,6 +436,147 @@ export function Courses() {
             </div>
           </div>
         </div>
+
+        {/* Peserta Section */}
+        <div className="bg-white dark:bg-[#161b22] rounded-xl shadow-sm border border-gray-200 dark:border-white/10 overflow-hidden">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-white/10">
+            <h3 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+              <Users className="w-5 h-5 text-red-500" />
+              Peserta Terdaftar
+              <span className="ml-1 px-2 py-0.5 text-xs font-bold bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 rounded-full">
+                {coursePeserta.length}
+              </span>
+            </h3>
+            <button
+              onClick={openEnrollModal}
+              className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-lg transition-colors text-sm"
+            >
+              <UserPlus className="w-4 h-4" /> Tambah Peserta
+            </button>
+          </div>
+
+          {pesertaLoading ? (
+            <div className="flex justify-center py-10">
+              <div className="w-6 h-6 border-4 border-red-600 border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : coursePeserta.length === 0 ? (
+            <div className="py-10 text-center text-sm text-gray-400">Belum ada peserta yang terdaftar di course ini.</div>
+          ) : (
+            <div className="divide-y divide-gray-100 dark:divide-white/8">
+              {coursePeserta.map((p: any) => {
+                const initials = (p.nama ?? '?').split(' ').map((n: string) => n[0] ?? '').join('').substring(0, 2).toUpperCase();
+                const statusColor: Record<string, string> = {
+                  belum_mulai:    'bg-gray-100 dark:bg-white/8 text-gray-500 dark:text-gray-400',
+                  sedang_belajar: 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400',
+                  selesai:        'bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400',
+                };
+                const statusLabel: Record<string, string> = {
+                  belum_mulai: 'Belum Mulai', sedang_belajar: 'Sedang Belajar', selesai: 'Selesai',
+                };
+                return (
+                  <div key={p.id} className="flex items-center justify-between px-6 py-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-full bg-red-100 dark:bg-red-500/20 flex items-center justify-center flex-shrink-0">
+                        <span className="text-red-600 dark:text-red-400 font-semibold text-xs">{initials}</span>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">{p.nama}</p>
+                        <p className="text-xs text-gray-400">{p.email}{p.asal_sekolah ? ` · ${p.asal_sekolah}` : ''}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusColor[p.status] ?? statusColor.belum_mulai}`}>
+                        {statusLabel[p.status] ?? p.status}
+                      </span>
+                      <button
+                        onClick={() => handleUnenroll(p.id, p.nama)}
+                        title="Keluarkan peserta"
+                        className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"
+                      >
+                        <UserMinus className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Enroll Modal */}
+        {showEnrollModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+            <div className="bg-white dark:bg-[#161b22] rounded-2xl shadow-2xl w-full max-w-md">
+              <div className="flex items-center justify-between px-6 py-4 border-b dark:border-white/10">
+                <h3 className="text-base font-semibold dark:text-white">Tambah Peserta ke Course</h3>
+                <button onClick={() => setShowEnrollModal(false)}><X className="w-5 h-5 text-gray-400" /></button>
+              </div>
+              <div className="p-6 space-y-4">
+                {enrollError && <p className="text-red-500 text-sm bg-red-50 dark:bg-red-500/10 p-2 rounded-lg">{enrollError}</p>}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cari Peserta</label>
+                  <div className="relative mb-2">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <input
+                      type="text"
+                      placeholder="Ketik nama atau email..."
+                      className="w-full pl-9 pr-4 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-red-500 outline-none text-sm bg-white dark:bg-[#0d0f14] dark:text-white"
+                      value={enrollSearch}
+                      onChange={e => setEnrollSearch(e.target.value)}
+                    />
+                  </div>
+                  <div className="border border-gray-200 dark:border-white/10 rounded-lg overflow-hidden max-h-56 overflow-y-auto">
+                    {allPeserta
+                      .filter(p =>
+                        (p.nama ?? '').toLowerCase().includes(enrollSearch.toLowerCase()) ||
+                        (p.email ?? '').toLowerCase().includes(enrollSearch.toLowerCase())
+                      )
+                      .map(p => (
+                        <button
+                          key={p.id}
+                          onClick={() => setSelectedEnrollId(p.id)}
+                          className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors text-sm ${
+                            selectedEnrollId === p.id
+                              ? 'bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400'
+                              : 'hover:bg-gray-50 dark:hover:bg-white/5 text-gray-800 dark:text-gray-200'
+                          }`}
+                        >
+                          <div className="w-7 h-7 rounded-full bg-red-100 dark:bg-red-500/20 flex items-center justify-center flex-shrink-0 text-xs font-bold text-red-600 dark:text-red-400">
+                            {(p.nama ?? '?').split(' ').map((n: string) => n[0] ?? '').join('').substring(0, 2).toUpperCase()}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-medium truncate">{p.nama}</p>
+                            <p className="text-xs text-gray-400 truncate">{p.email}</p>
+                          </div>
+                          {selectedEnrollId === p.id && <span className="ml-auto text-red-500 text-xs font-bold">✓</span>}
+                        </button>
+                      ))}
+                    {allPeserta.filter(p =>
+                      (p.nama ?? '').toLowerCase().includes(enrollSearch.toLowerCase()) ||
+                      (p.email ?? '').toLowerCase().includes(enrollSearch.toLowerCase())
+                    ).length === 0 && (
+                      <p className="text-center text-sm text-gray-400 py-6">
+                        {allPeserta.length === 0 ? 'Semua peserta aktif sudah terdaftar' : 'Peserta tidak ditemukan'}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <div className="flex gap-3 pt-2">
+                  <button onClick={() => setShowEnrollModal(false)} className="flex-1 py-2 border border-gray-300 dark:border-white/10 rounded-lg text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+                    Batal
+                  </button>
+                  <button
+                    onClick={handleEnroll}
+                    disabled={!selectedEnrollId || enrolling}
+                    className="flex-1 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white rounded-lg text-sm transition-colors"
+                  >
+                    {enrolling ? 'Mendaftarkan...' : 'Daftarkan'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Materials Section */}
         <div>
@@ -347,7 +651,11 @@ export function Courses() {
           <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-white/10">
             <h3 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
               <ClipboardList className="w-5 h-5 text-red-500" /> Tugas
+              <span className="px-2 py-0.5 text-xs font-bold bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 rounded-full">{courseTugas.length}</span>
             </h3>
+            <button onClick={openTugasModal} className="flex items-center gap-1.5 bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-lg transition-colors text-sm">
+              <Plus className="w-4 h-4" /> Tambah Tugas
+            </button>
           </div>
           {courseTugas.length === 0 ? (
             <div className="py-10 text-center text-sm text-gray-400">Belum ada tugas untuk course ini.</div>
@@ -375,8 +683,12 @@ export function Courses() {
         <div className="bg-white dark:bg-[#161b22] rounded-xl shadow-sm border border-gray-200 dark:border-white/10 overflow-hidden">
           <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-white/10">
             <h3 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-              <HelpCircle className="w-5 h-5 text-purple-500" /> Kuis
+              <HelpCircle className="w-5 h-5 text-red-500" /> Kuis
+              <span className="px-2 py-0.5 text-xs font-bold bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 rounded-full">{courseKuis.length}</span>
             </h3>
+            <button onClick={openKuisModal} className="flex items-center gap-1.5 bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-lg transition-colors text-sm">
+              <Plus className="w-4 h-4" /> Tambah Kuis
+            </button>
           </div>
           {courseKuis.length === 0 ? (
             <div className="py-10 text-center text-sm text-gray-400">Belum ada kuis untuk course ini.</div>
@@ -397,6 +709,197 @@ export function Courses() {
             </div>
           )}
         </div>
+
+        {/* Tambah Tugas Modal */}
+        {showTugasModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+            <div className="bg-white dark:bg-[#161b22] rounded-2xl shadow-2xl w-full max-w-md">
+              <div className="flex items-center justify-between px-6 py-4 border-b dark:border-white/10">
+                <h3 className="text-base font-semibold dark:text-white flex items-center gap-2"><ClipboardList className="w-4 h-4 text-red-500" /> Tambah Tugas</h3>
+                <button onClick={() => setShowTugasModal(false)}><X className="w-5 h-5 text-gray-400" /></button>
+              </div>
+              <div className="p-6 space-y-4">
+                {tugasFormError && <p className="text-red-500 text-sm bg-red-50 dark:bg-red-500/10 p-2 rounded-lg">{tugasFormError}</p>}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Judul Tugas <span className="text-red-500">*</span></label>
+                  <input className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-red-500 outline-none bg-white dark:bg-[#0d0f14] dark:text-white text-sm"
+                    placeholder="Contoh: Tugas Praktek Minggu 1" value={tugasForm.judul_tugas}
+                    onChange={e => setTugasForm(f => ({ ...f, judul_tugas: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Deskripsi</label>
+                  <textarea rows={3} className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-red-500 outline-none bg-white dark:bg-[#0d0f14] dark:text-white text-sm resize-none"
+                    placeholder="Deskripsi tugas (opsional)" value={tugasForm.deskripsi}
+                    onChange={e => setTugasForm(f => ({ ...f, deskripsi: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Deadline <span className="text-red-500">*</span></label>
+                  <input type="datetime-local" className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-red-500 outline-none bg-white dark:bg-[#0d0f14] dark:text-white text-sm"
+                    value={tugasForm.deadline} onChange={e => setTugasForm(f => ({ ...f, deadline: e.target.value }))} />
+                </div>
+                <div className="flex gap-3 pt-2">
+                  <button onClick={() => setShowTugasModal(false)} className="flex-1 py-2 border border-gray-300 dark:border-white/10 rounded-lg text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">Batal</button>
+                  <button onClick={handleSaveTugas} disabled={savingTugas} className="flex-1 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white rounded-lg text-sm transition-colors">
+                    {savingTugas ? 'Menyimpan...' : 'Simpan Tugas'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Tambah Kuis Modal */}
+        {showKuisModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+            <div className="bg-white dark:bg-[#161b22] rounded-2xl shadow-2xl w-full flex flex-col"
+              style={{ maxWidth: kuisStep === 'soal' ? '860px' : '480px', maxHeight: '90vh' }}>
+
+              {/* Header */}
+              <div className="flex items-center justify-between px-6 py-4 border-b dark:border-white/10 shrink-0">
+                <div className="flex items-center gap-3">
+                  <h3 className="text-base font-semibold dark:text-white flex items-center gap-2">
+                    <HelpCircle className="w-4 h-4 text-red-500" />
+                    {kuisStep === 'info' ? 'Buat Kuis Baru' : `Edit Soal — ${createdKuisJudul}`}
+                  </h3>
+                  {kuisStep === 'soal' && (
+                    <span className="px-2 py-0.5 text-xs bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 rounded-full font-medium">
+                      {soalList.length} soal
+                    </span>
+                  )}
+                </div>
+                <button onClick={() => setShowKuisModal(false)}><X className="w-5 h-5 text-gray-400" /></button>
+              </div>
+
+              {kuisError && <p className="mx-6 mt-4 text-red-500 text-sm bg-red-50 dark:bg-red-500/10 p-2 rounded-lg shrink-0">{kuisError}</p>}
+
+              {/* Step 1: Info */}
+              {kuisStep === 'info' && (
+                <div className="p-6 space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Judul Kuis <span className="text-red-500">*</span></label>
+                    <input className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-red-500 outline-none bg-white dark:bg-[#0d0f14] dark:text-white text-sm"
+                      placeholder="Contoh: Kuis Modul 1" value={kuisForm.judul_kuis}
+                      onChange={e => setKuisForm(f => ({ ...f, judul_kuis: e.target.value }))} />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Waktu Mulai <span className="text-red-500">*</span></label>
+                      <input type="datetime-local" className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-red-500 outline-none bg-white dark:bg-[#0d0f14] dark:text-white text-sm"
+                        value={kuisForm.waktu_mulai} onChange={e => setKuisForm(f => ({ ...f, waktu_mulai: e.target.value }))} />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Waktu Selesai <span className="text-red-500">*</span></label>
+                      <input type="datetime-local" className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-red-500 outline-none bg-white dark:bg-[#0d0f14] dark:text-white text-sm"
+                        value={kuisForm.waktu_selesai} onChange={e => setKuisForm(f => ({ ...f, waktu_selesai: e.target.value }))} />
+                    </div>
+                  </div>
+                  <div className="flex gap-3 pt-2">
+                    <button onClick={() => setShowKuisModal(false)} className="flex-1 py-2 border border-gray-300 dark:border-white/10 rounded-lg text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">Batal</button>
+                    <button onClick={handleCreateKuisInfo} disabled={savingKuis} className="flex-1 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white rounded-lg text-sm transition-colors">
+                      {savingKuis ? 'Membuat...' : 'Lanjut → Buat Soal'}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 2: Soal */}
+              {kuisStep === 'soal' && (
+                <div className="flex flex-1 min-h-0 overflow-hidden">
+                  {/* Sidebar daftar soal */}
+                  <div className="w-48 shrink-0 border-r dark:border-white/10 flex flex-col bg-gray-50 dark:bg-[#0d0f14]">
+                    <div className="flex-1 overflow-y-auto py-2">
+                      {soalList.map((_, i) => (
+                        <button key={i} onClick={() => setActiveSoal(i)}
+                          className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${activeSoal === i ? 'bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 font-medium border-r-2 border-red-500' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5'}`}>
+                          Soal {i + 1}
+                          <span className="ml-1.5 text-[10px] opacity-60">{soalList[i].tipe === 'pilihan_ganda' ? 'PG' : 'Essay'}</span>
+                        </button>
+                      ))}
+                    </div>
+                    <div className="p-3 border-t dark:border-white/10">
+                      <button onClick={addSoal} className="w-full flex items-center justify-center gap-1.5 py-2 border border-dashed border-red-300 dark:border-red-500/40 text-red-600 dark:text-red-400 rounded-lg text-xs hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors">
+                        <Plus className="w-3.5 h-3.5" /> Soal Baru
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Editor soal aktif */}
+                  <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                    {soalList[activeSoal] && (() => {
+                      const soal = soalList[activeSoal];
+                      return (
+                        <>
+                          <div className="flex items-center justify-between">
+                            <h4 className="text-sm font-semibold text-gray-800 dark:text-white">Soal {activeSoal + 1}</h4>
+                            {soalList.length > 1 && (
+                              <button onClick={() => removeSoal(activeSoal)} className="text-xs text-red-500 hover:text-red-700 flex items-center gap-1">
+                                <Trash2 className="w-3.5 h-3.5" /> Hapus soal ini
+                              </button>
+                            )}
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Pertanyaan</label>
+                            <textarea rows={3} className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-red-500 outline-none bg-white dark:bg-[#0d0f14] dark:text-white text-sm resize-none"
+                              placeholder="Tulis pertanyaan di sini..." value={soal.pertanyaan}
+                              onChange={e => updateSoal(activeSoal, 'pertanyaan', e.target.value)} />
+                          </div>
+                          <div className="flex gap-4">
+                            <div className="flex-1">
+                              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Tipe</label>
+                              <select className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-red-500 outline-none bg-white dark:bg-[#0d0f14] dark:text-white text-sm"
+                                value={soal.tipe} onChange={e => updateSoal(activeSoal, 'tipe', e.target.value)}>
+                                <option value="pilihan_ganda">Pilihan Ganda</option>
+                                <option value="essay">Essay</option>
+                              </select>
+                            </div>
+                            <div className="w-28">
+                              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Bobot Nilai</label>
+                              <input type="number" min={1} max={100} className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-red-500 outline-none bg-white dark:bg-[#0d0f14] dark:text-white text-sm"
+                                value={soal.bobot_nilai} onChange={e => updateSoal(activeSoal, 'bobot_nilai', Number(e.target.value))} />
+                            </div>
+                          </div>
+                          {soal.tipe === 'pilihan_ganda' && (
+                            <div className="space-y-2">
+                              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400">Pilihan Jawaban <span className="text-red-500">(pilih yang benar)</span></label>
+                              {soal.pilihan.map((p, pi) => (
+                                <div key={pi} className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${p.benar ? 'border-green-400 bg-green-50 dark:bg-green-500/10' : 'border-gray-200 dark:border-white/10'}`}>
+                                  <input type="radio" name={`benar-${activeSoal}`} checked={p.benar}
+                                    onChange={() => updatePilihan(activeSoal, pi, 'benar', true)}
+                                    className="text-green-500 shrink-0" />
+                                  <input className="flex-1 bg-transparent outline-none text-sm text-gray-800 dark:text-white placeholder-gray-400"
+                                    placeholder={`Pilihan ${String.fromCharCode(65 + pi)}`} value={p.teks_jawaban}
+                                    onChange={e => updatePilihan(activeSoal, pi, 'teks_jawaban', e.target.value)} />
+                                  {p.benar && <span className="text-xs text-green-600 dark:text-green-400 font-medium shrink-0">✓ Benar</span>}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          {soal.tipe === 'essay' && (
+                            <p className="text-xs text-gray-400 italic bg-gray-50 dark:bg-white/5 rounded-lg p-3">
+                              Soal essay tidak memerlukan pilihan jawaban. Penilaian dilakukan manual oleh admin/trainer.
+                            </p>
+                          )}
+                        </>
+                      );
+                    })()}
+                  </div>
+                </div>
+              )}
+
+              {/* Footer step 2 */}
+              {kuisStep === 'soal' && (
+                <div className="flex gap-3 px-6 py-4 border-t dark:border-white/10 shrink-0">
+                  <button onClick={() => setShowKuisModal(false)} className="flex-1 py-2 border border-gray-300 dark:border-white/10 rounded-lg text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+                    Batalkan
+                  </button>
+                  <button onClick={handleSaveSoal} disabled={savingKuis} className="flex-1 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white rounded-lg text-sm transition-colors font-medium">
+                    {savingKuis ? 'Menyimpan...' : `Simpan Kuis (${soalList.length} soal)`}
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Viewer Modal */}
         {viewer && (

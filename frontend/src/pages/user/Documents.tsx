@@ -26,6 +26,11 @@ const statusBadge: Record<string, { label: string; className: string; icon: JSX.
     className: 'bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
     icon: <ShieldCheck size={14} />,
   },
+  disetujui: {
+    label: 'Terverifikasi',
+    className: 'bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
+    icon: <ShieldCheck size={14} />,
+  },
   ditolak: {
     label: 'Ditolak',
     className: 'bg-rose-100 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400',
