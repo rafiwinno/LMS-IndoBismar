@@ -43,7 +43,7 @@ export function Assignments() {
   const [savingGrade, setSavingGrade] = useState(false);
 
   const fetchKursus = async () => {
-    try { const res = await api.getKursus('per_page=100'); setKursus(res.data.map((k: any) => ({ id: k.id, judul: k.judul }))); } catch {}
+    try { const res = await api.getKursus('per_page=100'); setKursus(res.data.map((k: any) => ({ id: k.id, judul: k.judul }))); } catch { toast.error('Gagal memuat daftar kursus.'); }
   };
 
   const fetchTugas = async () => {
@@ -105,7 +105,7 @@ export function Assignments() {
     try {
       const res = await api.getSubmissions(id);
       setSubmissions(s => ({ ...s, [id]: res.data }));
-    } catch {}
+    } catch { toast.error('Gagal memuat submissions.'); }
     finally { setLoadingSub(null); }
   };
 

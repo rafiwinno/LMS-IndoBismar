@@ -1,4 +1,5 @@
 import { useParams, Link } from 'react-router-dom';
+import { toast } from '../../lib/toast';
 import { useEffect, useState } from 'react';
 import { Plus, Trash2, Pencil, FileText, Video, File, ArrowLeft, Loader2, ExternalLink, X as XIcon, ChevronLeft } from 'lucide-react';
 import { getMaterials, createMaterial, updateMaterial, deleteMaterial } from '../../api/MaterialApi';
@@ -133,7 +134,7 @@ export default function Materials() {
       await deleteMaterial(matId);
       load();
     } catch {
-      alert('Gagal menghapus materi. Coba lagi.');
+      toast.error('Gagal menghapus materi. Coba lagi.');
     } finally {
       setDeletingId(null);
     }

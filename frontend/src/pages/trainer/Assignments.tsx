@@ -1,14 +1,15 @@
 // FILE: src/pages/trainer/Assignments.tsx
 
 import { useEffect, useState } from 'react';
-
-const STORAGE_URL = (import.meta.env.VITE_API_URL as string ?? 'http://127.0.0.1:8000/api').replace('/api', '/storage');
+import { toast } from '../../lib/toast';
 import {
   Plus, Pencil, Trash2, X, ChevronDown, ChevronRight,
   Users, Star, Loader2, AlertCircle, Clock, Award,
   BookOpen, FileCheck, HelpCircle, CheckCircle2, Circle
 } from 'lucide-react';
 import api from '../../api/axiosInstance';
+
+const STORAGE_URL = (import.meta.env.VITE_API_URL as string ?? 'http://127.0.0.1:8000/api').replace('/api', '/storage');
 
 interface Course { id_kursus: number; judul_kursus: string; }
 interface Assignment {
@@ -158,11 +159,12 @@ function TugasTab() {
     if (expandedId === id) { setExpandedId(null); return; }
     setExpandedId(id);
     try { const res = await api.get(`/trainer/assignments/${id}/submissions`); setSubmissions(res.data.data ?? []); }
-    catch { setSubmissions([]); }
+    catch { setSubmissions([]); toast.error('Gagal memuat data pengumpulan.'); }
   };
 
   const handleSave = async () => {
     if (!form.judul_tugas.trim()) { setError('Judul wajib diisi'); return; }
+    if (!editTarget && !selectedCourse) { setError('Pilih course terlebih dahulu'); return; }
     setLoading(true);
     try {
       const fd = new FormData();
@@ -189,18 +191,23 @@ function TugasTab() {
     if (!confirm('Hapus tugas ini?')) return;
     setDeletingId(id);
     try { await api.delete(`/trainer/assignments/${id}`); setAssignments(assignments.filter((a) => a.id_tugas !== id)); }
-    catch { alert('Gagal menghapus'); }
+    catch { toast.error('Gagal menghapus tugas.'); }
     finally { setDeletingId(null); }
   };
 
   const handleGrade = async () => {
     if (!gradeTarget) return;
+    const max = assignments.find(a => a.id_tugas === expandedId)?.nilai_maksimal ?? 100;
+    if (gradeForm.nilai < 0 || gradeForm.nilai > max) {
+      toast.error(`Nilai harus antara 0 dan ${max}`);
+      return;
+    }
     setLoading(true);
     try {
       await api.put(`/trainer/submissions/${gradeTarget.id_pengumpulan}/grade`, gradeForm);
       setGradeTarget(null);
       if (expandedId) { const res = await api.get(`/trainer/assignments/${expandedId}/submissions`); setSubmissions(res.data.data ?? []); }
-    } catch (e: unknown) { const err = e as { response?: { data?: { message?: string } } }; alert(err.response?.data?.message || 'Gagal'); }
+    } catch (e: unknown) { const err = e as { response?: { data?: { message?: string } } }; toast.error(err.response?.data?.message || 'Gagal memberi nilai.'); }
     finally { setLoading(false); }
   };
 
@@ -318,7 +325,7 @@ function TugasTab() {
                         {submissions.map((s) => (
                           <div key={s.id_pengumpulan} className="flex items-center gap-3 bg-white dark:bg-[#161b22] rounded-xl px-4 py-3 border border-gray-100 dark:border-white/8 hover:border-gray-200 dark:hover:border-white/12 transition-colors">
                             <div className="w-9 h-9 rounded-full bg-linear-to-br from-red-400 to-red-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
-                              {s.peserta?.nama?.charAt(0).toUpperCase()}
+                              {(s.peserta?.nama?.[0] ?? '?').toUpperCase()}
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">{s.peserta?.nama}</p>
@@ -478,7 +485,7 @@ function KuisTab() {
       await api.delete(`/trainer/quizzes/${id}`);
       setQuizzes(quizzes.filter((q) => q.id_kuis !== id));
       if (selectedQuiz?.id_kuis === id) { setSelectedQuiz(null); setQuestions([]); }
-    } catch { alert('Gagal menghapus'); }
+    } catch { toast.error('Gagal menghapus kuis.'); }
     finally { setDeletingId(null); }
   };
 
@@ -501,7 +508,7 @@ function KuisTab() {
   const handleDeleteQuestion = async (id: number) => {
     if (!confirm('Hapus pertanyaan ini?')) return;
     try { await api.delete(`/trainer/questions/${id}`); setQuestions(questions.filter((q) => q.id_pertanyaan !== id)); }
-    catch { alert('Gagal'); }
+    catch { toast.error('Gagal menghapus pertanyaan.'); }
   };
 
   const updatePilihan = (idx: number, field: 'teks_jawaban' | 'benar', value: string | boolean) => {

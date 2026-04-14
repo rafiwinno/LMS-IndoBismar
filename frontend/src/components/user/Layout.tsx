@@ -2,11 +2,13 @@ import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import { useState } from 'react';
+import { ToastProvider } from '../../lib/toast';
 
 export default function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
+    <ToastProvider>
     <div className="flex h-screen bg-gray-50 dark:bg-[#0d0f14] font-sans text-gray-900 dark:text-white transition-colors duration-200">
       <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
@@ -18,5 +20,6 @@ export default function Layout() {
         </main>
       </div>
     </div>
+    </ToastProvider>
   );
 }

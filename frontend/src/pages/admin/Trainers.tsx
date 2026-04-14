@@ -55,11 +55,11 @@ export function Trainers() {
     try {
       const res = await api.getAllJadwal(search ? `search=${search}` : '');
       setJadwal(res.data);
-    } catch {}
+    } catch { toast.error('Gagal memuat data jadwal.'); }
   };
 
   const fetchKursus = async () => {
-    try { const res = await api.getKursus('per_page=100'); setKursus(res.data); } catch {}
+    try { const res = await api.getKursus('per_page=100'); setKursus(res.data); } catch { toast.error('Gagal memuat daftar kursus.'); }
   };
 
   useEffect(() => { fetchKursus(); }, []);

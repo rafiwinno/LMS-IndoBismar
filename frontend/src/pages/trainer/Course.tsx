@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { toast } from '../../lib/toast';
 import { Plus, Pencil, Trash2, Globe, BookOpen, Check, Loader2, ImageIcon, X, Users, UserPlus, UserMinus, ChevronDown, Search } from 'lucide-react';
 import { getCourses, createCourse, updateCourse, deleteCourse, publishCourse, getCoursePeserta, enrollPesertaToCourse, unenrollPesertaFromCourse, getAllPesertaCabang } from '../../api/courseApi';
 import { Link } from 'react-router-dom';
@@ -6,8 +7,19 @@ import type { Course } from '../types/trainer';
 import Modal from '../../components/ui/Modal';
 import { inputCls, cardCls, thCls, trCls } from '../../lib/styles';
 
+interface EnrolledPeserta {
+  id: number;
+  nama: string;
+  email: string;
+}
+
+interface PesertaCabang {
+  id_pengguna: number;
+  nama: string;
+}
+
 const labelCls = 'block text-sm font-medium text-gray-800 dark:text-gray-200 mb-1.5';
-const STORAGE_URL = (import.meta.env.VITE_API_URL as string).replace('/api', '/storage');
+const STORAGE_URL = (import.meta.env.VITE_API_URL as string ?? 'http://127.0.0.1:8000/api').replace('/api', '/storage');
 
 function courseImageUrl(path: string | null): string | null {
   if (!path) return null;
@@ -30,8 +42,8 @@ export default function TrainerCourses() {
 
   // Peserta management
   const [pesertaModal, setPesertaModal]       = useState<Course | null>(null);
-  const [enrolledPeserta, setEnrolledPeserta] = useState<any[]>([]);
-  const [allPeserta, setAllPeserta]           = useState<any[]>([]);
+  const [enrolledPeserta, setEnrolledPeserta] = useState<EnrolledPeserta[]>([]);
+  const [allPeserta, setAllPeserta]           = useState<PesertaCabang[]>([]);
   const [pesertaLoading, setPesertaLoading]   = useState(false);
   const [selectedPesertaId, setSelectedPesertaId] = useState<number | ''>('');
   const [enrollingPeserta, setEnrollingPeserta]   = useState(false);
@@ -114,7 +126,7 @@ export default function TrainerCourses() {
         await createCourse(fd);
       }
       setShowModal(false);
-      load();
+      await load();
     } catch (e: unknown) {
       const err = e as { response?: { data?: { message?: string } } };
       setError(err.response?.data?.message || 'Gagal menyimpan');
@@ -128,9 +140,9 @@ export default function TrainerCourses() {
     setActionId(id);
     try {
       await deleteCourse(id);
-      load();
+      await load();
     } catch {
-      alert('Gagal menghapus course. Coba lagi.');
+      toast.error('Gagal menghapus course. Coba lagi.');
     } finally {
       setActionId(null);
     }
@@ -140,9 +152,9 @@ export default function TrainerCourses() {
     setActionId(id);
     try {
       await publishCourse(id);
-      load();
+      await load();
     } catch {
-      alert('Gagal mempublish course. Coba lagi.');
+      toast.error('Gagal mempublish course. Coba lagi.');
     } finally {
       setActionId(null);
     }
@@ -162,7 +174,7 @@ export default function TrainerCourses() {
       setEnrolledPeserta(enrolled.data?.data ?? []);
       setAllPeserta(all.data?.data ?? []);
     } catch {
-      alert('Gagal memuat data peserta.');
+      toast.error('Gagal memuat data peserta.');
     } finally {
       setPesertaLoading(false);
     }
@@ -176,9 +188,9 @@ export default function TrainerCourses() {
       setSelectedPesertaId('');
       const res = await getCoursePeserta(pesertaModal.id_kursus);
       setEnrolledPeserta(res.data?.data ?? []);
-      load();
-    } catch (e: any) {
-      alert(e.response?.data?.message || 'Gagal mendaftarkan peserta.');
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { message?: string } } };
+      toast.error(err.response?.data?.message || 'Gagal mendaftarkan peserta.');
     } finally {
       setEnrollingPeserta(false);
     }
@@ -190,9 +202,8 @@ export default function TrainerCourses() {
       await unenrollPesertaFromCourse(pesertaModal.id_kursus, id_pengguna);
       const res = await getCoursePeserta(pesertaModal.id_kursus);
       setEnrolledPeserta(res.data?.data ?? []);
-      load();
     } catch {
-      alert('Gagal mengeluarkan peserta.');
+      toast.error('Gagal mengeluarkan peserta.');
     }
   };
 
@@ -245,11 +256,21 @@ export default function TrainerCourses() {
                 <tr key={c.id_kursus} className={trCls}>
                   <td className="px-3 py-3">
                     {courseImageUrl(c.gambar_kursus) ? (
-                      <img
-                        src={courseImageUrl(c.gambar_kursus)!}
-                        alt={c.judul_kursus}
-                        className="w-12 h-12 object-cover rounded-lg border border-gray-200 dark:border-white/10"
-                      />
+                      <>
+                        <img
+                          src={courseImageUrl(c.gambar_kursus)!}
+                          alt={c.judul_kursus}
+                          className="w-12 h-12 object-cover rounded-lg border border-gray-200 dark:border-white/10"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                            const sib = e.currentTarget.nextElementSibling as HTMLElement | null;
+                            if (sib) { sib.classList.remove('hidden'); sib.classList.add('flex'); }
+                          }}
+                        />
+                        <div className="hidden w-12 h-12 rounded-lg bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 items-center justify-center">
+                          <ImageIcon size={18} className="text-gray-400 dark:text-gray-500" />
+                        </div>
+                      </>
                     ) : (
                       <div className="w-12 h-12 rounded-lg bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 flex items-center justify-center">
                         <ImageIcon size={18} className="text-gray-400 dark:text-gray-500" />
@@ -469,34 +490,37 @@ export default function TrainerCourses() {
                         />
                       </div>
                       {/* Options list */}
-                      <ul className="max-h-44 overflow-y-auto py-1">
-                        {allPeserta
+                      {(() => {
+                        const filtered = allPeserta
                           .filter(p => !enrolledPeserta.some(ep => ep.id === p.id_pengguna))
-                          .filter(p => p.nama.toLowerCase().includes(pesertaSearch.toLowerCase()))
-                          .map((p: any) => (
-                            <li
-                              key={p.id_pengguna}
-                              onClick={() => {
-                                setSelectedPesertaId(p.id_pengguna);
-                                setShowPesertaDropdown(false);
-                              }}
-                              className={`flex items-center px-3 py-2 text-sm cursor-pointer transition-colors
-                                ${selectedPesertaId === p.id_pengguna
-                                  ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400'
-                                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5'}`}
-                            >
-                              {p.nama}
-                            </li>
-                          ))}
-                        {allPeserta
-                          .filter(p => !enrolledPeserta.some(ep => ep.id === p.id_pengguna))
-                          .filter(p => p.nama.toLowerCase().includes(pesertaSearch.toLowerCase()))
-                          .length === 0 && (
-                          <li className="px-3 py-3 text-sm text-center text-gray-400 dark:text-gray-500">
-                            Tidak ada peserta
-                          </li>
-                        )}
-                      </ul>
+                          .filter(p => p.nama.toLowerCase().includes(pesertaSearch.toLowerCase()));
+                        return (
+                          <>
+                            <ul className="max-h-44 overflow-y-auto py-1">
+                              {filtered.map((p) => (
+                                <li
+                                  key={p.id_pengguna}
+                                  onClick={() => {
+                                    setSelectedPesertaId(p.id_pengguna);
+                                    setShowPesertaDropdown(false);
+                                  }}
+                                  className={`flex items-center px-3 py-2 text-sm cursor-pointer transition-colors
+                                    ${selectedPesertaId === p.id_pengguna
+                                      ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400'
+                                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5'}`}
+                                >
+                                  {p.nama}
+                                </li>
+                              ))}
+                              {filtered.length === 0 && (
+                                <li className="px-3 py-3 text-sm text-center text-gray-400 dark:text-gray-500">
+                                  Tidak ada peserta
+                                </li>
+                              )}
+                            </ul>
+                          </>
+                        );
+                      })()}
                     </div>
                   )}
                 </div>
@@ -522,7 +546,7 @@ export default function TrainerCourses() {
                 <p className="text-center text-gray-400 text-sm py-8">Belum ada peserta terdaftar.</p>
               ) : (
                 <ul className="space-y-2">
-                  {enrolledPeserta.map((p: any) => (
+                  {enrolledPeserta.map((p) => (
                     <li key={p.id} className="flex items-center justify-between p-3 border border-gray-100 dark:border-white/8 rounded-lg">
                       <div>
                         <p className="text-sm font-medium text-gray-800 dark:text-white">{p.nama}</p>

@@ -3,9 +3,10 @@ import { BookOpen, FileText, Globe, Plus, ArrowRight, AlertCircle } from 'lucide
 import { Link, useNavigate } from 'react-router-dom';
 import { getCourses } from '../../api/courseApi';
 import { getUser } from '../types';
+import { Course } from '../../pages/types/trainer';
 
 export default function TrainerDashboard() {
-  const [courses, setCourses] = useState<any[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [pageError, setPageError] = useState('');
   const user = getUser();
@@ -110,7 +111,7 @@ export default function TrainerDashboard() {
           </div>
         ) : (
           <div className="p-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {courses.map((c: any) => (
+            {courses.map((c: Course) => (
               <div
                 key={c.id_kursus}
                 className="border border-gray-100 dark:border-white/6 rounded-lg p-4 hover:border-red-300 dark:hover:border-red-800/60 transition-colors group"
@@ -133,12 +134,6 @@ export default function TrainerDashboard() {
                     className="flex-1 text-center text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 py-1.5 rounded-md transition-colors"
                   >
                     Materi
-                  </Link>
-                  <Link
-                    to="/trainer/courses"
-                    className="flex-1 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/6 py-1.5 rounded-md transition-colors"
-                  >
-                    Kelola
                   </Link>
                 </div>
               </div>

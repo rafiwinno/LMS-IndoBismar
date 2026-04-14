@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Search, FileText, File, Trash2, X, Youtube, ExternalLink, ChevronLeft } from 'lucide-react';
 import { api } from '../../lib/api';
 import { confirm } from '../../lib/confirm';
+import { toast } from '../../lib/toast';
 
 interface Materi {
   id_materi: number; judul_materi: string; tipe_materi: string;
@@ -65,7 +66,7 @@ export function Materials() {
   };
 
   const fetchKursus = async () => {
-    try { const res = await api.getKursus('per_page=100'); setKursus(res.data); } catch {}
+    try { const res = await api.getKursus('per_page=100'); setKursus(res.data); } catch { toast.error('Gagal memuat daftar kursus.'); }
   };
 
   useEffect(() => { fetchKursus(); }, []);
@@ -106,7 +107,7 @@ export function Materials() {
     e.stopPropagation();
     if (!await confirm('Hapus materi ini?')) return;
     try { await api.deleteMateri(id); fetchMateri(searchTerm); }
-    catch (e: any) { alert(e.message); }
+    catch (e: any) { toast.error(e.message); }
   };
 
   const tipeConfig: Record<string, { label: string; bg: string; text: string; icon: React.ReactNode }> = {

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
 import { Clock, CheckCircle, ChevronLeft } from 'lucide-react';
 import API from '../../api/api';
+import { toast } from '../../lib/toast';
 
 interface Pilihan {
   id_pilihan: number;
@@ -111,7 +112,7 @@ export default function Quiz() {
       if (msg === 'Kamu sudah mengerjakan kuis ini') {
         navigate(fromCourse ? `/courses/${fromCourse}` : '/tasks');
       } else {
-        alert(msg || 'Gagal mengumpulkan kuis.');
+        toast.error(msg || 'Gagal mengumpulkan kuis.');
       }
     } finally {
       setSubmitting(false);

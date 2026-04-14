@@ -10,7 +10,7 @@ export const createMaterial = (data: FormData) =>
 
 export const updateMaterial = (
   id: number,
-  data: { judul_materi?: string; tipe_materi?: string; urutan?: number }
+  data: { judul_materi?: string; tipe_materi?: string; urutan?: number; link_video?: string }
 ) => api.put(`/trainer/materials/${id}`, data);
 
 export const deleteMaterial = (id: number) =>

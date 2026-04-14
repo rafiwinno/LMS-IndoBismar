@@ -103,7 +103,7 @@ export function Exams() {
   };
 
   const fetchKursus = async () => {
-    try { const res = await api.getKursus('per_page=100'); setKursus(res.data); } catch {}
+    try { const res = await api.getKursus('per_page=100'); setKursus(res.data); } catch { toast.error('Gagal memuat daftar kursus.'); }
   };
 
   useEffect(() => { fetchKursus(); }, []);
@@ -170,7 +170,7 @@ export function Exams() {
     try {
       const res = await api.getSubmissions(id);
       setSubmissions(s => ({ ...s, [id]: res.data }));
-    } catch {}
+    } catch { toast.error('Gagal memuat submissions.'); }
     finally { setLoadingSub(null); }
   };
 
@@ -289,7 +289,7 @@ export function Exams() {
   const viewResults = async (k: Kuis) => {
     setSelectedKuis(k);
     try { const res = await api.getKuisResults(k.id); setResults(res); }
-    catch {}
+    catch { toast.error('Gagal memuat hasil kuis.'); }
     setGradingAttempt(null);
     setModalMode('results');
   };
@@ -299,13 +299,13 @@ export function Exams() {
       await api.gradeEssay(attemptId, essayScores);
       viewResults(selectedKuis!);
       setGradingAttempt(null);
-    } catch (e: any) { alert(e.message); }
+    } catch (e: any) { toast.error(e.message); }
   };
 
   const handleDelete = async (id: number) => {
     if (!await confirm('Hapus kuis ini?')) return;
     try { await api.deleteKuis(id); fetchKuis(searchTerm); }
-    catch (e: any) { alert(e.message); }
+    catch (e: any) { toast.error(e.message); }
   };
 
   const fmt = (d: string) => d ? new Date(d).toLocaleString('id-ID') : '-';

@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { api } from '../../lib/api';
 import { confirm } from '../../lib/confirm';
+import { toast } from '../../lib/toast';
 
 interface Kursus {
   id: number; judul: string; deskripsi: string;
@@ -15,6 +16,35 @@ interface Kursus {
 interface Materi {
   id_materi: number; judul_materi: string; tipe_materi: string;
   file_materi: string; ukuran: string; kursus: string; id_kursus: number; dibuat_pada: string;
+}
+
+interface Trainer {
+  id: number;
+  nama: string;
+}
+
+interface CourseTugas {
+  id: number;
+  judul: string;
+  deadline: string;
+  submissions: number;
+  total: number;
+  status: string;
+}
+
+interface CourseKuis {
+  id: number;
+  judul: string;
+  waktu_selesai: string | null;
+  participants: number | null;
+  avg_score: number | null;
+}
+
+interface PaginationMeta {
+  current_page: number;
+  last_page: number;
+  total: number;
+  per_page: number;
 }
 
 const emptyForm = { judul_kursus: '', deskripsi: '', id_trainer: '', id_cabang: 1, status: 'draft' };
@@ -38,22 +68,22 @@ const tipeConfig: Record<string, { label: string; bg: string; text: string; icon
 export function Courses() {
   // ── Course list state ──────────────────────────────────────────────────
   const [kursus, setKursus] = useState<Kursus[]>([]);
-  const [trainers, setTrainers] = useState<any[]>([]);
+  const [trainers, setTrainers] = useState<Trainer[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
-  const [editData, setEditData] = useState<any>(null);
+  const [editData, setEditData] = useState<Kursus | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [page, setPage] = useState(1);
-  const [meta, setMeta] = useState<any>(null);
+  const [meta, setMeta] = useState<PaginationMeta | null>(null);
 
   // ── Course detail / materials state ───────────────────────────────────
   const skipSearchEffect = useRef(false);
   const [selectedCourse, setSelectedCourse] = useState<Kursus | null>(null);
-  const [courseTugas, setCourseTugas] = useState<any[]>([]);
-  const [courseKuis, setCourseKuis] = useState<any[]>([]);
+  const [courseTugas, setCourseTugas] = useState<CourseTugas[]>([]);
+  const [courseKuis, setCourseKuis] = useState<CourseKuis[]>([]);
   const [materi, setMateri] = useState<Materi[]>([]);
   const [materiLoading, setMateriLoading] = useState(false);
   const [materiSearch, setMateriSearch] = useState('');
@@ -106,7 +136,7 @@ export function Courses() {
   };
 
   const fetchTrainers = async () => {
-    try { const res = await api.getTrainer(); setTrainers(res.data); } catch {}
+    try { const res = await api.getTrainer(); setTrainers(res.data); } catch { toast.error('Gagal memuat daftar trainer.'); }
   };
 
   useEffect(() => { fetchTrainers(); }, []);
@@ -168,7 +198,7 @@ export function Courses() {
     setSaving(true); setError('');
     try {
       if (editData) {
-        const payload: any = { judul_kursus: form.judul_kursus, deskripsi: form.deskripsi, status: form.status };
+        const payload: { judul_kursus: string; deskripsi: string; status: string; id_trainer?: number } = { judul_kursus: form.judul_kursus, deskripsi: form.deskripsi, status: form.status };
         if (form.id_trainer) payload.id_trainer = Number(form.id_trainer);
         await api.updateKursus(editData.id, payload);
       } else {
@@ -185,14 +215,14 @@ export function Courses() {
     e.stopPropagation();
     if (!await confirm('Hapus kursus ini?')) return;
     try { await api.deleteKursus(id); fetchKursus(page, searchTerm); }
-    catch (e: any) { alert(e.message); }
+    catch (e: any) { toast.error(e.message); }
   };
 
   const toggleStatus = async (k: Kursus, e: React.MouseEvent) => {
     e.stopPropagation();
     const newStatus = k.status === 'publish' ? 'draft' : 'publish';
     try { await api.updateStatusKursus(k.id, newStatus); fetchKursus(page, searchTerm); }
-    catch (e: any) { alert(e.message); }
+    catch (e: any) { toast.error(e.message); }
   };
 
   // ── Material CRUD ──────────────────────────────────────────────────────
@@ -237,7 +267,7 @@ export function Courses() {
     e.stopPropagation();
     if (!await confirm('Hapus materi ini?')) return;
     try { await api.deleteMateri(id); fetchMateri(materiSearch); }
-    catch (e: any) { alert(e.message); }
+    catch (e: any) { toast.error(e.message); }
   };
 
   // ── Course Detail View ─────────────────────────────────────────────────
@@ -353,7 +383,7 @@ export function Courses() {
             <div className="py-10 text-center text-sm text-gray-400">Belum ada tugas untuk course ini.</div>
           ) : (
             <div className="divide-y divide-gray-100 dark:divide-white/8">
-              {courseTugas.map((t: any) => (
+              {courseTugas.map((t) => (
                 <div key={t.id} className="flex items-center justify-between px-6 py-4">
                   <div>
                     <p className="font-medium text-gray-900 dark:text-white text-sm">{t.judul}</p>
@@ -382,7 +412,7 @@ export function Courses() {
             <div className="py-10 text-center text-sm text-gray-400">Belum ada kuis untuk course ini.</div>
           ) : (
             <div className="divide-y divide-gray-100 dark:divide-white/8">
-              {courseKuis.map((k: any) => (
+              {courseKuis.map((k) => (
                 <div key={k.id} className="flex items-center justify-between px-6 py-4">
                   <div>
                     <p className="font-medium text-gray-900 dark:text-white text-sm">{k.judul}</p>
