@@ -209,6 +209,8 @@ export default function TrainerFeedback() {
     if (!form.id_kursus)    { setError('Pilih course terlebih dahulu');  return; }
     if (!form.pesan.trim()) { setError('Pesan tidak boleh kosong');      return; }
     setError('');
+    setSuccess('');
+    if (successTimer.current) clearTimeout(successTimer.current);
     setLoading(true);
 
     try {
@@ -219,17 +221,21 @@ export default function TrainerFeedback() {
         tipe:       form.tipe,
       });
 
-      setFeedbacks([
-        {
-          id:      Date.now(),
-          peserta: selectedPeserta?.nama ?? '',
-          course:  selectedCourse?.judul_kursus ?? '—',
-          pesan:   form.pesan,
-          tanggal: new Date().toISOString().slice(0, 10),
-          tipe:    form.tipe,
-        },
-        ...feedbacks,
-      ]);
+      // Refetch riwayat feedback dari server setelah berhasil kirim
+      try {
+        const res = await api.get('/trainer/feedback');
+        const data = res.data.data ?? [];
+        setFeedbacks(data.map((f: { id_feedback: number; peserta?: { nama: string }; kursus?: { judul_kursus: string }; pesan: string; dibuat_pada?: string; tipe: string }) => ({
+          id:      f.id_feedback,
+          peserta: f.peserta?.nama ?? 'Peserta',
+          course:  f.kursus?.judul_kursus ?? '—',
+          pesan:   f.pesan,
+          tanggal: f.dibuat_pada?.slice(0, 10),
+          tipe:    f.tipe,
+        })));
+      } catch {
+        // Jika refetch gagal, biarkan riwayat lama tetap tampil
+      }
       setForm({ id_peserta: '', id_kursus: '', pesan: '', tipe: 'positif' });
       setSuccess('Feedback berhasil dikirim!');
       if (successTimer.current) clearTimeout(successTimer.current);
@@ -252,7 +258,7 @@ export default function TrainerFeedback() {
       {apiError && (
         <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-lg text-sm">
           <AlertCircle size={16} className="mt-0.5 shrink-0" />
-          <span>Endpoint <code>/api/trainer/peserta</code> belum tersedia di backend.</span>
+          <span>Gagal memuat daftar peserta. Coba refresh halaman atau hubungi administrator.</span>
         </div>
       )}
 
@@ -283,7 +289,7 @@ export default function TrainerFeedback() {
                       ? 'bg-red-600 text-white'
                       : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
                     }`}>
-                    {p.nama.charAt(0).toUpperCase()}
+                    {(p.nama?.[0] ?? '?').toUpperCase()}
                   </div>
                   <span className="truncate">{p.nama}</span>
                 </div>
@@ -362,7 +368,7 @@ export default function TrainerFeedback() {
 
           <button
             onClick={handleSend}
-            disabled={loading}
+            disabled={loading || !form.id_peserta || !form.id_kursus || !form.pesan.trim()}
             className="w-full flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white text-sm font-semibold py-2.5 rounded-xl transition-colors"
           >
             <Send size={16} />
