@@ -21,12 +21,17 @@ export default function Login() {
 
   const handleLogin = (user: any, token: string) => {
     saveToken(token);
-    saveUser(user);
-    const role = user.id_role;
-    if (role === 1)      navigate('/superadmin/dashboard', { replace: true });
-    else if (role === 2) navigate('/admin/dashboard',      { replace: true });
-    else if (role === 3) navigate('/trainer/dashboard',    { replace: true });
-    else                 navigate('/dashboard',            { replace: true });
+    const idRole = user.id_role;
+    saveUser({
+      id:    user.id_pengguna,
+      nama:  user.nama,
+      email: user.email,
+      role:  idRole === 1 ? 'superadmin' : idRole === 2 ? 'admin' : idRole === 3 ? 'trainer' : 'user',
+    });
+    if (idRole === 1)      navigate('/superadmin/dashboard', { replace: true });
+    else if (idRole === 2) navigate('/admin/dashboard',      { replace: true });
+    else if (idRole === 3) navigate('/trainer/dashboard',    { replace: true });
+    else                   navigate('/dashboard',            { replace: true });
   };
 
   return (
@@ -94,11 +99,11 @@ export default function Login() {
 
         {/* Form area */}
         <div className="flex-1 flex items-center justify-center px-6 py-10">
-          <div className="w-full max-w-100">
-            {mode === 'main'     && <UserLoginForm   onLogin={handleLogin} onSwitchAdmin={() => setMode('admin')} onSwitchTrainer={() => setMode('trainer')} onSwitchRegister={() => setMode('register')} />}
-            {mode === 'admin'    && <AdminLoginForm  onLogin={handleLogin} onBack={() => setMode('main')} />}
+          <div className="w-full max-w-sm">
+            {mode === 'main'     && <UserLoginForm    onLogin={handleLogin} onSwitchAdmin={() => setMode('admin')} onSwitchTrainer={() => setMode('trainer')} onSwitchRegister={() => setMode('register')} />}
+            {mode === 'admin'    && <AdminLoginForm   onLogin={handleLogin} onBack={() => setMode('main')} />}
             {mode === 'trainer'  && <TrainerLoginForm onLogin={handleLogin} onBack={() => setMode('main')} />}
-            {mode === 'register' && <RegisterForm    onBack={() => setMode('main')} />}
+            {mode === 'register' && <RegisterForm     onBack={() => setMode('main')} />}
           </div>
         </div>
       </div>
@@ -513,12 +518,12 @@ function RegisterForm({ onBack }: any) {
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-2 gap-3">
           {[
-            { key: 'nama',     label: 'Nama Lengkap', type: 'text',  placeholder: 'Nama lengkap', colSpan: 2 },
-            { key: 'username', label: 'Username',     type: 'text',  placeholder: 'Username unik', colSpan: 1 },
-            { key: 'nomor_hp', label: 'Nomor HP',     type: 'tel',   placeholder: '08xxxxxxxxxx',  colSpan: 1 },
-            { key: 'email',    label: 'Email',        type: 'email', placeholder: 'email@example.com', colSpan: 2 },
-            { key: 'asal_sekolah', label: 'Asal Sekolah', type: 'text', placeholder: 'SMKN 1 ...', colSpan: 1 },
-            { key: 'jurusan',      label: 'Jurusan',      type: 'text', placeholder: 'Teknik Informatika', colSpan: 1 },
+            { key: 'nama',         label: 'Nama Lengkap',  type: 'text',  placeholder: 'Nama lengkap',       colSpan: 2 },
+            { key: 'username',     label: 'Username',      type: 'text',  placeholder: 'Username unik',       colSpan: 1 },
+            { key: 'nomor_hp',     label: 'Nomor HP',      type: 'tel',   placeholder: '08xxxxxxxxxx',        colSpan: 1 },
+            { key: 'email',        label: 'Email',         type: 'email', placeholder: 'email@example.com',   colSpan: 2 },
+            { key: 'asal_sekolah', label: 'Asal Sekolah',  type: 'text',  placeholder: 'SMKN 1 ...',          colSpan: 1 },
+            { key: 'jurusan',      label: 'Jurusan',       type: 'text',  placeholder: 'Teknik Informatika',  colSpan: 1 },
           ].map(({ key, label, type, placeholder, colSpan }) => (
             <div key={key} className={colSpan === 2 ? 'col-span-2' : ''}>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">{label}</label>
