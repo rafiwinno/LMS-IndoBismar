@@ -164,10 +164,9 @@ function UserLoginForm({ onLogin, onSwitchAdmin, onSwitchTrainer, onSwitchRegist
       </div>
 
       {error && (
-        <div className="mb-5 px-4 py-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2.5">
-          <span className="text-red-500 text-base leading-none mt-0.5">!</span>
+        <div className="mb-5 px-4 py-3 bg-red-50 border border-red-200 rounded-lg">
           <p className="text-red-600 text-sm">
-            {error}{isLocked && <span className="font-semibold"> Coba lagi dalam {countdown} detik.</span>}
+            {error}<span className="text-red-500 font-bold">!</span>{isLocked && <span className="font-semibold"> Coba lagi dalam {countdown} detik.</span>}
           </p>
         </div>
       )}
@@ -301,10 +300,9 @@ function AdminLoginForm({ onLogin, onBack }: any) {
       </div>
 
       {error && (
-        <div className="mb-5 px-4 py-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2.5">
-          <span className="text-red-500 text-base leading-none mt-0.5">!</span>
+        <div className="mb-5 px-4 py-3 bg-red-50 border border-red-200 rounded-lg">
           <p className="text-red-600 text-sm">
-            {error}{isLocked && <span className="font-semibold"> Coba lagi dalam {countdown} detik.</span>}
+            {error}<span className="text-red-500 font-bold">!</span>{isLocked && <span className="font-semibold"> Coba lagi dalam {countdown} detik.</span>}
           </p>
         </div>
       )}
@@ -404,10 +402,9 @@ function TrainerLoginForm({ onLogin, onBack }: any) {
       </div>
 
       {error && (
-        <div className="mb-5 px-4 py-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2.5">
-          <span className="text-red-500 text-base leading-none mt-0.5">!</span>
+        <div className="mb-5 px-4 py-3 bg-red-50 border border-red-200 rounded-lg">
           <p className="text-red-600 text-sm">
-            {error}{isLocked && <span className="font-semibold"> Coba lagi dalam {countdown} detik.</span>}
+            {error}<span className="text-red-500 font-bold">!</span>{isLocked && <span className="font-semibold"> Coba lagi dalam {countdown} detik.</span>}
           </p>
         </div>
       )}
