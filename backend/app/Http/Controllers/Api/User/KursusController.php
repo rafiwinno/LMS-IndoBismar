@@ -81,7 +81,7 @@ class KursusController extends Controller
 
         DB::table('progress_materi')->updateOrInsert(
             ['id_pengguna' => $id_pengguna, 'id_materi' => $id_materi],
-            ['status' => 'selesai', 'updated_at' => now()]
+            ['status' => 'selesai', 'waktu_update' => now()]
         );
 
         return response()->json(['message' => 'Progress disimpan']);
