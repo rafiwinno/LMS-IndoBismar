@@ -9,12 +9,14 @@ use App\Models\Materi;
 use App\Models\Tugas;
 use App\Models\AttemptKuis;
 use App\Models\PesertaKursus;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $adminId = $request->user()?->id_pengguna;
         // ── Stat Cards — 5 simple queries ────────────────────────────────────
         $totalPeserta = Pengguna::where('id_role', 4)->where('status', 'aktif')->count();
         $totalKursus  = Kursus::where('status', 'publish')->count();
@@ -72,15 +74,14 @@ class DashboardController extends Controller
         });
 
         // ── Recent Activity ──────────────────────────────────────────────────
-        $recentActivity = collect();
 
         // Tugas dikumpulkan
         $submissions = DB::table('pengumpulan_tugas as pt')
             ->join('pengguna as p', 'p.id_pengguna', '=', 'pt.id_pengguna')
             ->join('tugas as t', 't.id_tugas', '=', 'pt.id_tugas')
-            ->select('p.nama as user', DB::raw("'submitted assignment' as action"), 't.judul_tugas as target', 'pt.tanggal_kumpul as time')
+            ->select('p.nama as user', DB::raw("'mengumpulkan tugas' as action"), 't.judul_tugas as target', 'pt.tanggal_kumpul as time')
             ->orderBy('pt.tanggal_kumpul', 'desc')
-            ->limit(3)
+            ->limit(5)
             ->get();
 
         // Kuis selesai
@@ -90,14 +91,34 @@ class DashboardController extends Controller
             ->select('p.nama as user', DB::raw("'completed exam' as action"), 'k.judul_kuis as target', 'ak.waktu_selesai as time')
             ->where('ak.status', 'selesai')
             ->orderBy('ak.waktu_selesai', 'desc')
-            ->limit(3)
+            ->limit(5)
             ->get();
 
-        $recentActivity = $recentActivity
+        // Dokumen diupload peserta — ambil dari notifikasi milik admin ini
+        // GROUP BY id_referensi agar satu peserta yang upload 2 dok tidak muncul 2x
+        $dokumenUploads = $adminId
+            ? DB::table('notifikasi as n')
+                ->join('pengguna as p', 'p.id_pengguna', '=', 'n.id_referensi')
+                ->where('n.tipe', 'dokumen_menunggu')
+                ->where('n.id_penerima', $adminId)
+                ->select(
+                    'p.nama as user',
+                    DB::raw("'mengupload dokumen' as action"),
+                    DB::raw("'menunggu verifikasi' as target"),
+                    DB::raw('MAX(n.dibuat_pada) as time')
+                )
+                ->groupBy('n.id_referensi', 'p.nama')
+                ->orderByDesc('time')
+                ->limit(5)
+                ->get()
+            : collect();
+
+        $recentActivity = collect()
             ->concat($submissions)
             ->concat($attempts)
+            ->concat($dokumenUploads)
             ->sortByDesc('time')
-            ->take(5)
+            ->take(8)
             ->values()
             ->map(fn($a) => [
                 'user'   => $a->user,

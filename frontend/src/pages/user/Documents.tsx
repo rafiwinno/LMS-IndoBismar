@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { FileText, UploadCloud, CheckCircle, AlertCircle, Loader2, ShieldCheck, Clock } from 'lucide-react';
+import { FileText, UploadCloud, AlertCircle, BadgeCheck, CheckCircle, Loader2, ShieldCheck, Clock } from 'lucide-react';
 import API from '../../api/api';
 import { DocumentsSkeleton } from '../../components/ui/Skeleton';
 
@@ -22,6 +22,11 @@ const statusBadge: Record<string, { label: string; className: string; icon: JSX.
     icon: <Clock size={14} />,
   },
   terverifikasi: {
+    label: 'Terverifikasi',
+    className: 'bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
+    icon: <ShieldCheck size={14} />,
+  },
+  disetujui: {
     label: 'Terverifikasi',
     className: 'bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
     icon: <ShieldCheck size={14} />,
@@ -91,7 +96,7 @@ export default function Documents() {
 
       {successMsg && (
         <div className="p-4 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400 rounded-xl text-sm font-medium">
-          ✅ {successMsg}
+          <CheckCircle size={16} className="inline mr-1.5 shrink-0" />{successMsg}
         </div>
       )}
       {errorMsg && (
@@ -117,7 +122,7 @@ export default function Documents() {
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{deskripsi}</p>
                     {uploaded ? (
                       <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 text-sm font-medium mt-2">
-                        <CheckCircle size={15} /><span>Sudah diupload</span>
+                        <BadgeCheck size={16} /><span>Sudah diupload</span>
                       </div>
                     ) : (
                       <div className="flex items-center gap-1.5 text-rose-500 dark:text-rose-400 text-sm font-medium mt-2">
