@@ -23,10 +23,11 @@ export default function Login() {
     saveToken(token);
     const idRole = user.id_role;
     saveUser({
-      id:    user.id_pengguna,
-      nama:  user.nama,
-      email: user.email,
-      role:  idRole === 1 ? 'superadmin' : idRole === 2 ? 'admin' : idRole === 3 ? 'trainer' : 'user',
+      id:         user.id_pengguna,
+      id_role:    idRole,
+      nama:       user.nama,
+      email:      user.email,
+      role:       idRole === 1 ? 'superadmin' : idRole === 2 ? 'admin' : idRole === 3 ? 'trainer' : 'user',
     });
     if (idRole === 1)      navigate('/superadmin/dashboard', { replace: true });
     else if (idRole === 2) navigate('/admin/dashboard',      { replace: true });
