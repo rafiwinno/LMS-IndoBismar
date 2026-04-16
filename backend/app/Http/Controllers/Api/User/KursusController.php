@@ -68,19 +68,22 @@ class KursusController extends Controller
         });
 
         // Kuis yang terhubung ke kursus ini + status attempt user
+        // Gunakan subquery untuk hindari duplikat saat user punya banyak attempt
+        $attemptSubQuery = DB::table('attempt_kuis')
+            ->where('id_pengguna', $id_pengguna)
+            ->groupBy('id_kuis')
+            ->select('id_kuis', DB::raw('MAX(skor) as skor'));
+
         $kuis = DB::table('kuis')
-            ->leftJoin('attempt_kuis', function ($join) use ($id_pengguna) {
-                $join->on('attempt_kuis.id_kuis', '=', 'kuis.id_kuis')
-                     ->where('attempt_kuis.id_pengguna', '=', $id_pengguna);
-            })
             ->where('kuis.id_kursus', $id_kursus)
+            ->leftJoinSub($attemptSubQuery, 'ak', 'ak.id_kuis', '=', 'kuis.id_kuis')
             ->select(
                 'kuis.id_kuis',
                 'kuis.judul_kuis',
                 'kuis.waktu_mulai',
                 'kuis.waktu_selesai',
-                'attempt_kuis.skor',
-                DB::raw('CASE WHEN attempt_kuis.id_attempt IS NOT NULL THEN "sudah" ELSE "belum" END as status_attempt')
+                'ak.skor',
+                DB::raw('CASE WHEN ak.id_kuis IS NOT NULL THEN "sudah" ELSE "belum" END as status_attempt')
             )
             ->get();
 
