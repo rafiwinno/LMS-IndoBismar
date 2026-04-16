@@ -21,13 +21,16 @@ export default function Login() {
 
   const handleLogin = (user: any, token: string) => {
     saveToken(token);
-    const idRole = user.id_role;
     saveUser({
-      id:    user.id_pengguna,
-      nama:  user.nama,
-      email: user.email,
-      role:  idRole === 1 ? 'superadmin' : idRole === 2 ? 'admin' : idRole === 3 ? 'trainer' : 'user',
+      id_pengguna: user.id_pengguna,
+      id_role:     user.id_role,
+      id_cabang:   user.id_cabang,
+      nama:        user.nama,
+      username:    user.username,
+      email:       user.email,
+      nomor_hp:    user.nomor_hp,
     });
+    const idRole = user.id_role;
     if (idRole === 1)      navigate('/superadmin/dashboard', { replace: true });
     else if (idRole === 2) navigate('/admin/dashboard',      { replace: true });
     else if (idRole === 3) navigate('/trainer/dashboard',    { replace: true });
@@ -198,7 +201,7 @@ function UserLoginForm({ onLogin, onSwitchAdmin, onSwitchTrainer, onSwitchRegist
 
         <button
           type="submit" disabled={loading || isLocked}
-          className="w-full py-2.5 bg-red-600 hover:bg-red-700 active:bg-red-800 disabled:opacity-60 text-white text-sm font-semibold rounded-lg transition-colors mt-1"
+          className="w-full py-2.5 bg-red-600 hover:bg-red-700 active:bg-red-800 disabled:opacity-60 text-white text-sm font-semibold rounded-lg transition-colors mt-1 cursor-pointer disabled:cursor-not-allowed"
         >
           {loading ? 'Masuk...' : isLocked ? `Tunggu ${countdown} detik...` : 'Masuk'}
         </button>
@@ -213,25 +216,29 @@ function UserLoginForm({ onLogin, onSwitchAdmin, onSwitchTrainer, onSwitchRegist
       <div className="space-y-2.5">
         <button
           onClick={onSwitchAdmin}
-          className="w-full py-2.5 bg-white hover:bg-gray-50 active:bg-gray-100 text-gray-700 text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2 border border-gray-200 shadow-sm"
+          className="w-full py-2.5 bg-white hover:bg-gray-50 active:bg-gray-100 text-gray-700 text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2 border border-gray-200 shadow-sm cursor-pointer"
         >
           <Shield className="w-4 h-4 text-amber-500" />
           Masuk sebagai Admin
         </button>
         <button
           onClick={onSwitchTrainer}
-          className="w-full py-2.5 bg-white hover:bg-gray-50 active:bg-gray-100 text-gray-700 text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2 border border-gray-200 shadow-sm"
+          className="w-full py-2.5 bg-white hover:bg-gray-50 active:bg-gray-100 text-gray-700 text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2 border border-gray-200 shadow-sm cursor-pointer"
         >
           <GraduationCap className="w-4 h-4 text-green-500" />
           Masuk sebagai Trainer
         </button>
-        <button
-          onClick={onSwitchRegister}
-          className="w-full py-2.5 text-gray-500 hover:text-gray-700 text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
-        >
-          <UserPlus className="w-4 h-4" />
-          Belum punya akun? Daftar sekarang
-        </button>
+        <p className="flex items-center justify-center gap-1.5 text-sm text-gray-500 py-1">
+          <UserPlus className="w-3.5 h-3.5 text-red-600 shrink-0" />
+          Belum punya akun?{' '}
+          <button
+            type="button"
+            onClick={onSwitchRegister}
+            className="text-red-600 font-semibold hover:text-red-700 hover:underline cursor-pointer transition-colors"
+          >
+            Daftar sekarang
+          </button>
+        </p>
       </div>
     </div>
   );
@@ -280,7 +287,7 @@ function AdminLoginForm({ onLogin, onBack }: any) {
     <div>
       <button
         onClick={onBack}
-        className="flex items-center gap-1.5 text-gray-400 hover:text-gray-700 text-sm mb-6 transition-colors"
+        className="flex items-center gap-1.5 text-gray-400 hover:text-gray-700 text-sm mb-6 transition-colors cursor-pointer"
       >
         <ArrowLeft className="w-4 h-4" /> Kembali
       </button>
@@ -383,7 +390,7 @@ function TrainerLoginForm({ onLogin, onBack }: any) {
     <div>
       <button
         onClick={onBack}
-        className="flex items-center gap-1.5 text-gray-400 hover:text-gray-700 text-sm mb-6 transition-colors"
+        className="flex items-center gap-1.5 text-gray-400 hover:text-gray-700 text-sm mb-6 transition-colors cursor-pointer"
       >
         <ArrowLeft className="w-4 h-4" /> Kembali
       </button>
@@ -496,7 +503,7 @@ function RegisterForm({ onBack }: any) {
     <div>
       <button
         onClick={onBack}
-        className="flex items-center gap-1.5 text-gray-400 hover:text-gray-700 text-sm mb-6 transition-colors"
+        className="flex items-center gap-1.5 text-gray-400 hover:text-gray-700 text-sm mb-6 transition-colors cursor-pointer"
       >
         <ArrowLeft className="w-4 h-4" /> Kembali
       </button>
@@ -566,7 +573,7 @@ function RegisterForm({ onBack }: any) {
 
         <button
           type="submit" disabled={loading}
-          className="w-full py-2.5 bg-red-600 hover:bg-red-700 active:bg-red-800 disabled:opacity-60 text-white text-sm font-semibold rounded-lg transition-colors"
+          className="w-full py-2.5 bg-red-600 hover:bg-red-700 active:bg-red-800 disabled:opacity-60 text-white text-sm font-semibold rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
         >
           {loading ? 'Mendaftar...' : 'Daftar Sekarang'}
         </button>
