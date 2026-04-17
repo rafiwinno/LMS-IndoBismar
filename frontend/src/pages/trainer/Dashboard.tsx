@@ -53,24 +53,36 @@ export default function TrainerDashboard() {
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
-        {[
-          { label: 'Total Course', value: courses.length, icon: BookOpen,  color: 'text-red-500',     bg: 'bg-red-500/10 dark:bg-red-500/10' },
-          { label: 'Published',    value: published,      icon: Globe,     color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-          { label: 'Draft',        value: draft,          icon: FileText,  color: 'text-amber-500',   bg: 'bg-amber-500/10' },
-        ].map((s) => (
-          <div
-            key={s.label}
-            className="bg-white dark:bg-[#161b22] border border-gray-200 dark:border-white/8 rounded-xl p-5 flex items-center gap-4"
-          >
-            <div className={`w-10 h-10 rounded-lg ${s.bg} flex items-center justify-center shrink-0`}>
-              <s.icon size={18} className={s.color} />
+        {loading ? (
+          [...Array(3)].map((_, i) => (
+            <div key={i} className="bg-white dark:bg-[#161b22] border border-gray-200 dark:border-white/8 rounded-xl p-5 flex items-center gap-4 animate-pulse">
+              <div className="w-10 h-10 rounded-lg bg-gray-200 dark:bg-white/8 shrink-0" />
+              <div className="space-y-2">
+                <div className="h-7 w-10 bg-gray-200 dark:bg-white/8 rounded" />
+                <div className="h-3 w-20 bg-gray-100 dark:bg-white/5 rounded" />
+              </div>
             </div>
-            <div>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white leading-none">{s.value}</p>
-              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{s.label}</p>
+          ))
+        ) : (
+          [
+            { label: 'Total Course', value: courses.length, icon: BookOpen,  color: 'text-red-500',     bg: 'bg-red-500/10 dark:bg-red-500/10' },
+            { label: 'Published',    value: published,      icon: Globe,     color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+            { label: 'Draft',        value: draft,          icon: FileText,  color: 'text-amber-500',   bg: 'bg-amber-500/10' },
+          ].map((s) => (
+            <div
+              key={s.label}
+              className="bg-white dark:bg-[#161b22] border border-gray-200 dark:border-white/8 rounded-xl p-5 flex items-center gap-4"
+            >
+              <div className={`w-10 h-10 rounded-lg ${s.bg} flex items-center justify-center shrink-0`}>
+                <s.icon size={18} className={s.color} />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white leading-none">{s.value}</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{s.label}</p>
+              </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
 
       {/* Course list */}
