@@ -91,6 +91,11 @@ export default function TrainerCourses() {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  const handleCloseModal = () => {
+    setShowModal(false);
+    resetImageState();
+  };
+
   const openCreate = () => {
     setEditTarget(null);
     setForm({ judul_kursus: '', deskripsi: '' });
@@ -147,7 +152,7 @@ export default function TrainerCourses() {
       } else {
         await createCourse(fd);
       }
-      setShowModal(false);
+      handleCloseModal();
       await load();
     } catch (e: unknown) {
       const err = e as { response?: { data?: { message?: string } } };
@@ -372,7 +377,7 @@ export default function TrainerCourses() {
       {showModal && (
         <Modal
           title={editTarget ? 'Edit Course' : 'Tambah Course Baru'}
-          onClose={() => setShowModal(false)}
+          onClose={handleCloseModal}
         >
           <div className="space-y-4">
             <div>
@@ -448,7 +453,7 @@ export default function TrainerCourses() {
             )}
             <div className="flex gap-3 pt-1">
               <button
-                onClick={() => setShowModal(false)}
+                onClick={handleCloseModal}
                 className="flex-1 py-2.5 border border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300 text-sm font-semibold rounded-lg hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
               >
                 Batal

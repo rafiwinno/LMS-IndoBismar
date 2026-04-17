@@ -55,6 +55,16 @@ const NotFound = () => (
   </div>
 );
 
+const TrainerNotFound = () => (
+  <div className="flex flex-col items-center justify-center py-24 text-center">
+    <h1 className="text-5xl font-bold text-gray-300 dark:text-gray-600">404</h1>
+    <p className="mt-3 text-gray-500 dark:text-gray-400">Halaman tidak ditemukan.</p>
+    <a href="/trainer/dashboard" className="mt-5 inline-block text-sm text-red-600 hover:underline">
+      Kembali ke Dashboard
+    </a>
+  </div>
+);
+
 const Unauthorized = () => (
   <div className="min-h-screen flex items-center justify-center bg-slate-50">
     <div className="text-center">
@@ -135,6 +145,7 @@ export default function App() {
             <Route path="assignments"            element={<TrainerAssignments />} />
             <Route path="progress"               element={<TrainerProgress />} />
             <Route path="feedback"               element={<TrainerFeedback />} />
+            <Route path="*"                      element={<TrainerNotFound />} />
           </Route>
 
           {/* ── Misc ── */}
