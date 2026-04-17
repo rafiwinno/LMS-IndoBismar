@@ -196,6 +196,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/trainer/quizzes/{id}',           [TrainerQuizController::class, 'update']);
     Route::delete('/trainer/quizzes/{id}',        [TrainerQuizController::class, 'destroy']);
     Route::post('/trainer/quizzes/{id}/questions',[TrainerQuizController::class, 'storeQuestion']);
+    Route::put('/trainer/questions/{id}',         [TrainerQuizController::class, 'updateQuestion']);
     Route::delete('/trainer/questions/{id}',      [TrainerQuizController::class, 'destroyQuestion']);
 
     // Materials (nested under course)

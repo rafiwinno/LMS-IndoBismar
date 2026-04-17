@@ -155,6 +155,50 @@ class QuizController extends Controller
         ], 201);
     }
 
+    // UPDATE PERTANYAAN
+    public function updateQuestion(Request $request, $questionId)
+    {
+        $question = Question::findOrFail($questionId);
+        $quiz     = Quiz::findOrFail($question->id_kuis);
+        $course   = Course::findOrFail($quiz->id_kursus);
+
+        if ($course->id_trainer !== $request->user()->id_pengguna) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $request->validate([
+            'pertanyaan'  => 'required|string',
+            'tipe'        => 'required|in:pilihan_ganda,essay',
+            'bobot_nilai' => 'nullable|integer|min:1',
+            'pilihan'     => 'required_if:tipe,pilihan_ganda|array|min:2',
+            'pilihan.*.teks_jawaban' => 'required_if:tipe,pilihan_ganda|string',
+            'pilihan.*.benar'        => 'required_if:tipe,pilihan_ganda|boolean',
+        ]);
+
+        $question->update([
+            'pertanyaan'  => $request->pertanyaan,
+            'tipe'        => $request->tipe,
+            'bobot_nilai' => $request->bobot_nilai ?? $question->bobot_nilai,
+        ]);
+
+        // Ganti pilihan lama dengan yang baru
+        $question->pilihan()->delete();
+        if ($request->tipe === 'pilihan_ganda' && $request->pilihan) {
+            foreach ($request->pilihan as $p) {
+                Choice::create([
+                    'id_pertanyaan' => $question->id_pertanyaan,
+                    'teks_jawaban'  => $p['teks_jawaban'],
+                    'benar'         => $p['benar'] ? 1 : 0,
+                ]);
+            }
+        }
+
+        return response()->json([
+            'message' => 'Pertanyaan berhasil diupdate',
+            'data'    => $question->load('pilihan'),
+        ]);
+    }
+
     public function destroyQuestion(Request $request, $questionId)
     {
         $question = Question::findOrFail($questionId);
