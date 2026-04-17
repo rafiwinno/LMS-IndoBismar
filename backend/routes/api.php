@@ -175,6 +175,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/trainer/courses/{id}',                         [TrainerCourseController::class, 'update']);
     Route::delete('/trainer/courses/{id}',                      [TrainerCourseController::class, 'destroy']);
     Route::patch('/trainer/courses/{id}/publish',               [TrainerCourseController::class, 'publish']);
+    Route::patch('/trainer/courses/{id}/unpublish',             [TrainerCourseController::class, 'unpublish']);
     Route::get('/trainer/courses/{id}/peserta',                 [TrainerCourseController::class, 'peserta']);
     Route::post('/trainer/courses/{id}/enroll',                 [TrainerCourseController::class, 'enroll']);
     Route::delete('/trainer/courses/{id}/peserta/{id_pengguna}',[TrainerCourseController::class, 'unenroll']);

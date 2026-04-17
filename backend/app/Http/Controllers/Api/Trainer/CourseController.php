@@ -224,4 +224,23 @@ class CourseController extends Controller
             'data'    => $course,
         ]);
     }
+
+    // 7. Unpublish course (kembalikan ke draft)
+    public function unpublish(Request $request, $id)
+    {
+        $course = Course::findOrFail($id);
+
+        if ($course->id_trainer !== $request->user()->id_pengguna) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $course->update(['status' => 'draft']);
+
+        Cache::forget("trainer_courses_{$request->user()->id_pengguna}");
+
+        return response()->json([
+            'message' => 'Course berhasil dikembalikan ke draft',
+            'data'    => $course,
+        ]);
+    }
 }

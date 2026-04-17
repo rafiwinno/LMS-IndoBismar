@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { toast } from '../../lib/toast';
-import { Plus, Pencil, Trash2, Globe, BookOpen, Check, Loader2, ImageIcon, X, Users, UserPlus, UserMinus, ChevronDown, Search } from 'lucide-react';
-import { getCourses, createCourse, updateCourse, deleteCourse, publishCourse, getCoursePeserta, enrollPesertaToCourse, unenrollPesertaFromCourse, getAllPesertaCabang } from '../../api/courseApi';
+import { Plus, Pencil, Trash2, Globe, EyeOff, BookOpen, Check, Loader2, ImageIcon, X, Users, UserPlus, UserMinus, ChevronDown, Search } from 'lucide-react';
+import { getCourses, createCourse, updateCourse, deleteCourse, publishCourse, unpublishCourse, getCoursePeserta, enrollPesertaToCourse, unenrollPesertaFromCourse, getAllPesertaCabang } from '../../api/courseApi';
 import { Link } from 'react-router-dom';
 import type { Course } from '../types/trainer';
 import Modal from '../../components/ui/Modal';
@@ -51,6 +51,21 @@ export default function TrainerCourses() {
   const [showPesertaDropdown, setShowPesertaDropdown] = useState(false);
   const [pesertaSearch, setPesertaSearch]             = useState('');
   const pesertaDropdownRef                            = useRef<HTMLDivElement>(null);
+
+  // Custom confirm dialog
+  const [confirmDialog, setConfirmDialog] = useState<{
+    message: string;
+    sub?: string;
+    confirmLabel?: string;
+    variant?: 'danger' | 'warning' | 'success';
+    onConfirm: () => void;
+  } | null>(null);
+
+  const openConfirm = (
+    message: string,
+    onConfirm: () => void,
+    opts?: { sub?: string; confirmLabel?: string; variant?: 'danger' | 'warning' | 'success' }
+  ) => setConfirmDialog({ message, onConfirm, ...opts });
 
   const load = async () => {
     try {
@@ -162,30 +177,58 @@ export default function TrainerCourses() {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('Hapus course ini? Tindakan tidak bisa dibatalkan.')) return;
-    setActionId(id);
-    try {
-      await deleteCourse(id);
-      await load();
-    } catch {
-      toast.error('Gagal menghapus course. Coba lagi.');
-    } finally {
-      setActionId(null);
-    }
+  const handleDelete = (id: number) => {
+    openConfirm(
+      'Hapus course ini?',
+      async () => {
+        setActionId(id);
+        try {
+          await deleteCourse(id);
+          await load();
+        } catch {
+          toast.error('Gagal menghapus course. Coba lagi.');
+        } finally {
+          setActionId(null);
+        }
+      },
+      { sub: 'Tindakan ini tidak bisa dibatalkan.', confirmLabel: 'Hapus', variant: 'danger' }
+    );
   };
 
-  const handlePublish = async (id: number) => {
-    if (!confirm('Publish course ini? Course akan langsung terlihat oleh semua peserta.')) return;
-    setActionId(id);
-    try {
-      await publishCourse(id);
-      await load();
-    } catch {
-      toast.error('Gagal mempublish course. Coba lagi.');
-    } finally {
-      setActionId(null);
-    }
+  const handlePublish = (id: number) => {
+    openConfirm(
+      'Publish course ini?',
+      async () => {
+        setActionId(id);
+        try {
+          await publishCourse(id);
+          await load();
+        } catch {
+          toast.error('Gagal mempublish course. Coba lagi.');
+        } finally {
+          setActionId(null);
+        }
+      },
+      { sub: 'Course akan langsung terlihat oleh semua peserta.', confirmLabel: 'Publish', variant: 'success' }
+    );
+  };
+
+  const handleUnpublish = (id: number) => {
+    openConfirm(
+      'Kembalikan ke Draft?',
+      async () => {
+        setActionId(id);
+        try {
+          await unpublishCourse(id);
+          await load();
+        } catch {
+          toast.error('Gagal mengubah status course. Coba lagi.');
+        } finally {
+          setActionId(null);
+        }
+      },
+      { sub: 'Course tidak akan terlihat oleh peserta.', confirmLabel: 'Ya, ke Draft', variant: 'warning' }
+    );
   };
 
   const openPesertaModal = async (c: Course) => {
@@ -242,7 +285,11 @@ export default function TrainerCourses() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Kelola Course</h1>
-          <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">{courses.length} course ditemukan</p>
+          {pageLoading ? (
+            <div className="h-4 w-32 rounded bg-gray-200 dark:bg-white/8 animate-pulse mt-1.5" />
+          ) : (
+            <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">{courses.length} course ditemukan</p>
+          )}
         </div>
         <button
           onClick={openCreate}
@@ -260,9 +307,44 @@ export default function TrainerCourses() {
       )}
 
       {pageLoading ? (
-        <div className={`${cardCls} p-16 text-center text-gray-400 dark:text-gray-500`}>
-          <Loader2 size={28} className="mx-auto mb-2 animate-spin opacity-40" />
-          <p>Memuat course...</p>
+        <div className={`${cardCls} overflow-hidden`}>
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50 dark:bg-white/4 border-b border-gray-200 dark:border-white/8">
+              <tr>
+                <th className={`${thCls} w-16`}>Gambar</th>
+                <th className={thCls}>Judul</th>
+                <th className={`${thCls} hidden md:table-cell`}>Deskripsi</th>
+                <th className={thCls}>Status</th>
+                <th className="px-5 py-3.5 font-semibold text-gray-500 dark:text-gray-400 text-right">Aksi</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100 dark:divide-white/6">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <tr key={i} className="animate-pulse">
+                  <td className="px-3 py-3">
+                    <div className="w-12 h-12 rounded-lg bg-gray-200 dark:bg-white/8" />
+                  </td>
+                  <td className="px-5 py-4">
+                    <div className="h-4 w-36 rounded bg-gray-200 dark:bg-white/8" />
+                  </td>
+                  <td className="px-5 py-4 hidden md:table-cell">
+                    <div className="h-4 w-48 rounded bg-gray-200 dark:bg-white/8" />
+                  </td>
+                  <td className="px-5 py-4">
+                    <div className="h-6 w-20 rounded-full bg-gray-200 dark:bg-white/8" />
+                  </td>
+                  <td className="px-5 py-4">
+                    <div className="flex items-center justify-end gap-2">
+                      <div className="w-7 h-7 rounded-lg bg-gray-200 dark:bg-white/8" />
+                      <div className="w-7 h-7 rounded-lg bg-gray-200 dark:bg-white/8" />
+                      <div className="w-7 h-7 rounded-lg bg-gray-200 dark:bg-white/8" />
+                      <div className="w-7 h-7 rounded-lg bg-gray-200 dark:bg-white/8" />
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       ) : courses.length === 0 ? (
         <div className={`${cardCls} p-16 text-center`}>
@@ -337,7 +419,7 @@ export default function TrainerCourses() {
                       >
                         <Users size={16} />
                       </button>
-                      {c.status !== 'publish' && (
+                      {c.status !== 'publish' ? (
                         <button
                           onClick={() => handlePublish(c.id_kursus)}
                           disabled={actionId === c.id_kursus}
@@ -347,6 +429,17 @@ export default function TrainerCourses() {
                           {actionId === c.id_kursus
                             ? <Loader2 size={16} className="animate-spin" />
                             : <Globe size={16} />}
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleUnpublish(c.id_kursus)}
+                          disabled={actionId === c.id_kursus}
+                          title="Kembalikan ke Draft"
+                          className="p-2 text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-colors disabled:opacity-50"
+                        >
+                          {actionId === c.id_kursus
+                            ? <Loader2 size={16} className="animate-spin" />
+                            : <EyeOff size={16} />}
                         </button>
                       )}
                       <button
@@ -593,6 +686,37 @@ export default function TrainerCourses() {
                   ))}
                 </ul>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Custom Confirm Dialog */}
+      {confirmDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/60 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-[#1c2333] rounded-2xl shadow-xl w-full max-w-sm">
+            <div className="px-6 pt-6 pb-4">
+              <p className="text-base font-semibold text-gray-900 dark:text-white">{confirmDialog.message}</p>
+              {confirmDialog.sub && (
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{confirmDialog.sub}</p>
+              )}
+            </div>
+            <div className="flex items-center justify-end gap-2 px-6 pb-5">
+              <button
+                onClick={() => setConfirmDialog(null)}
+                className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+              >
+                Batal
+              </button>
+              <button
+                onClick={() => { confirmDialog.onConfirm(); setConfirmDialog(null); }}
+                className={`px-4 py-2 text-sm font-medium rounded-lg text-white transition-colors ${
+                  confirmDialog.variant === 'danger'  ? 'bg-red-600 hover:bg-red-700' :
+                  confirmDialog.variant === 'warning' ? 'bg-amber-500 hover:bg-amber-600' :
+                                                        'bg-green-600 hover:bg-green-700'
+                }`}
+              >
+                {confirmDialog.confirmLabel ?? 'Ya'}
+              </button>
             </div>
           </div>
         </div>

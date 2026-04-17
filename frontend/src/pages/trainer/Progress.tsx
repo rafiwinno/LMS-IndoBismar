@@ -1,13 +1,19 @@
-import { useEffect, useState } from 'react';
-import { Users, TrendingUp, CheckSquare, AlertCircle } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Users, TrendingUp, CheckSquare, AlertCircle, BookOpen } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 import api from '../../api/axiosInstance';
 import type { PesertaProgress } from '../types/trainer';
 import { cardCls, thCls, trCls } from '../../lib/styles';
 
 export default function TrainerProgress() {
+  const [searchParams] = useSearchParams();
   const [peserta, setPeserta] = useState<PesertaProgress[]>([]);
   const [loading, setLoading] = useState(true);
   const [apiError, setApiError] = useState(false);
+  const courseParam = searchParams.get('course');
+  const [selectedCourse, setSelectedCourse] = useState<number | 'all'>(
+    courseParam ? Number(courseParam) : 'all'
+  );
 
   useEffect(() => {
     api.get('/trainer/peserta/progress')
@@ -22,11 +28,42 @@ export default function TrainerProgress() {
       .finally(() => setLoading(false));
   }, []);
 
+  // Derive unique courses from fetched data
+  const courses = useMemo(() => {
+    const map = new Map<number, string>();
+    peserta.forEach((p) => map.set(p.id_kursus, p.course));
+    return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
+  }, [peserta]);
+
+  const filtered = useMemo(
+    () => selectedCourse === 'all' ? peserta : peserta.filter((p) => p.id_kursus === selectedCourse),
+    [peserta, selectedCourse],
+  );
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Progres Peserta</h1>
-        <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Pantau perkembangan belajar seluruh peserta PKL</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Progres Peserta</h1>
+          <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Pantau perkembangan belajar seluruh peserta PKL</p>
+        </div>
+
+        {/* Course filter */}
+        {!loading && courses.length > 0 && (
+          <div className="flex items-center gap-2 shrink-0">
+            <BookOpen size={16} className="text-gray-400 dark:text-gray-500 shrink-0" />
+            <select
+              value={selectedCourse}
+              onChange={(e) => setSelectedCourse(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+              className="text-sm border border-gray-200 dark:border-white/10 rounded-lg px-3 py-2 bg-white dark:bg-white/5 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-red-500/40 min-w-44"
+            >
+              <option value="all">Semua Course</option>
+              {courses.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
 
       {apiError && (
@@ -49,10 +86,10 @@ export default function TrainerProgress() {
           ))
         ) : (
           [
-            { label: 'Total Peserta',  value: peserta.length,                                              icon: Users,       color: 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400' },
-            { label: 'Progres > 75%', value: peserta.filter((p) => (p.progress ?? 0) >= 75).length,       icon: TrendingUp,  color: 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400' },
-            { label: 'Progres < 50%', value: peserta.filter((p) => (p.progress ?? 0) < 50).length,        icon: TrendingUp,  color: 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400' },
-            { label: 'Tugas Selesai', value: peserta.reduce((a, p) => a + (p.tugas_selesai ?? 0), 0),     icon: CheckSquare, color: 'bg-gray-100 dark:bg-white/8 text-gray-600 dark:text-gray-400' },
+            { label: 'Total Peserta',  value: filtered.length,                                              icon: Users,       color: 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400' },
+            { label: 'Progres > 75%', value: filtered.filter((p) => (p.progress ?? 0) >= 75).length,       icon: TrendingUp,  color: 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400' },
+            { label: 'Progres < 50%', value: filtered.filter((p) => (p.progress ?? 0) < 50).length,        icon: TrendingUp,  color: 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400' },
+            { label: 'Tugas Selesai', value: filtered.reduce((a, p) => a + (p.tugas_selesai ?? 0), 0),     icon: CheckSquare, color: 'bg-gray-100 dark:bg-white/8 text-gray-600 dark:text-gray-400' },
           ].map((s) => (
             <div key={s.label} className={`${cardCls} p-5`}>
               <div className={`inline-flex p-2.5 rounded-lg ${s.color} mb-3`}>
@@ -69,11 +106,15 @@ export default function TrainerProgress() {
         <div className={`${cardCls} p-8 text-center text-gray-400 dark:text-gray-500`}>
           Memuat data...
         </div>
-      ) : peserta.length === 0 ? (
+      ) : filtered.length === 0 ? (
         <div className={`${cardCls} p-16 text-center`}>
           <Users size={40} className="mx-auto mb-3 text-gray-400 dark:text-gray-500" />
           <p className="text-gray-500 dark:text-gray-400 font-medium">
-            {apiError ? 'Data tidak dapat dimuat dari server' : 'Belum ada data progres peserta'}
+            {apiError
+              ? 'Data tidak dapat dimuat dari server'
+              : selectedCourse !== 'all'
+              ? 'Belum ada peserta di course ini'
+              : 'Belum ada data progres peserta'}
           </p>
         </div>
       ) : (
@@ -88,8 +129,8 @@ export default function TrainerProgress() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-white/6">
-              {peserta.map((p) => (
-                <tr key={p.id} className={trCls}>
+              {filtered.map((p) => (
+                <tr key={`${p.id}-${p.id_kursus}`} className={trCls}>
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-full flex items-center justify-center font-bold text-xs shrink-0">

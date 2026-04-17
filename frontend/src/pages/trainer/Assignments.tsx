@@ -1,6 +1,7 @@
 // FILE: src/pages/trainer/Assignments.tsx
 
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { toast } from '../../lib/toast';
 import {
   Plus, Pencil, Trash2, X, ChevronDown, ChevronRight,
@@ -105,6 +106,8 @@ const btnPrimary = "flex-1 py-3 bg-red-600 hover:bg-red-700 disabled:bg-red-400 
 const btnSecondary = "flex-1 py-3 border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 text-sm font-semibold rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 transition-colors";
 
 export default function TrainerAssignments() {
+  const [searchParams] = useSearchParams();
+  const initialCourseId = searchParams.get('course') ? Number(searchParams.get('course')) : null;
   const [activeTab, setActiveTab] = useState<'tugas' | 'kuis'>('tugas');
   const [courses, setCourses] = useState<Course[]>([]);
   const [coursesError, setCoursesError] = useState('');
@@ -138,13 +141,13 @@ export default function TrainerAssignments() {
           </button>
         ))}
       </div>
-      {activeTab === 'tugas' ? <TugasTab courses={courses} coursesError={coursesError} /> : <KuisTab courses={courses} coursesError={coursesError} />}
+      {activeTab === 'tugas' ? <TugasTab courses={courses} coursesError={coursesError} initialCourseId={initialCourseId} /> : <KuisTab courses={courses} coursesError={coursesError} initialCourseId={initialCourseId} />}
     </div>
   );
 }
 
-function TugasTab({ courses, coursesError }: { courses: Course[]; coursesError: string; }) {
-  const [selectedCourse, setSelectedCourse] = useState<number | null>(null);
+function TugasTab({ courses, coursesError, initialCourseId }: { courses: Course[]; coursesError: string; initialCourseId: number | null; }) {
+  const [selectedCourse, setSelectedCourse] = useState<number | null>(initialCourseId);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [expandedId, setExpandedId] = useState<number | null>(null);
@@ -159,7 +162,10 @@ function TugasTab({ courses, coursesError }: { courses: Course[]; coursesError: 
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (courses.length > 0 && !selectedCourse) setSelectedCourse(courses[0].id_kursus);
+    if (courses.length === 0) return;
+    if (!selectedCourse || !courses.find((c) => c.id_kursus === selectedCourse)) {
+      setSelectedCourse(courses[0].id_kursus);
+    }
   }, [courses]);
 
   useEffect(() => {
@@ -442,8 +448,8 @@ function TugasTab({ courses, coursesError }: { courses: Course[]; coursesError: 
   );
 }
 
-function KuisTab({ courses, coursesError }: { courses: Course[]; coursesError: string; }) {
-  const [selectedCourse, setSelectedCourse] = useState<number | null>(null);
+function KuisTab({ courses, coursesError, initialCourseId }: { courses: Course[]; coursesError: string; initialCourseId: number | null; }) {
+  const [selectedCourse, setSelectedCourse] = useState<number | null>(initialCourseId);
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -469,7 +475,10 @@ function KuisTab({ courses, coursesError }: { courses: Course[]; coursesError: s
   const [gradingAttempt, setGradingAttempt] = useState<number | null>(null);
 
   useEffect(() => {
-    if (courses.length > 0 && !selectedCourse) setSelectedCourse(courses[0].id_kursus);
+    if (courses.length === 0) return;
+    if (!selectedCourse || !courses.find((c) => c.id_kursus === selectedCourse)) {
+      setSelectedCourse(courses[0].id_kursus);
+    }
   }, [courses]);
 
   useEffect(() => {

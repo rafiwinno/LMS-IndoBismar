@@ -14,11 +14,12 @@ class ProgressController extends Controller
     {
         $trainerId = $request->user()->id_pengguna;
 
-        $data = Cache::remember("trainer_progress_{$trainerId}", 120, function () use ($trainerId) {
+        $data = Cache::remember("trainer_progress_v2_{$trainerId}", 120, function () use ($trainerId) {
             return DB::select("
                 SELECT
                     p.id_pengguna   AS id,
                     p.nama,
+                    k.id_kursus,
                     k.judul_kursus  AS course,
                     COUNT(DISTINCT pm.id_progress) AS tugas_selesai,
                     COUNT(DISTINCT m.id_materi)    AS total_tugas,

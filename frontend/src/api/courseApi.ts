@@ -25,6 +25,9 @@ export const deleteCourse = (id: number) =>
 export const publishCourse = (id: number) =>
   api.patch(`/trainer/courses/${id}/publish`);
 
+export const unpublishCourse = (id: number) =>
+  api.patch(`/trainer/courses/${id}/unpublish`);
+
 export const getAllPesertaCabang = () =>
   api.get('/trainer/peserta/semua');
 

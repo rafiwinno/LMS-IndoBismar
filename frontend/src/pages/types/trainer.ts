@@ -49,6 +49,7 @@ export interface Peserta {
 export interface PesertaProgress {
   id:            number;
   nama:          string;
+  id_kursus:     number;
   course:        string;
   progress:      number;
   tugas_selesai: number;
