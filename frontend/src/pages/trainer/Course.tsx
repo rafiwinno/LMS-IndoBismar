@@ -39,6 +39,7 @@ export default function TrainerCourses() {
   const [error, setError]             = useState('');
   const [pageError, setPageError]     = useState('');
   const fileInputRef                  = useRef<HTMLInputElement>(null);
+  const blobUrlRef                    = useRef<string | null>(null);
 
   // Peserta management
   const [pesertaModal, setPesertaModal]       = useState<Course | null>(null);
@@ -65,7 +66,12 @@ export default function TrainerCourses() {
 
   useEffect(() => { load(); }, []);
 
+  // Revoke blob URL on unmount to prevent memory leak
+  useEffect(() => () => { if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current); }, []);
+
+  // Only attach click-outside listener while the dropdown is open
   useEffect(() => {
+    if (!showPesertaDropdown) return;
     const handleClickOutside = (e: MouseEvent) => {
       if (pesertaDropdownRef.current && !pesertaDropdownRef.current.contains(e.target as Node)) {
         setShowPesertaDropdown(false);
@@ -73,9 +79,13 @@ export default function TrainerCourses() {
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  }, [showPesertaDropdown]);
 
   const resetImageState = () => {
+    if (blobUrlRef.current) {
+      URL.revokeObjectURL(blobUrlRef.current);
+      blobUrlRef.current = null;
+    }
     setImageFile(null);
     setImagePreview(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
@@ -90,6 +100,10 @@ export default function TrainerCourses() {
   };
 
   const openEdit = (c: Course) => {
+    if (blobUrlRef.current) {
+      URL.revokeObjectURL(blobUrlRef.current);
+      blobUrlRef.current = null;
+    }
     setEditTarget(c);
     setForm({ judul_kursus: c.judul_kursus, deskripsi: c.deskripsi ?? '' });
     setImageFile(null);
@@ -101,8 +115,16 @@ export default function TrainerCourses() {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] ?? null;
     if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      setError('Ukuran gambar maksimal 2 MB');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+    if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
+    const url = URL.createObjectURL(file);
+    blobUrlRef.current = url;
     setImageFile(file);
-    setImagePreview(URL.createObjectURL(file));
+    setImagePreview(url);
   };
 
   const handleRemoveImage = () => {
@@ -149,6 +171,7 @@ export default function TrainerCourses() {
   };
 
   const handlePublish = async (id: number) => {
+    if (!confirm('Publish course ini? Course akan langsung terlihat oleh semua peserta.')) return;
     setActionId(id);
     try {
       await publishCourse(id);

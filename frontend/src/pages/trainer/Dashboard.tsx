@@ -147,6 +147,18 @@ export default function TrainerDashboard() {
                   >
                     Materi
                   </Link>
+                  <Link
+                    to="/trainer/assignments"
+                    className="flex-1 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/6 py-1.5 rounded-md transition-colors"
+                  >
+                    Tugas
+                  </Link>
+                  <Link
+                    to="/trainer/progress"
+                    className="flex-1 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/6 py-1.5 rounded-md transition-colors"
+                  >
+                    Progres
+                  </Link>
                 </div>
               </div>
             ))}
