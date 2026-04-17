@@ -211,6 +211,7 @@ export default function TrainerCourses() {
       setSelectedPesertaId('');
       const res = await getCoursePeserta(pesertaModal.id_kursus);
       setEnrolledPeserta(res.data?.data ?? []);
+      toast.success('Peserta berhasil didaftarkan.');
     } catch (e: unknown) {
       const err = e as { response?: { data?: { message?: string } } };
       toast.error(err.response?.data?.message || 'Gagal mendaftarkan peserta.');
@@ -225,6 +226,7 @@ export default function TrainerCourses() {
       await unenrollPesertaFromCourse(pesertaModal.id_kursus, id_pengguna);
       const res = await getCoursePeserta(pesertaModal.id_kursus);
       setEnrolledPeserta(res.data?.data ?? []);
+      toast.success('Peserta berhasil dikeluarkan dari kursus.');
     } catch {
       toast.error('Gagal mengeluarkan peserta.');
     }

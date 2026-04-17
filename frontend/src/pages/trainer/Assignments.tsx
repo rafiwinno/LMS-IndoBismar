@@ -89,6 +89,15 @@ const btnSecondary = "flex-1 py-3 border border-gray-200 dark:border-white/10 te
 
 export default function TrainerAssignments() {
   const [activeTab, setActiveTab] = useState<'tugas' | 'kuis'>('tugas');
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [coursesError, setCoursesError] = useState('');
+
+  useEffect(() => {
+    api.get('/trainer/courses')
+      .then((res) => setCourses(res.data))
+      .catch(() => setCoursesError('Gagal memuat daftar kursus.'));
+  }, []);
+
   const tabs = [
     { key: 'tugas' as const, label: 'Tugas', icon: FileCheck },
     { key: 'kuis' as const, label: 'Kuis', icon: HelpCircle },
@@ -112,13 +121,12 @@ export default function TrainerAssignments() {
           </button>
         ))}
       </div>
-      {activeTab === 'tugas' ? <TugasTab /> : <KuisTab />}
+      {activeTab === 'tugas' ? <TugasTab courses={courses} coursesError={coursesError} /> : <KuisTab courses={courses} coursesError={coursesError} />}
     </div>
   );
 }
 
-function TugasTab() {
-  const [courses, setCourses] = useState<Course[]>([]);
+function TugasTab({ courses, coursesError }: { courses: Course[]; coursesError: string; }) {
   const [selectedCourse, setSelectedCourse] = useState<number | null>(null);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
@@ -132,13 +140,10 @@ function TugasTab() {
   const [loading, setLoading] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [error, setError] = useState('');
-  const [pageError, setPageError] = useState('');
 
   useEffect(() => {
-    api.get('/trainer/courses')
-      .then((res) => { setCourses(res.data); if (res.data.length > 0) setSelectedCourse(res.data[0].id_kursus); })
-      .catch(() => setPageError('Gagal memuat course'));
-  }, []);
+    if (courses.length > 0 && !selectedCourse) setSelectedCourse(courses[0].id_kursus);
+  }, [courses]);
 
   useEffect(() => {
     if (!selectedCourse) return;
@@ -231,9 +236,9 @@ function TugasTab() {
 
   return (
     <div className="space-y-5">
-      {pageError && (
+      {coursesError && (
         <div className="flex gap-2 items-center bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/30 text-red-600 dark:text-red-400 px-4 py-3 rounded-2xl text-sm">
-          <AlertCircle size={15} />{pageError}
+          <AlertCircle size={15} />{coursesError}
         </div>
       )}
 
@@ -420,8 +425,7 @@ function TugasTab() {
   );
 }
 
-function KuisTab() {
-  const [courses, setCourses] = useState<Course[]>([]);
+function KuisTab({ courses, coursesError }: { courses: Course[]; coursesError: string; }) {
   const [selectedCourse, setSelectedCourse] = useState<number | null>(null);
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
@@ -429,6 +433,7 @@ function KuisTab() {
   const [showQuizModal, setShowQuizModal] = useState(false);
   const [showQModal, setShowQModal] = useState(false);
   const [editQuiz, setEditQuiz] = useState<Quiz | null>(null);
+  const [editQuestion, setEditQuestion] = useState<Question | null>(null);
   const [quizForm, setQuizForm] = useState({ judul_kuis: '', waktu_mulai: '', waktu_selesai: '' });
   const [qForm, setQForm] = useState<Question>({
     pertanyaan: '', tipe: 'pilihan_ganda', bobot_nilai: 10,
@@ -436,13 +441,12 @@ function KuisTab() {
   });
   const [loading, setLoading] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [questionsLoading, setQuestionsLoading] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    api.get('/trainer/courses')
-      .then((res) => { setCourses(res.data); if (res.data.length > 0) setSelectedCourse(res.data[0].id_kursus); })
-      .catch(() => setError('Gagal memuat daftar kursus.'));
-  }, []);
+    if (courses.length > 0 && !selectedCourse) setSelectedCourse(courses[0].id_kursus);
+  }, [courses]);
 
   useEffect(() => {
     if (!selectedCourse) return;
@@ -455,8 +459,10 @@ function KuisTab() {
   const loadQuestions = async (quiz: Quiz) => {
     if (selectedQuiz?.id_kuis === quiz.id_kuis) { setSelectedQuiz(null); setQuestions([]); return; }
     setSelectedQuiz(quiz);
+    setQuestionsLoading(true);
     try { const res = await api.get(`/trainer/quizzes/${quiz.id_kuis}`); setQuestions(res.data.data?.pertanyaan ?? []); }
-    catch { setQuestions([]); }
+    catch { setQuestions([]); toast.error('Gagal memuat soal.'); }
+    finally { setQuestionsLoading(false); }
   };
 
   const reloadQuizzes = async () => {
@@ -490,6 +496,7 @@ function KuisTab() {
   };
 
   const handleSaveQuestion = async () => {
+    if (!selectedQuiz) return;
     if (!qForm.pertanyaan.trim()) { setError('Pertanyaan wajib diisi'); return; }
     if (qForm.tipe === 'pilihan_ganda') {
       if (!qForm.pilihan?.some((p) => p.benar)) { setError('Tandai 1 jawaban benar'); return; }
@@ -497,12 +504,36 @@ function KuisTab() {
     }
     setLoading(true);
     try {
-      await api.post(`/trainer/quizzes/${selectedQuiz?.id_kuis}/questions`, qForm);
+      if (editQuestion) {
+        await api.put(`/trainer/questions/${editQuestion.id_pertanyaan}`, qForm);
+      } else {
+        await api.post(`/trainer/quizzes/${selectedQuiz.id_kuis}/questions`, qForm);
+      }
       setShowQModal(false);
-      const res = await api.get(`/trainer/quizzes/${selectedQuiz?.id_kuis}`);
+      setEditQuestion(null);
+      const res = await api.get(`/trainer/quizzes/${selectedQuiz.id_kuis}`);
       setQuestions(res.data.data?.pertanyaan ?? []);
     } catch (e: unknown) { const err = e as { response?: { data?: { message?: string } } }; setError(err.response?.data?.message || 'Gagal'); }
     finally { setLoading(false); }
+  };
+
+  const openEditQuestion = (qt: Question) => {
+    setEditQuestion(qt);
+    setQForm({
+      pertanyaan: qt.pertanyaan,
+      tipe: qt.tipe,
+      bobot_nilai: qt.bobot_nilai,
+      pilihan: qt.pilihan ? qt.pilihan.map((p) => ({ ...p })) : Array(4).fill(null).map(() => ({ teks_jawaban: '', benar: false })),
+    });
+    setError('');
+    setShowQModal(true);
+  };
+
+  const openCreateQuestion = () => {
+    setEditQuestion(null);
+    setQForm({ pertanyaan: '', tipe: 'pilihan_ganda', bobot_nilai: 10, pilihan: Array(4).fill(null).map(() => ({ teks_jawaban: '', benar: false })) });
+    setError('');
+    setShowQModal(true);
   };
 
   const handleDeleteQuestion = async (id: number) => {
@@ -520,6 +551,11 @@ function KuisTab() {
 
   return (
     <div className="space-y-5">
+      {coursesError && (
+        <div className="flex gap-2 items-center bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/30 text-red-600 dark:text-red-400 px-4 py-3 rounded-2xl text-sm">
+          <AlertCircle size={15} />{coursesError}
+        </div>
+      )}
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <CoursePills courses={courses} selected={selectedCourse} onSelect={setSelectedCourse} />
         <button
@@ -568,12 +604,16 @@ function KuisTab() {
                   <div className="flex items-center justify-between mb-4">
                     <p className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Soal · {questions.length}</p>
                     <button
-                      onClick={() => { setQForm({ pertanyaan: '', tipe: 'pilihan_ganda', bobot_nilai: 10, pilihan: Array(4).fill(null).map(() => ({ teks_jawaban: '', benar: false })) }); setError(''); setShowQModal(true); }}
+                      onClick={() => openCreateQuestion()}
                       className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-xl transition-colors">
                       <Plus size={13} />Tambah Soal
                     </button>
                   </div>
-                  {questions.length === 0 ? (
+                  {questionsLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 size={20} className="animate-spin text-gray-400 dark:text-gray-500" />
+                    </div>
+                  ) : questions.length === 0 ? (
                     <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-8">Belum ada soal.</p>
                   ) : (
                     <div className="space-y-2">
@@ -602,6 +642,9 @@ function KuisTab() {
                                 </div>
                               )}
                             </div>
+                            <button onClick={() => openEditQuestion(qt)} className="p-1.5 text-gray-300 dark:text-gray-600 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-900/20 rounded-lg transition-colors shrink-0">
+                              <Pencil size={14} />
+                            </button>
                             <button onClick={() => handleDeleteQuestion(qt.id_pertanyaan!)} className="p-1.5 text-gray-300 dark:text-gray-600 hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors shrink-0">
                               <Trash2 size={14} />
                             </button>
@@ -644,8 +687,8 @@ function KuisTab() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/60 backdrop-blur-sm p-4">
           <div className="bg-white dark:bg-[#1c2333] rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden max-h-[90vh] flex flex-col">
             <div className="flex items-center justify-between px-7 py-5 border-b border-gray-100 dark:border-white/8 shrink-0">
-              <h2 className="text-base font-bold text-gray-900 dark:text-white">Tambah Soal</h2>
-              <button onClick={() => setShowQModal(false)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-white/8 rounded-xl"><X size={18} className="text-gray-400 dark:text-gray-500" /></button>
+              <h2 className="text-base font-bold text-gray-900 dark:text-white">{editQuestion ? 'Edit Soal' : 'Tambah Soal'}</h2>
+              <button onClick={() => { setShowQModal(false); setEditQuestion(null); }} className="p-1.5 hover:bg-gray-100 dark:hover:bg-white/8 rounded-xl"><X size={18} className="text-gray-400 dark:text-gray-500" /></button>
             </div>
             <div className="px-7 py-6 overflow-y-auto space-y-4">
               <Field label="Pertanyaan">
@@ -680,7 +723,7 @@ function KuisTab() {
               )}
               {error && <p className="text-xs text-red-500 bg-red-50 dark:bg-red-900/20 px-4 py-2.5 rounded-xl">{error}</p>}
               <div className="flex gap-3 pt-1">
-                <button onClick={() => setShowQModal(false)} className={btnSecondary}>Batal</button>
+                <button onClick={() => { setShowQModal(false); setEditQuestion(null); }} className={btnSecondary}>Batal</button>
                 <button onClick={handleSaveQuestion} disabled={loading} className={btnPrimary}>{loading ? 'Menyimpan...' : 'Simpan Soal'}</button>
               </div>
             </div>
