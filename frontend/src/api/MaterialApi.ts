@@ -10,8 +10,16 @@ export const createMaterial = (data: FormData) =>
 
 export const updateMaterial = (
   id: number,
-  data: { judul_materi?: string; tipe_materi?: string; urutan?: number; link_video?: string }
-) => api.put(`/trainer/materials/${id}`, data);
+  data: FormData | { judul_materi?: string; tipe_materi?: string; urutan?: number; link_video?: string }
+) => {
+  if (data instanceof FormData) {
+    data.append('_method', 'PUT');
+    return api.post(`/trainer/materials/${id}`, data, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  }
+  return api.put(`/trainer/materials/${id}`, data);
+};
 
 export const deleteMaterial = (id: number) =>
   api.delete(`/trainer/materials/${id}`);

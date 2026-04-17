@@ -5,7 +5,8 @@ import { toast } from '../../lib/toast';
 import {
   Plus, Pencil, Trash2, X, ChevronDown, ChevronRight,
   Users, Star, Loader2, AlertCircle, Clock, Award,
-  BookOpen, FileCheck, HelpCircle, CheckCircle2, Circle
+  BookOpen, FileCheck, HelpCircle, CheckCircle2, Circle,
+  BarChart2, XCircle
 } from 'lucide-react';
 import api from '../../api/axiosInstance';
 
@@ -30,6 +31,22 @@ interface Question {
 interface Quiz {
   id_kuis: number; id_kursus: number; judul_kuis: string;
   waktu_mulai: string | null; waktu_selesai: string | null; pertanyaan_count?: number;
+}
+interface EssayAnswer {
+  id_jawaban: number; pertanyaan: string; bobot_nilai: number;
+  jawaban_text: string; skor: number | null;
+}
+interface PGAnswer {
+  pertanyaan: string; bobot_nilai: number; jawaban_dipilih: string;
+  benar: boolean; jawaban_benar: string;
+}
+interface QuizAttempt {
+  id_attempt: number; peserta: string; skor: number;
+  waktu_mulai: string; waktu_selesai: string;
+  has_essay: boolean; jawaban_essay: EssayAnswer[]; jawaban_pg: PGAnswer[];
+}
+interface QuizResults {
+  avg_score: number; total_peserta: number; data: QuizAttempt[];
 }
 
 function CoursePills({ courses, selected, onSelect }: { courses: Course[]; selected: number | null; onSelect: (id: number) => void; }) {
@@ -443,6 +460,13 @@ function KuisTab({ courses, coursesError }: { courses: Course[]; coursesError: s
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [questionsLoading, setQuestionsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showResultsModal, setShowResultsModal] = useState(false);
+  const [resultsQuiz, setResultsQuiz] = useState<Quiz | null>(null);
+  const [results, setResults] = useState<QuizResults | null>(null);
+  const [resultsLoading, setResultsLoading] = useState(false);
+  const [expandedAttempt, setExpandedAttempt] = useState<number | null>(null);
+  const [essayScores, setEssayScores] = useState<Record<number, Record<number, number>>>({});
+  const [gradingAttempt, setGradingAttempt] = useState<number | null>(null);
 
   useEffect(() => {
     if (courses.length > 0 && !selectedCourse) setSelectedCourse(courses[0].id_kursus);
@@ -549,6 +573,40 @@ function KuisTab({ courses, coursesError }: { courses: Course[]; coursesError: s
     setQForm({ ...qForm, pilihan: p });
   };
 
+  const openResults = async (quiz: Quiz) => {
+    setResultsQuiz(quiz);
+    setResults(null);
+    setExpandedAttempt(null);
+    setEssayScores({});
+    setShowResultsModal(true);
+    setResultsLoading(true);
+    try {
+      const res = await api.get(`/trainer/quizzes/${quiz.id_kuis}/results`);
+      setResults(res.data);
+    } catch {
+      toast.error('Gagal memuat hasil kuis.');
+      setShowResultsModal(false);
+    } finally {
+      setResultsLoading(false);
+    }
+  };
+
+  const handleGradeEssay = async (attemptId: number) => {
+    const scores = essayScores[attemptId] ?? {};
+    setGradingAttempt(attemptId);
+    try {
+      await api.patch(`/trainer/quizzes/attempts/${attemptId}/grade-essay`, { scores });
+      toast.success('Nilai essay berhasil disimpan.');
+      const res = await api.get(`/trainer/quizzes/${resultsQuiz!.id_kuis}/results`);
+      setResults(res.data);
+      setEssayScores((prev) => { const n = { ...prev }; delete n[attemptId]; return n; });
+    } catch {
+      toast.error('Gagal menyimpan nilai.');
+    } finally {
+      setGradingAttempt(null);
+    }
+  };
+
   return (
     <div className="space-y-5">
       {coursesError && (
@@ -590,6 +648,10 @@ function KuisTab({ courses, coursesError }: { courses: Course[]; coursesError: s
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors ${selectedQuiz?.id_kuis === q.id_kuis ? 'bg-violet-600 text-white shadow-md shadow-violet-600/25' : 'bg-gray-50 dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/10'}`}>
                     <BookOpen size={13} />Soal
                     {selectedQuiz?.id_kuis === q.id_kuis ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
+                  </button>
+                  <button onClick={() => openResults(q)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-gray-50 dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-colors">
+                    <BarChart2 size={13} />Hasil
                   </button>
                   <button onClick={() => { setEditQuiz(q); setQuizForm({ judul_kuis: q.judul_kuis, waktu_mulai: q.waktu_mulai?.slice(0, 16) ?? '', waktu_selesai: q.waktu_selesai?.slice(0, 16) ?? '' }); setError(''); setShowQuizModal(true); }}
                     className="p-2 text-gray-300 dark:text-gray-600 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"><Pencil size={15} /></button>
@@ -681,6 +743,140 @@ function KuisTab({ courses, coursesError }: { courses: Course[]; coursesError: s
             </div>
           </div>
         </Modal>
+      )}
+
+      {showResultsModal && resultsQuiz && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/60 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-[#1c2333] rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between px-7 py-5 border-b border-gray-100 dark:border-white/8 shrink-0">
+              <div>
+                <h2 className="text-base font-bold text-gray-900 dark:text-white">Hasil Kuis</h2>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{resultsQuiz.judul_kuis}</p>
+              </div>
+              <button onClick={() => setShowResultsModal(false)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-white/8 rounded-xl">
+                <X size={18} className="text-gray-400 dark:text-gray-500" />
+              </button>
+            </div>
+
+            {resultsLoading ? (
+              <div className="flex items-center justify-center py-16">
+                <Loader2 size={24} className="animate-spin text-gray-400 dark:text-gray-500" />
+              </div>
+            ) : !results || results.total_peserta === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 text-gray-400 dark:text-gray-500">
+                <Users size={32} className="mb-3 opacity-40" />
+                <p className="text-sm font-semibold">Belum ada peserta yang mengerjakan</p>
+              </div>
+            ) : (
+              <div className="overflow-y-auto flex-1">
+                {/* Summary */}
+                <div className="flex gap-4 px-7 py-4 border-b border-gray-50 dark:border-white/6">
+                  <div className="flex-1 bg-red-50 dark:bg-red-900/20 rounded-2xl px-5 py-3 text-center">
+                    <p className="text-2xl font-bold text-red-600 dark:text-red-400">{results.avg_score}</p>
+                    <p className="text-xs text-red-600/70 dark:text-red-400/70 mt-0.5">Rata-rata Skor</p>
+                  </div>
+                  <div className="flex-1 bg-gray-50 dark:bg-white/5 rounded-2xl px-5 py-3 text-center">
+                    <p className="text-2xl font-bold text-gray-700 dark:text-gray-200">{results.total_peserta}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Peserta Selesai</p>
+                  </div>
+                </div>
+
+                {/* Attempt list */}
+                <div className="px-7 py-4 space-y-3">
+                  {results.data.map((attempt) => (
+                    <div key={attempt.id_attempt} className="border border-gray-100 dark:border-white/8 rounded-2xl overflow-hidden">
+                      <button
+                        onClick={() => setExpandedAttempt(expandedAttempt === attempt.id_attempt ? null : attempt.id_attempt)}
+                        className="w-full flex items-center gap-4 px-5 py-3.5 hover:bg-gray-50 dark:hover:bg-white/3 transition-colors text-left">
+                        <div className="w-9 h-9 rounded-xl bg-gray-100 dark:bg-white/8 flex items-center justify-center shrink-0">
+                          <Users size={15} className="text-gray-400 dark:text-gray-500" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-sm text-gray-800 dark:text-gray-100">{attempt.peserta}</p>
+                          <p className="text-xs text-gray-400 dark:text-gray-500">
+                            {attempt.waktu_selesai ? new Date(attempt.waktu_selesai).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '-'}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className={`text-sm font-bold px-3 py-1 rounded-xl ${attempt.skor >= 70 ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400' : 'bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400'}`}>
+                            {attempt.skor ?? 0}
+                          </span>
+                          {expandedAttempt === attempt.id_attempt ? <ChevronDown size={15} className="text-gray-400" /> : <ChevronRight size={15} className="text-gray-400" />}
+                        </div>
+                      </button>
+
+                      {expandedAttempt === attempt.id_attempt && (
+                        <div className="border-t border-gray-50 dark:border-white/6 bg-gray-50/60 dark:bg-white/2 px-5 py-4 space-y-4">
+                          {/* Pilihan Ganda */}
+                          {attempt.jawaban_pg.length > 0 && (
+                            <div>
+                              <p className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-2">Pilihan Ganda</p>
+                              <div className="space-y-2">
+                                {attempt.jawaban_pg.map((pg, i) => (
+                                  <div key={i} className="bg-white dark:bg-[#161b22] rounded-xl border border-gray-100 dark:border-white/8 p-3">
+                                    <p className="text-xs font-medium text-gray-700 dark:text-gray-200 mb-2">{i + 1}. {pg.pertanyaan}</p>
+                                    <div className="flex items-center gap-2 text-xs">
+                                      {pg.benar
+                                        ? <CheckCircle2 size={13} className="text-emerald-500 shrink-0" />
+                                        : <XCircle size={13} className="text-red-400 shrink-0" />}
+                                      <span className={pg.benar ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}>
+                                        {pg.jawaban_dipilih ?? '(tidak dijawab)'}
+                                      </span>
+                                      {!pg.benar && (
+                                        <span className="text-gray-400 dark:text-gray-500 ml-2">
+                                          Benar: <span className="text-emerald-600 dark:text-emerald-400 font-medium">{pg.jawaban_benar}</span>
+                                        </span>
+                                      )}
+                                      <span className="ml-auto text-gray-400 dark:text-gray-500">{pg.bobot_nilai} poin</span>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Essay */}
+                          {attempt.jawaban_essay.length > 0 && (
+                            <div>
+                              <p className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-2">Essay</p>
+                              <div className="space-y-3">
+                                {attempt.jawaban_essay.map((essay) => (
+                                  <div key={essay.id_jawaban} className="bg-white dark:bg-[#161b22] rounded-xl border border-gray-100 dark:border-white/8 p-3 space-y-2">
+                                    <p className="text-xs font-medium text-gray-700 dark:text-gray-200">{essay.pertanyaan}</p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-white/4 rounded-lg px-3 py-2 whitespace-pre-wrap">{essay.jawaban_text || <span className="italic">(kosong)</span>}</p>
+                                    <div className="flex items-center gap-3">
+                                      <span className="text-xs text-gray-400 dark:text-gray-500">Nilai (maks {essay.bobot_nilai}):</span>
+                                      <input
+                                        type="number" min={0} max={essay.bobot_nilai}
+                                        defaultValue={essay.skor ?? 0}
+                                        onChange={(e) => setEssayScores((prev) => ({
+                                          ...prev,
+                                          [attempt.id_attempt]: { ...(prev[attempt.id_attempt] ?? {}), [essay.id_jawaban]: Number(e.target.value) },
+                                        }))}
+                                        className="w-16 text-xs text-center border border-gray-200 dark:border-white/10 rounded-lg px-2 py-1 bg-white dark:bg-white/6 text-gray-800 dark:text-gray-100 focus:outline-none focus:border-red-400" />
+                                      {essay.skor !== null && <span className="text-xs text-emerald-500 font-semibold">Tersimpan: {essay.skor}</span>}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                              <button
+                                onClick={() => handleGradeEssay(attempt.id_attempt)}
+                                disabled={gradingAttempt === attempt.id_attempt}
+                                className="mt-3 flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-60 text-white text-xs font-semibold rounded-xl transition-colors">
+                                {gradingAttempt === attempt.id_attempt ? <Loader2 size={13} className="animate-spin" /> : <Award size={13} />}
+                                Simpan Nilai Essay
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       )}
 
       {showQModal && (

@@ -198,11 +198,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/trainer/quizzes/{id}/questions',[TrainerQuizController::class, 'storeQuestion']);
     Route::put('/trainer/questions/{id}',         [TrainerQuizController::class, 'updateQuestion']);
     Route::delete('/trainer/questions/{id}',      [TrainerQuizController::class, 'destroyQuestion']);
+    Route::get('/trainer/quizzes/{id}/results',                         [TrainerQuizController::class, 'results']);
+    Route::patch('/trainer/quizzes/attempts/{attemptId}/grade-essay',   [TrainerQuizController::class, 'gradeEssay']);
 
     // Materials (nested under course)
     Route::get('/trainer/courses/{id}/materials', [TrainerMaterialController::class, 'index']);
     Route::post('/trainer/materials',             [TrainerMaterialController::class, 'store']);
     Route::put('/trainer/materials/{id}',         [TrainerMaterialController::class, 'update']);
+    Route::post('/trainer/materials/{id}',        [TrainerMaterialController::class, 'update']); // method spoofing untuk FormData upload
     Route::delete('/trainer/materials/{id}',      [TrainerMaterialController::class, 'destroy']);
 
     // Progress peserta

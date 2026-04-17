@@ -8,6 +8,9 @@ use App\Models\Trainer\Quiz;
 use App\Models\Trainer\Question;
 use App\Models\Trainer\Choice;
 use App\Models\Trainer\Course;
+use App\Models\AttemptKuis;
+use App\Models\JawabanKuis;
+use App\Models\Pertanyaan;
 
 class QuizController extends Controller
 {
@@ -213,5 +216,88 @@ class QuizController extends Controller
         $question->delete();
 
         return response()->json(['message' => 'Pertanyaan berhasil dihapus']);
+    }
+
+    // HASIL KUIS — daftar attempt peserta beserta jawaban
+    public function results(Request $request, $id)
+    {
+        $quiz   = Quiz::findOrFail($id);
+        $course = Course::findOrFail($quiz->id_kursus);
+
+        if ($course->id_trainer !== $request->user()->id_pengguna) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $attempts = AttemptKuis::with(['pengguna', 'jawabanKuis.pertanyaan.pilihanJawaban', 'jawabanKuis.pilihan'])
+            ->where('id_kuis', $id)
+            ->where('status', 'selesai')
+            ->get();
+
+        $avgScore = $attempts->avg('skor') ?? 0;
+
+        return response()->json([
+            'avg_score'     => round($avgScore, 1),
+            'total_peserta' => $attempts->count(),
+            'data'          => $attempts->map(fn($a) => [
+                'id_attempt'    => $a->id_attempt,
+                'peserta'       => $a->pengguna->nama ?? null,
+                'skor'          => $a->skor,
+                'waktu_mulai'   => $a->waktu_mulai,
+                'waktu_selesai' => $a->waktu_selesai,
+                'has_essay'     => $a->jawabanKuis->contains(fn($j) => $j->pertanyaan?->tipe === 'essay'),
+                'jawaban_essay' => $a->jawabanKuis
+                    ->filter(fn($j) => $j->pertanyaan?->tipe === 'essay')
+                    ->map(fn($j) => [
+                        'id_jawaban'   => $j->id_jawaban,
+                        'pertanyaan'   => $j->pertanyaan?->pertanyaan,
+                        'bobot_nilai'  => $j->pertanyaan?->bobot_nilai,
+                        'jawaban_text' => $j->jawaban_text,
+                        'skor'         => $j->skor,
+                    ])->values(),
+                'jawaban_pg' => $a->jawabanKuis
+                    ->filter(fn($j) => $j->pertanyaan?->tipe === 'pilihan_ganda')
+                    ->map(fn($j) => [
+                        'pertanyaan'      => $j->pertanyaan?->pertanyaan,
+                        'bobot_nilai'     => $j->pertanyaan?->bobot_nilai,
+                        'jawaban_dipilih' => $j->pilihan?->teks_jawaban,
+                        'benar'           => $j->skor > 0 || (bool)($j->pilihan?->benar),
+                        'jawaban_benar'   => $j->pertanyaan?->pilihanJawaban->firstWhere('benar', true)?->teks_jawaban,
+                    ])->values(),
+            ]),
+        ]);
+    }
+
+    // NILAI ESSAY oleh trainer
+    public function gradeEssay(Request $request, $attemptId)
+    {
+        $request->validate([
+            'scores'   => 'required|array',
+            'scores.*' => 'required|integer|min:0',
+        ]);
+
+        $attempt = AttemptKuis::findOrFail($attemptId);
+        $quiz    = Quiz::findOrFail($attempt->id_kuis);
+        $course  = Course::findOrFail($quiz->id_kursus);
+
+        if ($course->id_trainer !== $request->user()->id_pengguna) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        foreach ($request->scores as $jawabanId => $skor) {
+            $jawaban = JawabanKuis::where('id_jawaban', $jawabanId)
+                ->where('id_attempt', $attemptId)
+                ->first();
+
+            if ($jawaban) {
+                $pertanyaan = Pertanyaan::find($jawaban->id_pertanyaan);
+                $maxSkor    = $pertanyaan ? $pertanyaan->bobot_nilai : 100;
+                $jawaban->update(['skor' => min($skor, $maxSkor)]);
+            }
+        }
+
+        $totalSkor = JawabanKuis::where('id_attempt', $attemptId)->sum('skor');
+        $attempt->update(['skor' => $totalSkor]);
+
+        return response()->json(['message' => 'Penilaian essay berhasil.', 'skor_total' => $totalSkor]);
     }
 }

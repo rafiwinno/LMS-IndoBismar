@@ -105,17 +105,28 @@ export default function Materials() {
     setLoading(true);
     try {
       if (editTarget) {
-        if (form.tipe_materi === 'video' && !form.link_video.trim()) {
-          setError('Link video wajib diisi');
-          setLoading(false);
-          return;
+        if (form.tipe_materi === 'video') {
+          if (!form.link_video.trim()) { setError('Link video wajib diisi'); setLoading(false); return; }
+          await updateMaterial(editTarget.id_materi, {
+            judul_materi: form.judul_materi,
+            tipe_materi:  form.tipe_materi,
+            urutan:       form.urutan,
+            link_video:   form.link_video,
+          });
+        } else if (form.file_materi) {
+          const fd = new FormData();
+          fd.append('judul_materi', form.judul_materi);
+          fd.append('tipe_materi',  form.tipe_materi);
+          fd.append('urutan',       String(form.urutan));
+          fd.append('file_materi',  form.file_materi);
+          await updateMaterial(editTarget.id_materi, fd);
+        } else {
+          await updateMaterial(editTarget.id_materi, {
+            judul_materi: form.judul_materi,
+            tipe_materi:  form.tipe_materi,
+            urutan:       form.urutan,
+          });
         }
-        await updateMaterial(editTarget.id_materi, {
-          judul_materi: form.judul_materi,
-          tipe_materi:  form.tipe_materi,
-          urutan:       form.urutan,
-          ...(form.tipe_materi === 'video' ? { link_video: form.link_video } : {}),
-        });
       } else {
         const fd = new FormData();
         fd.append('id_kursus',    String(courseId));
@@ -376,6 +387,27 @@ export default function Materials() {
                   placeholder="https://youtube.com/..."
                   className={inputCls}
                 />
+              </div>
+            )}
+
+            {/* Saat EDIT PDF/DOKUMEN: tampilkan opsi ganti file */}
+            {editTarget && form.tipe_materi !== 'video' && (
+              <div>
+                <label className={labelCls}>
+                  Ganti File ({form.tipe_materi === 'pdf' ? 'PDF' : 'DOC/DOCX'}) — opsional
+                </label>
+                {editTarget.file_materi && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1.5 truncate">
+                    File saat ini: {editTarget.file_materi.split('/').pop()}
+                  </p>
+                )}
+                <input
+                  type="file"
+                  accept={form.tipe_materi === 'pdf' ? '.pdf' : '.doc,.docx'}
+                  onChange={(e) => setForm({ ...form, file_materi: e.target.files?.[0] ?? null })}
+                  className="w-full text-sm text-gray-500 dark:text-gray-400 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-red-50 file:text-red-700 hover:file:bg-red-100"
+                />
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Kosongkan jika tidak ingin mengganti file</p>
               </div>
             )}
             {error && (
