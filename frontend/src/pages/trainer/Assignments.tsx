@@ -1,13 +1,13 @@
 // FILE: src/pages/trainer/Assignments.tsx
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from '../../lib/toast';
 import {
   Plus, Pencil, Trash2, X, ChevronDown, ChevronRight,
   Users, Star, Loader2, AlertCircle, Clock, Award,
   BookOpen, FileCheck, HelpCircle, CheckCircle2, Circle,
-  BarChart2, XCircle
+  BarChart2, XCircle, Check
 } from 'lucide-react';
 import api from '../../api/axiosInstance';
 
@@ -76,6 +76,65 @@ function EmptyState({ icon: Icon, message, sub }: { icon: any; message: string; 
   );
 }
 
+function SkeletonAssignmentCard() {
+  return (
+    <div className="bg-white dark:bg-[#161b22] rounded-2xl border border-gray-100 dark:border-white/8 overflow-hidden animate-pulse border-l-[3px] border-l-gray-200 dark:border-l-white/8">
+      <div className="flex items-center gap-4 px-5 py-4">
+        <div className="w-11 h-11 rounded-2xl bg-gray-100 dark:bg-white/8 shrink-0" />
+        <div className="flex-1 space-y-2">
+          <div className="h-4 bg-gray-100 dark:bg-white/8 rounded-lg w-2/5" />
+          <div className="flex gap-3">
+            <div className="h-3 bg-gray-100 dark:bg-white/6 rounded w-24" />
+            <div className="h-3 bg-gray-100 dark:bg-white/6 rounded w-16" />
+          </div>
+        </div>
+        <div className="flex items-center gap-1 shrink-0">
+          <div className="w-28 h-8 bg-gray-100 dark:bg-white/6 rounded-xl" />
+          <div className="w-8 h-8 bg-gray-100 dark:bg-white/6 rounded-xl" />
+          <div className="w-8 h-8 bg-gray-100 dark:bg-white/6 rounded-xl" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SkeletonQuizCard() {
+  return (
+    <div className="bg-white dark:bg-[#161b22] rounded-2xl border border-gray-100 dark:border-white/8 overflow-hidden animate-pulse border-l-[3px] border-l-gray-200 dark:border-l-white/8">
+      <div className="flex items-center gap-4 px-5 py-4">
+        <div className="w-11 h-11 rounded-2xl bg-gray-100 dark:bg-white/8 shrink-0" />
+        <div className="flex-1 space-y-2">
+          <div className="h-4 bg-gray-100 dark:bg-white/8 rounded-lg w-1/3" />
+          <div className="flex gap-3">
+            <div className="h-3 bg-gray-100 dark:bg-white/6 rounded w-16" />
+            <div className="h-3 bg-gray-100 dark:bg-white/6 rounded w-20" />
+          </div>
+        </div>
+        <div className="flex items-center gap-1 shrink-0">
+          <div className="w-16 h-8 bg-gray-100 dark:bg-white/6 rounded-xl" />
+          <div className="w-16 h-8 bg-gray-100 dark:bg-white/6 rounded-xl" />
+          <div className="w-8 h-8 bg-gray-100 dark:bg-white/6 rounded-xl" />
+          <div className="w-8 h-8 bg-gray-100 dark:bg-white/6 rounded-xl" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SkeletonSubmissionRow() {
+  return (
+    <div className="flex items-center gap-3 bg-white dark:bg-[#161b22] rounded-xl px-4 py-3 border border-gray-100 dark:border-white/8 animate-pulse">
+      <div className="w-9 h-9 rounded-full bg-gray-100 dark:bg-white/8 shrink-0" />
+      <div className="flex-1 space-y-1.5">
+        <div className="h-3.5 bg-gray-100 dark:bg-white/8 rounded w-1/3" />
+        <div className="h-3 bg-gray-100 dark:bg-white/6 rounded w-1/5" />
+      </div>
+      <div className="w-16 h-7 bg-gray-100 dark:bg-white/6 rounded-full" />
+      <div className="w-14 h-7 bg-gray-100 dark:bg-white/6 rounded-xl" />
+    </div>
+  );
+}
+
 function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode; }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/60 backdrop-blur-sm p-4">
@@ -104,6 +163,97 @@ function Field({ label, children }: { label: string; children: React.ReactNode; 
 const inputCls = "w-full px-4 py-3 bg-gray-50 dark:bg-[#161b22] border border-gray-200 dark:border-white/10 rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all";
 const btnPrimary = "flex-1 py-3 bg-red-600 hover:bg-red-700 disabled:bg-red-400 disabled:text-white/70 text-white text-sm font-semibold rounded-xl transition-colors";
 const btnSecondary = "flex-1 py-3 border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 text-sm font-semibold rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 transition-colors";
+
+const questionTypeOptions: Array<{
+  value: 'pilihan_ganda' | 'essay';
+  label: string;
+  icon: React.ReactNode;
+  bg: string;
+  text: string;
+}> = [
+  { value: 'pilihan_ganda', label: 'Pilihan Ganda', icon: <Circle      size={15} />, bg: 'bg-red-50 dark:bg-red-900/20',    text: 'text-red-600 dark:text-red-400'    },
+  { value: 'essay',         label: 'Essay',         icon: <BookOpen    size={15} />, bg: 'bg-violet-50 dark:bg-violet-900/20', text: 'text-violet-600 dark:text-violet-400' },
+];
+
+function QuestionTypeSelect({
+  value,
+  onChange,
+}: {
+  value: 'pilihan_ganda' | 'essay';
+  onChange: (v: 'pilihan_ganda' | 'essay') => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const current = questionTypeOptions.find((o) => o.value === value)!;
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className={`${inputCls} flex items-center gap-2.5`}
+      >
+        <span className={`flex items-center justify-center w-6 h-6 rounded-lg shrink-0 ${current.bg} ${current.text}`}>
+          {current.icon}
+        </span>
+        <span className={`font-medium ${current.text}`}>{current.label}</span>
+        <ChevronDown
+          size={15}
+          className={`ml-auto text-gray-400 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+        />
+      </button>
+
+      {open && (
+        <div className="absolute top-full left-0 right-0 mt-1.5 z-50 bg-white dark:bg-[#1c2333] border border-gray-200 dark:border-white/10 rounded-xl shadow-xl overflow-hidden">
+          {questionTypeOptions.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => { onChange(opt.value); setOpen(false); }}
+              className={`w-full flex items-center gap-2.5 px-4 py-3 text-sm transition-colors
+                ${value === opt.value ? 'bg-gray-50 dark:bg-white/6' : 'hover:bg-gray-50 dark:hover:bg-white/5'}`}
+            >
+              <span className={`flex items-center justify-center w-6 h-6 rounded-lg shrink-0 ${opt.bg} ${opt.text}`}>
+                {opt.icon}
+              </span>
+              <span className={`font-medium ${value === opt.value ? opt.text : 'text-gray-700 dark:text-gray-300'}`}>
+                {opt.label}
+              </span>
+              {value === opt.value && <Check size={14} className={`ml-auto ${opt.text}`} />}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DateTimeInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const datePart = value.slice(0, 10);
+  const timePart = value.length >= 16 ? value.slice(11, 16) : '';
+
+  const handleDate = (d: string) => onChange(d ? `${d}T${timePart || '00:00'}` : '');
+  const handleTime = (t: string) => { if (datePart) onChange(`${datePart}T${t}`); };
+
+  const subInput = 'flex-1 min-w-0 bg-transparent border-none outline-none text-sm text-gray-900 dark:text-white accent-red-600 dark:[color-scheme:dark]';
+
+  return (
+    <div className="flex items-center gap-1 w-full px-3 py-2.5 border border-gray-200 dark:border-white/10 rounded-xl bg-gray-50 dark:bg-[#161b22] focus-within:ring-2 focus-within:ring-red-500 focus-within:border-transparent transition-all">
+      <input type="date" value={datePart} onChange={(e) => handleDate(e.target.value)} className={subInput} />
+      <span className="text-gray-300 dark:text-gray-600 shrink-0 select-none">·</span>
+      <input type="time" value={timePart} onChange={(e) => handleTime(e.target.value)} className={`${subInput} w-24 shrink-0`} />
+    </div>
+  );
+}
 
 export default function TrainerAssignments() {
   const [searchParams] = useSearchParams();
@@ -159,6 +309,8 @@ function TugasTab({ courses, coursesError, initialCourseId }: { courses: Course[
   const [fileTugas, setFileTugas] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [assignmentsLoading, setAssignmentsLoading] = useState(false);
+  const [submissionsLoading, setSubmissionsLoading] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -170,10 +322,12 @@ function TugasTab({ courses, coursesError, initialCourseId }: { courses: Course[
 
   useEffect(() => {
     if (!selectedCourse) return;
+    setAssignmentsLoading(true);
+    setExpandedId(null);
     api.get(`/trainer/courses/${selectedCourse}/assignments`)
       .then((res) => setAssignments(res.data.data ?? []))
-      .catch(() => setAssignments([]));
-    setExpandedId(null);
+      .catch(() => setAssignments([]))
+      .finally(() => setAssignmentsLoading(false));
   }, [selectedCourse]);
 
   const reload = async () => {
@@ -186,8 +340,11 @@ function TugasTab({ courses, coursesError, initialCourseId }: { courses: Course[
   const loadSubmissions = async (id: number) => {
     if (expandedId === id) { setExpandedId(null); return; }
     setExpandedId(id);
+    setSubmissions([]);
+    setSubmissionsLoading(true);
     try { const res = await api.get(`/trainer/assignments/${id}/submissions`); setSubmissions(res.data.data ?? []); }
     catch { setSubmissions([]); toast.error('Gagal memuat data pengumpulan.'); }
+    finally { setSubmissionsLoading(false); }
   };
 
   const handleSave = async () => {
@@ -291,7 +448,11 @@ function TugasTab({ courses, coursesError, initialCourseId }: { courses: Course[
         </div>
       )}
 
-      {assignments.length === 0 ? (
+      {assignmentsLoading ? (
+        <div className="space-y-3">
+          {Array.from({ length: 3 }).map((_, i) => <SkeletonAssignmentCard key={i} />)}
+        </div>
+      ) : assignments.length === 0 ? (
         <div className="bg-white dark:bg-[#161b22] rounded-3xl border border-gray-100 dark:border-white/8">
           <EmptyState icon={FileCheck} message="Belum ada tugas" sub="Pilih course lalu buat tugas pertama" />
         </div>
@@ -345,8 +506,14 @@ function TugasTab({ courses, coursesError, initialCourseId }: { courses: Course[
 
                 {expandedId === a.id_tugas && (
                   <div className="border-t border-gray-50 dark:border-white/6 bg-gray-50/50 dark:bg-white/2 px-5 py-4">
-                    <p className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3">Pengumpulan · {submissions.length} peserta</p>
-                    {submissions.length === 0 ? (
+                    <p className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3">
+                      Pengumpulan{!submissionsLoading && ` · ${submissions.length} peserta`}
+                    </p>
+                    {submissionsLoading ? (
+                      <div className="space-y-2">
+                        {Array.from({ length: 3 }).map((_, i) => <SkeletonSubmissionRow key={i} />)}
+                      </div>
+                    ) : submissions.length === 0 ? (
                       <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-8">Belum ada yang mengumpulkan.</p>
                     ) : (
                       <div className="space-y-2">
@@ -413,7 +580,7 @@ function TugasTab({ courses, coursesError, initialCourseId }: { courses: Course[
             </Field>
             <div className="grid grid-cols-2 gap-3">
               <Field label="Deadline">
-                <input type="datetime-local" value={form.deadline} onChange={(e) => setForm({ ...form, deadline: e.target.value })} className={inputCls} />
+                <DateTimeInput value={form.deadline} onChange={(v) => setForm({ ...form, deadline: v })} />
               </Field>
               <Field label="Nilai Maks">
                 <input type="number" value={form.nilai_maksimal} min={1} max={1000} onChange={(e) => setForm({ ...form, nilai_maksimal: Number(e.target.value) })} className={inputCls} />
@@ -464,6 +631,7 @@ function KuisTab({ courses, coursesError, initialCourseId }: { courses: Course[]
   });
   const [loading, setLoading] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [quizzesLoading, setQuizzesLoading] = useState(false);
   const [questionsLoading, setQuestionsLoading] = useState(false);
   const [error, setError] = useState('');
   const [showResultsModal, setShowResultsModal] = useState(false);
@@ -483,10 +651,13 @@ function KuisTab({ courses, coursesError, initialCourseId }: { courses: Course[]
 
   useEffect(() => {
     if (!selectedCourse) return;
+    setQuizzesLoading(true);
+    setSelectedQuiz(null);
+    setQuestions([]);
     api.get(`/trainer/courses/${selectedCourse}/quizzes`)
       .then((res) => setQuizzes(res.data.data ?? []))
-      .catch(() => setQuizzes([]));
-    setSelectedQuiz(null); setQuestions([]);
+      .catch(() => setQuizzes([]))
+      .finally(() => setQuizzesLoading(false));
   }, [selectedCourse]);
 
   const loadQuestions = async (quiz: Quiz) => {
@@ -602,6 +773,7 @@ function KuisTab({ courses, coursesError, initialCourseId }: { courses: Course[]
 
   const handleGradeEssay = async (attemptId: number) => {
     const scores = essayScores[attemptId] ?? {};
+    if (Object.keys(scores).length === 0) { toast.error('Belum ada nilai yang diisi.'); return; }
     setGradingAttempt(attemptId);
     try {
       await api.patch(`/trainer/quizzes/attempts/${attemptId}/grade-essay`, { scores });
@@ -613,6 +785,21 @@ function KuisTab({ courses, coursesError, initialCourseId }: { courses: Course[]
       toast.error('Gagal menyimpan nilai.');
     } finally {
       setGradingAttempt(null);
+    }
+  };
+
+  const toggleAttempt = (attempt: QuizAttempt) => {
+    if (expandedAttempt === attempt.id_attempt) {
+      setExpandedAttempt(null);
+    } else {
+      setExpandedAttempt(attempt.id_attempt);
+      // Pre-populate essay scores dari data yang sudah tersimpan di DB
+      setEssayScores((prev) => {
+        if (prev[attempt.id_attempt] !== undefined) return prev;
+        const init: Record<number, number> = {};
+        attempt.jawaban_essay.forEach((e) => { init[e.id_jawaban] = e.skor ?? 0; });
+        return { ...prev, [attempt.id_attempt]: init };
+      });
     }
   };
 
@@ -633,7 +820,11 @@ function KuisTab({ courses, coursesError, initialCourseId }: { courses: Course[]
         </button>
       </div>
 
-      {quizzes.length === 0 ? (
+      {quizzesLoading ? (
+        <div className="space-y-3">
+          {Array.from({ length: 3 }).map((_, i) => <SkeletonQuizCard key={i} />)}
+        </div>
+      ) : quizzes.length === 0 ? (
         <div className="bg-white dark:bg-[#161b22] rounded-3xl border border-gray-100 dark:border-white/8">
           <EmptyState icon={HelpCircle} message="Belum ada kuis" sub="Buat kuis pertama untuk course ini" />
         </div>
@@ -739,10 +930,10 @@ function KuisTab({ courses, coursesError, initialCourseId }: { courses: Course[]
             </Field>
             <div className="grid grid-cols-2 gap-3">
               <Field label="Waktu Mulai">
-                <input type="datetime-local" value={quizForm.waktu_mulai} onChange={(e) => setQuizForm({ ...quizForm, waktu_mulai: e.target.value })} className={inputCls} />
+                <DateTimeInput value={quizForm.waktu_mulai} onChange={(v) => setQuizForm({ ...quizForm, waktu_mulai: v })} />
               </Field>
               <Field label="Waktu Selesai">
-                <input type="datetime-local" value={quizForm.waktu_selesai} onChange={(e) => setQuizForm({ ...quizForm, waktu_selesai: e.target.value })} className={inputCls} />
+                <DateTimeInput value={quizForm.waktu_selesai} onChange={(v) => setQuizForm({ ...quizForm, waktu_selesai: v })} />
               </Field>
             </div>
             {error && <p className="text-xs text-red-500 bg-red-50 dark:bg-red-900/20 px-4 py-2.5 rounded-xl">{error}</p>}
@@ -795,7 +986,7 @@ function KuisTab({ courses, coursesError, initialCourseId }: { courses: Course[]
                   {results.data.map((attempt) => (
                     <div key={attempt.id_attempt} className="border border-gray-100 dark:border-white/8 rounded-2xl overflow-hidden">
                       <button
-                        onClick={() => setExpandedAttempt(expandedAttempt === attempt.id_attempt ? null : attempt.id_attempt)}
+                        onClick={() => toggleAttempt(attempt)}
                         className="w-full flex items-center gap-4 px-5 py-3.5 hover:bg-gray-50 dark:hover:bg-white/3 transition-colors text-left">
                         <div className="w-9 h-9 rounded-xl bg-gray-100 dark:bg-white/8 flex items-center justify-center shrink-0">
                           <Users size={15} className="text-gray-400 dark:text-gray-500" />
@@ -806,7 +997,12 @@ function KuisTab({ courses, coursesError, initialCourseId }: { courses: Course[]
                             {attempt.waktu_selesai ? new Date(attempt.waktu_selesai).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '-'}
                           </p>
                         </div>
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2">
+                          {attempt.has_essay && attempt.jawaban_essay.some((e) => e.skor === null) && (
+                            <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 font-semibold flex items-center gap-1">
+                              <Clock size={10} />Perlu Dinilai
+                            </span>
+                          )}
                           <span className={`text-sm font-bold px-3 py-1 rounded-xl ${attempt.skor >= 70 ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400' : 'bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400'}`}>
                             {attempt.skor ?? 0}
                           </span>
@@ -857,13 +1053,16 @@ function KuisTab({ courses, coursesError, initialCourseId }: { courses: Course[]
                                       <span className="text-xs text-gray-400 dark:text-gray-500">Nilai (maks {essay.bobot_nilai}):</span>
                                       <input
                                         type="number" min={0} max={essay.bobot_nilai}
-                                        defaultValue={essay.skor ?? 0}
+                                        value={essayScores[attempt.id_attempt]?.[essay.id_jawaban] ?? essay.skor ?? 0}
                                         onChange={(e) => setEssayScores((prev) => ({
                                           ...prev,
                                           [attempt.id_attempt]: { ...(prev[attempt.id_attempt] ?? {}), [essay.id_jawaban]: Number(e.target.value) },
                                         }))}
                                         className="w-16 text-xs text-center border border-gray-200 dark:border-white/10 rounded-lg px-2 py-1 bg-white dark:bg-white/6 text-gray-800 dark:text-gray-100 focus:outline-none focus:border-red-400" />
-                                      {essay.skor !== null && <span className="text-xs text-emerald-500 font-semibold">Tersimpan: {essay.skor}</span>}
+                                      {essay.skor !== null
+                                        ? <span className="text-xs text-emerald-500 font-semibold flex items-center gap-1"><CheckCircle2 size={11} />Tersimpan: {essay.skor}</span>
+                                        : <span className="text-xs text-amber-500 font-semibold">Belum Dinilai</span>
+                                      }
                                     </div>
                                   </div>
                                 ))}
@@ -901,10 +1100,10 @@ function KuisTab({ courses, coursesError, initialCourseId }: { courses: Course[]
               </Field>
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Tipe">
-                  <select value={qForm.tipe} onChange={(e) => setQForm({ ...qForm, tipe: e.target.value as 'pilihan_ganda' | 'essay' })} className={inputCls}>
-                    <option value="pilihan_ganda">Pilihan Ganda</option>
-                    <option value="essay">Essay</option>
-                  </select>
+                  <QuestionTypeSelect
+                    value={qForm.tipe}
+                    onChange={(v) => setQForm({ ...qForm, tipe: v })}
+                  />
                 </Field>
                 <Field label="Bobot Nilai">
                   <input type="number" value={qForm.bobot_nilai} min={1} onChange={(e) => setQForm({ ...qForm, bobot_nilai: Number(e.target.value) })} className={inputCls} />

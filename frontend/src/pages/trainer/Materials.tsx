@@ -1,7 +1,7 @@
 import { useParams, Link } from 'react-router-dom';
 import { toast } from '../../lib/toast';
-import { useEffect, useState, useMemo } from 'react';
-import { Plus, Trash2, Pencil, FileText, Video, File, ArrowLeft, Loader2, ExternalLink, X as XIcon, ChevronLeft } from 'lucide-react';
+import { useEffect, useRef, useState, useMemo } from 'react';
+import { Plus, Trash2, Pencil, FileText, Video, File, ArrowLeft, Loader2, ExternalLink, X as XIcon, ChevronLeft, ChevronDown, Check } from 'lucide-react';
 import { getMaterials, createMaterial, updateMaterial, deleteMaterial } from '../../api/MaterialApi';
 import type { Material } from '../types/trainer';
 import Modal from '../../components/ui/Modal';
@@ -38,6 +38,84 @@ function getYouTubeId(url: string): string | null {
 
 const STORAGE_URL = (import.meta.env.VITE_API_URL as string ?? 'http://127.0.0.1:8000/api').replace('/api', '/storage');
 const labelCls = 'block text-sm font-medium text-gray-800 dark:text-gray-200 mb-1.5';
+
+const typeOptions: Array<{
+  value: 'pdf' | 'video' | 'dokumen';
+  label: string;
+  icon: React.ReactNode;
+  bg: string;
+  text: string;
+}> = [
+  { value: 'pdf',     label: 'PDF',     icon: <FileText size={15} />, bg: 'bg-red-500/10 dark:bg-red-500/15',     text: 'text-red-600 dark:text-red-400'     },
+  { value: 'video',   label: 'Video',   icon: <Video    size={15} />, bg: 'bg-purple-500/10 dark:bg-purple-500/15', text: 'text-purple-600 dark:text-purple-400' },
+  { value: 'dokumen', label: 'Dokumen', icon: <File     size={15} />, bg: 'bg-blue-500/10 dark:bg-blue-500/15',   text: 'text-blue-600 dark:text-blue-400'   },
+];
+
+function TypeSelect({
+  value,
+  onChange,
+}: {
+  value: 'pdf' | 'video' | 'dokumen';
+  onChange: (v: 'pdf' | 'video' | 'dokumen') => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const current = typeOptions.find((o) => o.value === value)!;
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="w-full flex items-center gap-2.5 px-3 py-2.5 border border-gray-200 dark:border-white/10 rounded-lg text-sm bg-white dark:bg-[#161b22] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
+      >
+        <span className={`flex items-center justify-center w-6 h-6 rounded-md shrink-0 ${current.bg} ${current.text}`}>
+          {current.icon}
+        </span>
+        <span className={`font-medium ${current.text}`}>{current.label}</span>
+        <ChevronDown
+          size={15}
+          className={`ml-auto text-gray-400 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+        />
+      </button>
+
+      {open && (
+        <div className="absolute top-full left-0 right-0 mt-1.5 z-50 bg-white dark:bg-[#1c2333] border border-gray-200 dark:border-white/10 rounded-xl shadow-xl overflow-hidden">
+          {typeOptions.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => { onChange(opt.value); setOpen(false); }}
+              className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-sm transition-colors
+                ${value === opt.value
+                  ? 'bg-gray-50 dark:bg-white/6'
+                  : 'hover:bg-gray-50 dark:hover:bg-white/5'}`}
+            >
+              <span className={`flex items-center justify-center w-6 h-6 rounded-md shrink-0 ${opt.bg} ${opt.text}`}>
+                {opt.icon}
+              </span>
+              <span className={`font-medium ${value === opt.value ? opt.text : 'text-gray-700 dark:text-gray-300'}`}>
+                {opt.label}
+              </span>
+              {value === opt.value && (
+                <Check size={14} className={`ml-auto ${opt.text}`} />
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function Materials() {
   const { id } = useParams<{ id: string }>();
@@ -329,15 +407,10 @@ export default function Materials() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className={labelCls}>Tipe</label>
-                <select
+                <TypeSelect
                   value={form.tipe_materi}
-                  onChange={(e) => setForm({ ...form, tipe_materi: e.target.value as 'pdf' | 'video' | 'dokumen' })}
-                  className={inputCls}
-                >
-                  <option value="pdf">PDF</option>
-                  <option value="video">Video</option>
-                  <option value="dokumen">Dokumen</option>
-                </select>
+                  onChange={(v) => setForm({ ...form, tipe_materi: v })}
+                />
               </div>
               <div>
                 <label className={labelCls}>Urutan</label>
