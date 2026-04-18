@@ -1,7 +1,7 @@
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Building2, LogOut,
-  Menu, X, Search, Sun, Moon, Bell,
+  Menu, X, Search, Sun, Moon,
 } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { authService } from '../../services/api';
@@ -204,7 +204,7 @@ function NavItem({ item, collapsed }: { item: typeof ALL_PAGES[0]; collapsed: bo
 
 // ─── Main Layout ──────────────────────────────────────────────────────────────
 export default function SuperAdminLayout() {
-  const [collapsed,  setCollapsed]  = useState(false);
+  const [collapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const [cmdOpen,    setCmdOpen]    = useState(false);
@@ -384,20 +384,22 @@ export default function SuperAdminLayout() {
           className="h-16 bg-topbar border-b border-theme flex items-center justify-between px-6 shrink-0 transition-colors duration-200"
           style={{ boxShadow: 'var(--shadow-topbar)' }}
         >
-          {/* Kiri: collapse / hamburger */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setCollapsed(c => !c)}
-              className="hidden lg:flex p-1.5 rounded-lg text-muted hover:text-secondary hover:bg-muted transition-colors"
-            >
-              <Menu size={18} />
-            </button>
+          {/* Kiri: nama halaman (desktop) / hamburger (mobile) */}
+          <div className="flex items-center gap-3">
+            {/* Mobile: hamburger */}
             <button
               onClick={() => setMobileOpen(true)}
               className="lg:hidden p-1.5 rounded-lg text-muted hover:text-secondary hover:bg-muted transition-colors"
             >
               <Menu size={18} />
             </button>
+
+            {/* Desktop: nama halaman */}
+            <div className="hidden lg:flex items-center gap-2">
+              <span className="text-[15px] font-semibold text-primary">
+                {BREADCRUMB[location.pathname] ?? 'Superadmin'}
+              </span>
+            </div>
           </div>
 
           {/* Kanan: Bell + divider + nama + role + avatar */}
