@@ -27,6 +27,18 @@ class SubmissionController extends Controller
         return response()->json(['data' => $submissions]);
     }
 
+    // JUMLAH PENGUMPULAN BELUM DINILAI
+    public function pendingCount(Request $request)
+    {
+        $trainerId = $request->user()->id_pengguna;
+
+        $count = Submission::whereNull('nilai')
+            ->whereHas('tugas.course', fn ($q) => $q->where('id_trainer', $trainerId))
+            ->count();
+
+        return response()->json(['pending_count' => $count]);
+    }
+
     // BERI NILAI & FEEDBACK
     public function grade(Request $request, $submissionId)
     {

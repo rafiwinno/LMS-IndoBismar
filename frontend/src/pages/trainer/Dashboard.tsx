@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react';
-import { BookOpen, FileText, Globe, Plus, ArrowRight, AlertCircle } from 'lucide-react';
+import { BookOpen, FileText, Globe, Plus, ArrowRight, AlertCircle, ClipboardCheck } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getCourses } from '../../api/courseApi';
+import API from '../../api/api';
 import { getUser } from '../types';
 import { Course } from '../../pages/types/trainer';
 
 export default function TrainerDashboard() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pendingCount, setPendingCount] = useState<number>(0);
   const [pageError, setPageError] = useState('');
   const user = getUser();
   const navigate = useNavigate();
@@ -17,6 +19,10 @@ export default function TrainerDashboard() {
       .then((res) => setCourses(res.data))
       .catch(() => setPageError('Gagal memuat data course. Coba refresh halaman.'))
       .finally(() => setLoading(false));
+
+    API.get('/trainer/submissions/pending-count')
+      .then((res) => setPendingCount(res.data.pending_count ?? 0))
+      .catch(() => {});
   }, []);
 
   const published = courses.filter((c) => c.status === 'publish').length;
@@ -52,9 +58,9 @@ export default function TrainerDashboard() {
       )}
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {loading ? (
-          [...Array(3)].map((_, i) => (
+          [...Array(4)].map((_, i) => (
             <div key={i} className="bg-white dark:bg-[#161b22] border border-gray-200 dark:border-white/8 rounded-xl p-5 flex items-center gap-4 animate-pulse">
               <div className="w-10 h-10 rounded-lg bg-gray-200 dark:bg-white/8 shrink-0" />
               <div className="space-y-2">
@@ -65,9 +71,10 @@ export default function TrainerDashboard() {
           ))
         ) : (
           [
-            { label: 'Total Course', value: courses.length, icon: BookOpen,  color: 'text-red-500',     bg: 'bg-red-500/10 dark:bg-red-500/10' },
-            { label: 'Published',    value: published,      icon: Globe,     color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-            { label: 'Draft',        value: draft,          icon: FileText,  color: 'text-amber-500',   bg: 'bg-amber-500/10' },
+            { label: 'Total Course',      value: courses.length, icon: BookOpen,       color: 'text-red-500',     bg: 'bg-red-500/10 dark:bg-red-500/10' },
+            { label: 'Published',         value: published,      icon: Globe,          color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+            { label: 'Draft',             value: draft,          icon: FileText,       color: 'text-amber-500',   bg: 'bg-amber-500/10' },
+            { label: 'Perlu Dinilai',     value: pendingCount,   icon: ClipboardCheck, color: 'text-purple-500',  bg: 'bg-purple-500/10' },
           ].map((s) => (
             <div
               key={s.label}

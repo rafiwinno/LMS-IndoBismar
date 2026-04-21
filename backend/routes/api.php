@@ -190,8 +190,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/trainer/assignments/{id}',       [TrainerAssignmentController::class, 'destroy']);
 
     // Submissions (trainer grades student submissions)
-    Route::get('/trainer/assignments/{id}/submissions', [TrainerSubmissionController::class, 'index']);
-    Route::put('/trainer/submissions/{id}/grade',       [TrainerSubmissionController::class, 'grade']);
+    Route::get('/trainer/submissions/pending-count',     [TrainerSubmissionController::class, 'pendingCount']);
+    Route::get('/trainer/assignments/{id}/submissions',  [TrainerSubmissionController::class, 'index']);
+    Route::put('/trainer/submissions/{id}/grade',        [TrainerSubmissionController::class, 'grade']);
 
     // Quizzes (nested under course)
     Route::get('/trainer/courses/{id}/quizzes',   [TrainerQuizController::class, 'index']);
