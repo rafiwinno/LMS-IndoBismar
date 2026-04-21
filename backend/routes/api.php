@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\User\KuisController;
 use App\Http\Controllers\Api\User\NilaiController;
 use App\Http\Controllers\Api\User\ProfileController;
 use App\Http\Controllers\Api\User\DocumentController;
+use App\Http\Controllers\Api\User\TugasController;
 
 
 // Test API
@@ -42,6 +43,11 @@ Route::middleware('auth:sanctum')->prefix('user')->group(function () {
     Route::get('/kuis',                            [KuisController::class, 'index']);
     Route::get('/kuis/{id_kuis}',                  [KuisController::class, 'show']);
     Route::post('/kuis/{id_kuis}/kerjakan',        [KuisController::class, 'kerjakan']);
+
+    // Tugas
+    Route::get('/tugas',                        [TugasController::class, 'index']);
+    Route::get('/tugas/{id_tugas}',             [TugasController::class, 'show']);
+    Route::post('/tugas/{id_tugas}/kumpul',     [TugasController::class, 'kumpul']);
 
     // Nilai & Progress
     Route::get('/nilai',               [NilaiController::class, 'index']);

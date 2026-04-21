@@ -68,10 +68,31 @@ class KursusController extends Controller
             )
             ->get();
 
+        $tugas = DB::table('tugas')
+            ->leftJoin('pengumpulan_tugas', function ($join) use ($id_pengguna) {
+                $join->on('pengumpulan_tugas.id_tugas', '=', 'tugas.id_tugas')
+                     ->where('pengumpulan_tugas.id_pengguna', '=', $id_pengguna);
+            })
+            ->where('tugas.id_kursus', $id_kursus)
+            ->select(
+                'tugas.id_tugas',
+                'tugas.judul_tugas',
+                'tugas.deskripsi',
+                'tugas.deadline',
+                'tugas.nilai_maksimal',
+                'tugas.file_tugas as file_soal',
+                'pengumpulan_tugas.id_pengumpulan',
+                'pengumpulan_tugas.nilai',
+                'pengumpulan_tugas.feedback',
+                DB::raw('CASE WHEN pengumpulan_tugas.id_pengumpulan IS NOT NULL THEN "sudah" ELSE "belum" END as status_pengumpulan')
+            )
+            ->get();
+
         return response()->json([
             'kursus' => $kursus,
             'materi' => $materiDenganProgress,
             'kuis'   => $kuis,
+            'tugas'  => $tugas,
         ]);
     }
 

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Award, TrendingUp, BookOpen, CheckCircle, Clock } from 'lucide-react';
+import { Award, TrendingUp, BookOpen, CheckCircle, Clock, ClipboardList } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import API from '../../api/api';
 import { GradesSkeleton } from '../../components/ui/Skeleton';
@@ -21,9 +21,19 @@ interface RiwayatKuis {
   status: string;
 }
 
+interface RiwayatTugas {
+  judul_tugas: string;
+  judul_kursus: string;
+  nilai_maksimal: number;
+  nilai: number | null;
+  feedback: string | null;
+  tanggal_kumpul: string;
+}
+
 export default function Grades() {
   const [nilaiPkl, setNilaiPkl] = useState<NilaiPkl | null>(null);
   const [riwayatKuis, setRiwayatKuis] = useState<RiwayatKuis[]>([]);
+  const [riwayatTugas, setRiwayatTugas] = useState<RiwayatTugas[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -31,6 +41,7 @@ export default function Grades() {
       .then(res => {
         setNilaiPkl(res.data.nilai_pkl);
         setRiwayatKuis(res.data.riwayat_kuis);
+        setRiwayatTugas(res.data.riwayat_tugas ?? []);
       })
       .catch(err => console.error(err))
       .finally(() => setLoading(false));
@@ -147,6 +158,62 @@ export default function Grades() {
                       <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">
                         {item.status}
                       </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Riwayat Tugas */}
+      <div className="bg-white dark:bg-[#161b27] rounded-2xl shadow-sm border border-gray-200 dark:border-white/8 overflow-hidden">
+        <div className="p-6 border-b border-gray-100 dark:border-white/8">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+            <ClipboardList size={20} className="text-red-500" />
+            Riwayat Tugas
+          </h2>
+        </div>
+        {riwayatTugas.length === 0 ? (
+          <div className="p-8 text-center text-gray-500 dark:text-gray-400">Belum ada tugas yang dikumpulkan.</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm text-gray-600 dark:text-gray-400">
+              <thead className="bg-gray-50 dark:bg-white/5 text-gray-700 dark:text-gray-300 font-semibold border-b border-gray-200 dark:border-white/8">
+                <tr>
+                  <th className="px-6 py-4">Nama Tugas</th>
+                  <th className="px-6 py-4">Kursus</th>
+                  <th className="px-6 py-4 text-center">Nilai</th>
+                  <th className="px-6 py-4">Tanggal Kumpul</th>
+                  <th className="px-6 py-4">Feedback</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 dark:divide-white/8">
+                {riwayatTugas.map((item, index) => (
+                  <tr key={index} className="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+                    <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">{item.judul_tugas}</td>
+                    <td className="px-6 py-4">{item.judul_kursus}</td>
+                    <td className="px-6 py-4 text-center">
+                      {item.nilai !== null ? (
+                        <span className={`text-lg font-bold ${item.nilai >= item.nilai_maksimal * 0.7 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                          {item.nilai}
+                          <span className="text-xs font-normal text-gray-400 dark:text-gray-500"> / {item.nilai_maksimal}</span>
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400">
+                          Menunggu
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400">
+                        <Clock size={14} />
+                        {new Date(item.tanggal_kumpul).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 max-w-xs text-gray-500 dark:text-gray-400">
+                      {item.feedback ?? <span className="text-gray-300 dark:text-gray-600">—</span>}
                     </td>
                   </tr>
                 ))}

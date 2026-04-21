@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
   PlayCircle, FileText, CheckCircle, Circle,
   ChevronLeft, ChevronDown, ChevronRight,
-  BookOpen, Award, Clock, AlertCircle
+  BookOpen, Award, Clock, AlertCircle, Upload, ClipboardList, Star
 } from 'lucide-react';
 import API from '../../api/api';
 
@@ -25,6 +25,19 @@ interface KuisItem {
   status_attempt: 'sudah' | 'belum';
 }
 
+interface TugasItem {
+  id_tugas: number;
+  judul_tugas: string;
+  deskripsi: string | null;
+  deadline: string;
+  nilai_maksimal: number;
+  file_soal: string | null;
+  id_pengumpulan: number | null;
+  nilai: number | null;
+  feedback: string | null;
+  status_pengumpulan: 'sudah' | 'belum';
+}
+
 interface Kursus {
   id_kursus: number;
   judul_kursus: string;
@@ -43,10 +56,14 @@ export default function CourseDetail() {
   const [kursus, setKursus] = useState<Kursus | null>(null);
   const [materi, setMateri] = useState<Materi[]>([]);
   const [kuisList, setKuisList] = useState<KuisItem[]>([]);
+  const [tugasList, setTugasList] = useState<TugasItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeMateri, setActiveMateri] = useState<Materi | null>(null);
   const [openBab, setOpenBab] = useState<Record<string, boolean>>({});
   const [markingDone, setMarkingDone] = useState(false);
+  const [uploadFiles, setUploadFiles] = useState<Record<number, File>>({});
+  const [uploading, setUploading] = useState<number | null>(null);
+  const [uploadMsg, setUploadMsg] = useState<{ id: number; type: 'success' | 'error'; text: string } | null>(null);
 
   const fetchData = () => {
     API.get(`/user/kursus/${id}`)
@@ -54,6 +71,7 @@ export default function CourseDetail() {
         setKursus(res.data.kursus);
         setMateri(res.data.materi);
         setKuisList(res.data.kuis ?? []);
+        setTugasList(res.data.tugas ?? []);
         const babKeys: Record<string, boolean> = {};
         res.data.materi.forEach((m: Materi) => {
           const key = m.sub_bab ?? 'Materi Lainnya';
@@ -89,6 +107,27 @@ export default function CourseDetail() {
       console.error(err);
     } finally {
       setMarkingDone(false);
+    }
+  };
+
+  const handleUploadTugas = async (id_tugas: number) => {
+    const file = uploadFiles[id_tugas];
+    if (!file) return;
+    setUploading(id_tugas);
+    setUploadMsg(null);
+    try {
+      const fd = new FormData();
+      fd.append('file_tugas', file);
+      await API.post(`/user/tugas/${id_tugas}/kumpul`, fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      setUploadMsg({ id: id_tugas, type: 'success', text: 'Tugas berhasil dikumpulkan!' });
+      setUploadFiles(prev => { const next = { ...prev }; delete next[id_tugas]; return next; });
+      fetchData();
+    } catch (err: any) {
+      setUploadMsg({ id: id_tugas, type: 'error', text: err.response?.data?.message || 'Gagal mengumpulkan tugas.' });
+    } finally {
+      setUploading(null);
     }
   };
 
@@ -345,6 +384,132 @@ export default function CourseDetail() {
                 )}
               </div>
             ))}
+          </div>
+        )}
+      </div>
+
+      {/* Section Tugas */}
+      <div className="bg-white dark:bg-[#161b27] rounded-2xl shadow-sm border border-gray-200 dark:border-white/8 overflow-hidden">
+        <div className="p-6 border-b border-gray-100 dark:border-white/8">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+            <ClipboardList size={20} className="text-red-500" />
+            Tugas
+          </h2>
+        </div>
+
+        {tugasList.length === 0 ? (
+          <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+            Belum ada tugas untuk kursus ini.
+          </div>
+        ) : (
+          <div className="divide-y divide-gray-100 dark:divide-white/8">
+            {tugasList.map(tugas => {
+              const isDeadlineLewat = tugas.deadline && new Date(tugas.deadline) < new Date();
+              const sudah = tugas.status_pengumpulan === 'sudah';
+              const fileSelected = uploadFiles[tugas.id_tugas];
+
+              return (
+                <div key={tugas.id_tugas} className="p-6 space-y-3">
+                  {/* Header tugas */}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-gray-900 dark:text-white">{tugas.judul_tugas}</p>
+                      {tugas.deskripsi && (
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{tugas.deskripsi}</p>
+                      )}
+                    </div>
+                    {sudah ? (
+                      <span className="shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">
+                        <CheckCircle size={12} /> Dikumpulkan
+                      </span>
+                    ) : isDeadlineLewat ? (
+                      <span className="shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-white/8 text-gray-500 dark:text-gray-400">
+                        <AlertCircle size={12} /> Terlambat
+                      </span>
+                    ) : (
+                      <span className="shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-rose-100 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400">
+                        <AlertCircle size={12} /> Belum
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Deadline & nilai maksimal */}
+                  <div className="flex items-center gap-4 text-xs text-gray-400 dark:text-gray-500">
+                    <span className={`flex items-center gap-1 ${isDeadlineLewat && !sudah ? 'text-rose-500 dark:text-rose-400' : ''}`}>
+                      <Clock size={12} />
+                      Deadline: {new Date(tugas.deadline).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                    <span>Nilai maks: {tugas.nilai_maksimal}</span>
+                    {tugas.file_soal && (
+                      <a
+                        href={`${import.meta.env.VITE_API_URL?.replace('/api', '')}/storage/${tugas.file_soal}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 text-blue-500 hover:underline"
+                      >
+                        <FileText size={12} /> Unduh Soal
+                      </a>
+                    )}
+                  </div>
+
+                  {/* Nilai & feedback jika sudah dinilai */}
+                  {sudah && tugas.nilai !== null && (
+                    <div className="flex items-center gap-3 p-3 bg-emerald-50 dark:bg-emerald-500/10 rounded-lg">
+                      <Star size={16} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+                      <div>
+                        <span className="text-sm font-bold text-emerald-700 dark:text-emerald-400">
+                          Nilai: {tugas.nilai} / {tugas.nilai_maksimal}
+                        </span>
+                        {tugas.feedback && (
+                          <p className="text-xs text-emerald-600 dark:text-emerald-500 mt-0.5">{tugas.feedback}</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {sudah && tugas.nilai === null && (
+                    <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 px-3 py-2 rounded-lg">
+                      Menunggu penilaian dari trainer.
+                    </p>
+                  )}
+
+                  {/* Form upload — hanya tampil jika belum dikumpulkan & deadline belum lewat */}
+                  {!sudah && !isDeadlineLewat && (
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <label className="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-indigo-300 dark:border-indigo-500/50 text-indigo-600 dark:text-indigo-400 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-colors">
+                        <Upload size={13} />
+                        {fileSelected ? fileSelected.name.slice(0, 20) + (fileSelected.name.length > 20 ? '...' : '') : 'Pilih File'}
+                        <input
+                          type="file"
+                          className="hidden"
+                          accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.txt"
+                          onChange={e => {
+                            const f = e.target.files?.[0];
+                            if (f) setUploadFiles(prev => ({ ...prev, [tugas.id_tugas]: f }));
+                            setUploadMsg(null);
+                          }}
+                        />
+                      </label>
+                      <button
+                        disabled={!fileSelected || uploading === tugas.id_tugas}
+                        onClick={() => handleUploadTugas(tugas.id_tugas)}
+                        className="px-3 py-1.5 text-xs font-medium bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50 transition-colors"
+                      >
+                        {uploading === tugas.id_tugas ? 'Mengirim...' : 'Kumpulkan'}
+                      </button>
+                      <span className="text-xs text-gray-400">PDF, DOC, XLS, PPT, ZIP, TXT — maks 50MB</span>
+                    </div>
+                  )}
+
+                  {/* Pesan upload per tugas */}
+                  {uploadMsg?.id === tugas.id_tugas && (
+                    <p className={`text-xs font-medium ${uploadMsg.type === 'success' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                      {uploadMsg.text}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

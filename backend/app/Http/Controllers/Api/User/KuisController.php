@@ -43,13 +43,11 @@ class KuisController extends Controller
     {
         $id_pengguna = $request->user()->id_pengguna;
 
-        // Cek apakah kuis ada
         $kuis = DB::table('kuis')->where('id_kuis', $id_kuis)->first();
         if (!$kuis) {
             return response()->json(['message' => 'Kuis tidak ditemukan'], 404);
         }
 
-        // Cek apakah sudah pernah mengerjakan
         $sudahKerjakan = DB::table('attempt_kuis')
             ->where('id_pengguna', $id_pengguna)
             ->where('id_kuis', $id_kuis)
@@ -59,39 +57,80 @@ class KuisController extends Controller
             return response()->json(['message' => 'Kamu sudah mengerjakan kuis ini'], 409);
         }
 
-        // Hitung nilai otomatis dari jawaban
-        // $request->jawaban = [['id_pertanyaan' => 1, 'id_pilihan' => 3], ...]
-        $jawaban = $request->jawaban ?? [];
-        $totalPertanyaan = DB::table('pertanyaan')->where('id_kuis', $id_kuis)->count();
-        $benar = 0;
+        $jawaban       = $request->jawaban ?? [];
+        $pertanyaanMap = DB::table('pertanyaan')
+            ->where('id_kuis', $id_kuis)
+            ->get()
+            ->keyBy('id_pertanyaan');
+
+        $totalPertanyaan = $pertanyaanMap->count();
+        $adaEssay        = false;
+        $benar           = 0;
+        $totalSkor       = 0;
+
+        // Gunakan bobot_nilai jika semua soal MC memiliki bobot
+        $totalBobot = $pertanyaanMap->where('tipe', 'pilihan_ganda')->sum('bobot_nilai');
+        $useBobot   = $totalBobot > 0;
 
         foreach ($jawaban as $item) {
-            $isBenar = DB::table('pilihan_jawaban')
-                ->where('id_pilihan', $item['id_pilihan'])
-                ->where('id_pertanyaan', $item['id_pertanyaan'])
-                ->where('benar', 1)
-                ->exists();
+            $p = $pertanyaanMap->get($item['id_pertanyaan'] ?? null);
+            if (!$p) continue;
 
-            if ($isBenar) $benar++;
+            if ($p->tipe === 'essay') {
+                $adaEssay = true;
+                continue;
+            }
+
+            if (!empty($item['id_pilihan'])) {
+                $isBenar = DB::table('pilihan_jawaban')
+                    ->where('id_pilihan', $item['id_pilihan'])
+                    ->where('id_pertanyaan', $item['id_pertanyaan'])
+                    ->where('benar', 1)
+                    ->exists();
+
+                if ($isBenar) {
+                    $benar++;
+                    $totalSkor += $useBobot ? ($p->bobot_nilai ?? 0) : 1;
+                }
+            }
         }
 
-        $nilai = $totalPertanyaan > 0 ? round(($benar / $totalPertanyaan) * 100, 2) : 0;
+        $totalMC = $pertanyaanMap->where('tipe', 'pilihan_ganda')->count();
+        if ($useBobot) {
+            $nilai = $totalBobot > 0 ? round(($totalSkor / $totalBobot) * 100, 2) : 0;
+        } else {
+            $nilai = $totalMC > 0 ? round(($benar / $totalMC) * 100, 2) : 0;
+        }
 
-        // Simpan attempt
         $id_attempt = DB::table('attempt_kuis')->insertGetId([
-            'id_pengguna'   => $id_pengguna,
-            'id_kuis'       => $id_kuis,
-            'skor'          => $nilai,
-            'waktu_mulai'   => now(),
-            'status'        => 'selesai',
+            'id_pengguna'  => $id_pengguna,
+            'id_kuis'      => $id_kuis,
+            'skor'         => $nilai,
+            'waktu_mulai'  => now(),
+            'status'       => 'selesai',
         ]);
 
-        // Simpan detail jawaban
         foreach ($jawaban as $item) {
+            $p = $pertanyaanMap->get($item['id_pertanyaan'] ?? null);
+            if (!$p) continue;
+
+            $skorItem = 0;
+            if ($p->tipe === 'pilihan_ganda' && !empty($item['id_pilihan'])) {
+                $pilihanBenar = DB::table('pilihan_jawaban')
+                    ->where('id_pilihan', $item['id_pilihan'])
+                    ->where('benar', 1)
+                    ->exists();
+                if ($pilihanBenar) {
+                    $skorItem = $useBobot ? ($p->bobot_nilai ?? 0) : 1;
+                }
+            }
+
             DB::table('jawaban_kuis')->insert([
-                'id_attempt'     => $id_attempt,
-                'id_pertanyaan'  => $item['id_pertanyaan'],
-                'id_pilihan'     => $item['id_pilihan'],
+                'id_attempt'    => $id_attempt,
+                'id_pertanyaan' => $item['id_pertanyaan'],
+                'id_pilihan'    => $p->tipe === 'pilihan_ganda' ? ($item['id_pilihan'] ?? null) : null,
+                'jawaban_text'  => $p->tipe === 'essay' ? ($item['jawaban_text'] ?? null) : null,
+                'skor'          => $skorItem,
             ]);
         }
 
@@ -100,6 +139,7 @@ class KuisController extends Controller
             'nilai'     => $nilai,
             'benar'     => $benar,
             'total'     => $totalPertanyaan,
+            'ada_essay' => $adaEssay,
         ], 201);
     }
 
