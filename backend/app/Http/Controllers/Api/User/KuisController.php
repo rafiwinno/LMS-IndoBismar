@@ -13,12 +13,17 @@ class KuisController extends Controller
     {
         $id_pengguna = $request->user()->id_pengguna;
 
+        $enrolledKursusIds = DB::table('peserta_kursus')
+            ->where('id_pengguna', $id_pengguna)
+            ->pluck('id_kursus');
+
         $kuis = DB::table('kuis')
             ->join('kursus', 'kuis.id_kursus', '=', 'kursus.id_kursus')
             ->leftJoin('attempt_kuis', function ($join) use ($id_pengguna) {
                 $join->on('attempt_kuis.id_kuis', '=', 'kuis.id_kuis')
                      ->where('attempt_kuis.id_pengguna', '=', $id_pengguna);
             })
+            ->whereIn('kuis.id_kursus', $enrolledKursusIds)
             ->select(
                 'kuis.id_kuis',
                 'kuis.judul_kuis',

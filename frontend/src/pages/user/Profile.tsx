@@ -48,12 +48,18 @@ export default function Profile() {
 
   const handleSavePassword = async () => {
     setSuccessMsg(''); setErrorMsg('');
+    if (!passwordForm.password_lama) {
+      setErrorMsg('Password lama wajib diisi.'); return;
+    }
     if (passwordForm.password_baru !== passwordForm.konfirmasi) {
       setErrorMsg('Konfirmasi password tidak cocok.'); return;
     }
     setSaving(true);
     try {
-      await API.put('/user/profil', { password: passwordForm.password_baru });
+      await API.put('/user/profil', {
+        current_password: passwordForm.password_lama,
+        password: passwordForm.password_baru,
+      });
       setSuccessMsg('Password berhasil diperbarui!');
       setPasswordForm({ password_lama: '', password_baru: '', konfirmasi: '' });
     } catch (err: any) {
@@ -162,6 +168,16 @@ export default function Profile() {
             </div>
             <div className="p-6 space-y-4">
               <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Password Lama</label>
+                <input
+                  type="password"
+                  value={passwordForm.password_lama}
+                  onChange={e => setPasswordForm({ ...passwordForm, password_lama: e.target.value })}
+                  className="block w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg bg-white dark:bg-white/5 text-gray-900 dark:text-white focus:ring-2 focus:ring-red-500 focus:border-red-500 sm:text-sm outline-none transition-colors"
+                  placeholder="••••••••"
+                />
+              </div>
+              <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Password Baru</label>
                 <input
                   type="password"
@@ -184,7 +200,7 @@ export default function Profile() {
               <div className="pt-2">
                 <button
                   onClick={handleSavePassword}
-                  disabled={saving || !passwordForm.password_baru}
+                  disabled={saving || !passwordForm.password_lama || !passwordForm.password_baru}
                   className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors disabled:opacity-50"
                 >
                   {saving ? <><Spinner size="sm" /> Menyimpan...</> : <><Save size={16} /> Simpan Password</>}

@@ -11,7 +11,7 @@ class TugasController extends Controller
     // Semua tugas dari kursus yang diikuti peserta
     public function index(Request $request)
     {
-        $id_pengguna = $request->id_pengguna;
+        $id_pengguna = $request->user()->id_pengguna;
 
         $tugas = DB::table('tugas')
             ->join('peserta_kursus', 'tugas.id_kursus', '=', 'peserta_kursus.id_kursus')
@@ -40,7 +40,7 @@ class TugasController extends Controller
     // Peserta kumpulkan tugas
     public function kumpul(Request $request, $id_tugas)
     {
-        $id_pengguna = $request->id_pengguna;
+        $id_pengguna = $request->user()->id_pengguna;
 
         // Cek apakah tugas ada
         $tugas = DB::table('tugas')->where('id_tugas', $id_tugas)->first();
@@ -56,6 +56,11 @@ class TugasController extends Controller
 
         if (!$terdaftar) {
             return response()->json(['message' => 'Kamu tidak terdaftar di kursus ini'], 403);
+        }
+
+        // Cek deadline
+        if ($tugas->deadline && now()->gt($tugas->deadline)) {
+            return response()->json(['message' => 'Deadline tugas sudah terlewat'], 403);
         }
 
         // Cek apakah sudah pernah mengumpulkan

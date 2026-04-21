@@ -50,6 +50,10 @@ class ProfileController extends Controller
 
         // Ganti password jika dikirim
         if ($request->password) {
+            $user = DB::table('pengguna')->where('id_pengguna', $id_pengguna)->first();
+            if (!$request->current_password || !Hash::check($request->current_password, $user->password)) {
+                return response()->json(['message' => 'Password lama tidak sesuai'], 422);
+            }
             $updateData['password'] = Hash::make($request->password);
         }
 
