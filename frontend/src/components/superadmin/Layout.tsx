@@ -1,7 +1,7 @@
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Building2, LogOut,
-  Menu, X, Search, Sun, Moon, Bell,
+  Menu, X, Search, Sun, Moon,
 } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { authService } from '../../services/api';
@@ -166,15 +166,36 @@ function NavItem({ item, collapsed }: { item: typeof ALL_PAGES[0]; collapsed: bo
 
       {/* Tooltip saat collapsed */}
       {collapsed && showTip && (
-        <div className="absolute left-full top-1/2 -translate-y-1/2 ml-3 z-50 pointer-events-none">
+        <div className="absolute left-full top-1/2 -translate-y-1/2 ml-4 z-50 pointer-events-none">
+          {/* Arrow */}
+          <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1.75 w-3 h-3
+            bg-white dark:bg-slate-800 rotate-45
+            border-l border-b border-slate-200 dark:border-slate-700" />
+          {/* Card */}
           <div
-            className="bg-slate-900 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow-xl whitespace-nowrap border border-slate-700"
+            className="relative bg-white dark:bg-slate-800 rounded-xl shadow-lg
+              border border-slate-200 dark:border-slate-700
+              px-4 py-3 whitespace-nowrap min-w-40"
             style={{ animation: 'tipIn .15s ease' }}
           >
-            {item.name}
-            <p className="text-slate-400 text-[10px] font-normal mt-0.5">{item.desc}</p>
+            {/* Top accent bar */}
+            <div className="absolute top-0 left-0 right-0 h-0.75 rounded-t-xl bg-linear-to-r from-red-500 to-red-400" />
+
+            {/* Icon + name */}
+            <div className="flex items-center gap-2 mt-1">
+              <div className="w-7 h-7 rounded-lg bg-red-50 dark:bg-red-500/15 flex items-center justify-center shrink-0">
+                <item.icon size={14} className="text-red-600 dark:text-red-400" />
+              </div>
+              <span className="text-[13px] font-semibold text-slate-800 dark:text-slate-100 leading-tight">
+                {item.name}
+              </span>
+            </div>
+
+            {/* Desc */}
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-2 leading-relaxed pl-0.5">
+              {item.desc}
+            </p>
           </div>
-          <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1 w-2 h-2 bg-slate-900 rotate-45 border-l border-b border-slate-700" />
         </div>
       )}
     </div>
@@ -183,7 +204,7 @@ function NavItem({ item, collapsed }: { item: typeof ALL_PAGES[0]; collapsed: bo
 
 // ─── Main Layout ──────────────────────────────────────────────────────────────
 export default function SuperAdminLayout() {
-  const [collapsed,  setCollapsed]  = useState(false);
+  const [collapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const [cmdOpen,    setCmdOpen]    = useState(false);
@@ -349,7 +370,7 @@ export default function SuperAdminLayout() {
 
       {/* Desktop sidebar */}
       <aside
-        className={`hidden lg:flex flex-col bg-sidebar shrink-0 border-r border-theme sticky top-0 h-screen
+        className={`hidden lg:flex flex-col bg-sidebar shrink-0 border-r border-theme sticky top-0 h-screen z-10
           transition-all duration-300 ease-in-out ${collapsed ? 'w-[68px]' : 'w-[220px]'}`}
       >
         <SidebarContent />
@@ -363,20 +384,22 @@ export default function SuperAdminLayout() {
           className="h-16 bg-topbar border-b border-theme flex items-center justify-between px-6 shrink-0 transition-colors duration-200"
           style={{ boxShadow: 'var(--shadow-topbar)' }}
         >
-          {/* Kiri: collapse / hamburger */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setCollapsed(c => !c)}
-              className="hidden lg:flex p-1.5 rounded-lg text-muted hover:text-secondary hover:bg-muted transition-colors"
-            >
-              <Menu size={18} />
-            </button>
+          {/* Kiri: nama halaman (desktop) / hamburger (mobile) */}
+          <div className="flex items-center gap-3">
+            {/* Mobile: hamburger */}
             <button
               onClick={() => setMobileOpen(true)}
               className="lg:hidden p-1.5 rounded-lg text-muted hover:text-secondary hover:bg-muted transition-colors"
             >
               <Menu size={18} />
             </button>
+
+            {/* Desktop: nama halaman */}
+            <div className="hidden lg:flex items-center gap-2">
+              <span className="text-[15px] font-semibold text-primary">
+                {BREADCRUMB[location.pathname] ?? 'Superadmin'}
+              </span>
+            </div>
           </div>
 
           {/* Kanan: Bell + divider + nama + role + avatar */}

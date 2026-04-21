@@ -1,7 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
-  LayoutDashboard, BookOpen, CheckSquare,
-  Award, User, FolderOpen, X, LogOut,
+  LayoutDashboard, BookOpen,
+  Award, User, FolderOpen, X, LogOut, Sun, Moon,
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -21,7 +21,6 @@ interface SidebarProps {
 const navItems = [
   { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
   { name: 'Courses',   path: '/courses',   icon: BookOpen },
-  { name: 'Kuis',      path: '/tasks',     icon: CheckSquare },
   { name: 'Nilai',     path: '/grades',    icon: Award },
   { name: 'Dokumen',   path: '/documents', icon: FolderOpen },
   { name: 'Profil',    path: '/profile',   icon: User },
@@ -134,7 +133,10 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
             onClick={toggle}
             className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/8 transition-colors"
           >
-            <span>{dark ? 'Dark Mode' : 'Light Mode'}</span>
+            <span className="flex items-center gap-3">
+              {dark ? <Sun size={18} /> : <Moon size={18} />}
+              {dark ? 'Dark Mode' : 'Light Mode'}
+            </span>
             {/* Toggle switch */}
             <div className={cn(
               'relative w-11 h-6 rounded-full transition-colors duration-200',

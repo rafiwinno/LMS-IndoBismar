@@ -92,10 +92,10 @@ class DashboardController extends Controller
 
         $branchBreakdown = $branches->map(function ($cabang) use ($start, $end) {
             $logins = LoginLog::whereBetween('logged_in_at', [$start, $end])
-                ->whereHas('pengguna', fn($q) => $q->where('id_cabang', $cabang->id))
+                ->whereHas('pengguna', fn($q) => $q->where('id_cabang', $cabang->id_cabang))
                 ->count();
             $unique = LoginLog::whereBetween('logged_in_at', [$start, $end])
-                ->whereHas('pengguna', fn($q) => $q->where('id_cabang', $cabang->id))
+                ->whereHas('pengguna', fn($q) => $q->where('id_cabang', $cabang->id_cabang))
                 ->distinct('user_id')
                 ->count('user_id');
             return [
