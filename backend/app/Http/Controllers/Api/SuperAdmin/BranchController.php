@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api\Superadmin;
 use App\Http\Controllers\Controller;
 use App\Models\Cabang;
 use App\Models\Pengguna;
+use App\Models\LoginLog;
+use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 
 class BranchController extends Controller
@@ -79,23 +81,52 @@ class BranchController extends Controller
     // GET /superadmin/cabang/{id}/users
     public function users($id)
     {
-        $cabang = Cabang::findOrFail($id);
-
+        $cabang   = Cabang::findOrFail($id);
         $pengguna = Pengguna::where('id_cabang', $id)
-            ->orderBy('id_role')
-            ->orderBy('nama')
-            ->get();
+            ->orderBy('id_role')->orderBy('nama')->get();
 
-        $mapped = $pengguna->map(function ($p) {
+        $userIds = $pengguna->pluck('id_pengguna');
+
+        // Ambil log login terbaru per user (subquery — sama dengan UserController)
+        $latestLogs = LoginLog::whereIn('ll.user_id', $userIds)
+            ->from('login_logs as ll')
+            ->joinSub(
+                LoginLog::whereIn('user_id', $userIds)
+                    ->selectRaw('user_id, MAX(logged_in_at) as max_logged_in_at')
+                    ->groupBy('user_id'),
+                'latest',
+                fn($join) => $join
+                    ->on('ll.user_id', '=', 'latest.user_id')
+                    ->on('ll.logged_in_at', '=', 'latest.max_logged_in_at')
+            )
+            ->select('ll.user_id', 'll.logged_in_at as last_login_at', 'll.logged_out_at')
+            ->get()
+            ->keyBy('user_id');
+
+        $onlineThreshold = now()->subMinutes(15);
+
+        $mapped = $pengguna->map(function ($p) use ($latestLogs, $onlineThreshold) {
+            $log       = $latestLogs[$p->id_pengguna] ?? null;
+            $lastLogin = $log?->last_login_at ?? null;
+            $loggedOut = $log?->logged_out_at ?? null;
+
+            $isOnline = $lastLogin
+                && is_null($loggedOut)
+                && \Carbon\Carbon::parse($lastLogin)->gte($onlineThreshold);
+
             return [
-                'id'       => $p->id_pengguna,
-                'nama'     => $p->nama,
-                'username' => $p->username,
-                'email'    => $p->email,
-                'nomor_hp' => $p->nomor_hp,
-                'role'     => self::ROLE_MAP[$p->id_role] ?? 'user',
-                'id_role'  => $p->id_role,
-                'status'   => $p->status,
+                'id'         => $p->id_pengguna,
+                'nama'       => $p->nama,
+                'username'   => $p->username,
+                'email'      => $p->email,
+                'nomor_hp'   => $p->nomor_hp,
+                'role'       => self::ROLE_MAP[$p->id_role] ?? 'user',
+                'id_role'    => $p->id_role,
+                'status'     => $p->status,
+                'is_online'  => $isOnline,
+                'last_login' => $lastLogin
+                    ? \Carbon\Carbon::parse($lastLogin)->setTimezone('Asia/Jakarta')->toIso8601String()
+                    : null,
             ];
         });
 
@@ -127,6 +158,15 @@ class BranchController extends Controller
             'status'      => $request->status ?? 'aktif',
         ]);
 
+        try { ActivityLog::create([
+            'user_id'      => $request->user()?->id_pengguna,
+            'action'       => 'create_branch',
+            'target_type'  => 'branch',
+            'target_id'    => $cabang->id_cabang,
+            'target_label' => $cabang->nama_cabang,
+            'ip_address'   => $request->ip(),
+        ]); } catch (\Throwable) {}
+
         return response()->json([
             'message' => 'Cabang berhasil dibuat.',
             'cabang'  => $cabang,
@@ -147,6 +187,8 @@ class BranchController extends Controller
             'status'      => 'in:aktif,nonaktif',
         ]);
 
+        $before = $cabang->only(['nama_cabang','kode','kota','alamat','telepon','status']);
+
         $cabang->update([
             'nama_cabang' => $request->nama_cabang,
             'kode'        => $request->kode,
@@ -156,6 +198,16 @@ class BranchController extends Controller
             'status'      => $request->status,
         ]);
 
+        try { ActivityLog::create([
+            'user_id'      => $request->user()?->id_pengguna,
+            'action'       => 'update_branch',
+            'target_type'  => 'branch',
+            'target_id'    => $cabang->id_cabang,
+            'target_label' => $cabang->nama_cabang,
+            'changes'      => ['before' => $before, 'after' => $cabang->only(array_keys($before))],
+            'ip_address'   => $request->ip(),
+        ]); } catch (\Throwable) {}
+
         return response()->json([
             'message' => 'Cabang berhasil diupdate.',
             'cabang'  => $cabang,
@@ -163,21 +215,40 @@ class BranchController extends Controller
     }
 
     // DELETE /superadmin/cabang/{id}
-    public function destroy($id)
+    // Query param: force=1 → hapus semua user di cabang ini sekalian
+    public function destroy(Request $request, $id)
     {
-        $cabang = Cabang::findOrFail($id);
-
+        $cabang    = Cabang::findOrFail($id);
         $userCount = Pengguna::where('id_cabang', $id)->count();
-        if ($userCount > 0) {
+
+        if ($userCount > 0 && !$request->boolean('force')) {
             return response()->json([
-                'message' => "Cabang tidak bisa dihapus karena masih memiliki {$userCount} user.",
+                'message'    => "Cabang masih memiliki {$userCount} user.",
+                'user_count' => $userCount,
+                'can_force'  => true,
             ], 422);
         }
+
+        if ($userCount > 0) {
+            $userIds = Pengguna::where('id_cabang', $id)->pluck('id_pengguna');
+            LoginLog::whereIn('user_id', $userIds)->delete();
+            Pengguna::where('id_cabang', $id)->delete();
+        }
+
+        try { ActivityLog::create([
+            'user_id'      => $request->user()?->id_pengguna,
+            'action'       => 'delete_branch',
+            'target_type'  => 'branch',
+            'target_id'    => $cabang->id_cabang,
+            'target_label' => $cabang->nama_cabang,
+            'changes'      => $userCount > 0 ? ['cascade_deleted_users' => $userCount] : null,
+            'ip_address'   => $request->ip(),
+        ]); } catch (\Throwable) {}
 
         $cabang->delete();
 
         return response()->json([
-            'message' => 'Cabang berhasil dihapus.',
+            'message' => 'Cabang berhasil dihapus.' . ($userCount > 0 ? " ({$userCount} user ikut dihapus)" : ''),
         ]);
     }
 }

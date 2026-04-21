@@ -53,57 +53,56 @@ class DashboardController extends Controller
         $end      = Carbon::parse($request->end, 'Asia/Jakarta')->endOfDay();
         $cabangId = $request->cabang_id;
 
-        // ── Per hari dalam periode ─────────────────────────────────────────
+        // ── Per hari dalam periode — 1 query batch, bukan N query ──────────
+        $dailyStats = LoginLog::join('pengguna', 'login_logs.user_id', '=', 'pengguna.id_pengguna')
+            ->whereBetween('login_logs.logged_in_at', [$start, $end])
+            ->when($cabangId, fn($q) => $q->where('pengguna.id_cabang', $cabangId))
+            ->selectRaw("DATE(CONVERT_TZ(login_logs.logged_in_at, '+00:00', '+07:00')) as login_date, COUNT(*) as total")
+            ->groupBy('login_date')
+            ->pluck('total', 'login_date');
+
         $period = CarbonPeriod::create($start, $end);
         $daily  = [];
-
         foreach ($period as $date) {
-            $query = LoginLog::whereDate('logged_in_at', $date->toDateString());
-
-            if ($cabangId) {
-                $query->whereHas('pengguna', fn($q) => $q->where('id_cabang', $cabangId));
-            }
-
+            $key     = $date->format('Y-m-d');
             $daily[] = [
                 'date'         => $date->format('d/m/Y'),
                 'day'          => $date->format('D'),
-                'active_users' => $query->count(),
+                'active_users' => (int) ($dailyStats[$key] ?? 0),
             ];
         }
 
-        // ── Total periode ──────────────────────────────────────────────────
-        $totalQuery = LoginLog::whereBetween('logged_in_at', [$start, $end]);
-        if ($cabangId) {
-            $totalQuery->whereHas('pengguna', fn($q) => $q->where('id_cabang', $cabangId));
-        }
-        $totalLogins = $totalQuery->count();
+        // ── Total periode — 1 query ────────────────────────────────────────
+        $summaryStats = LoginLog::join('pengguna', 'login_logs.user_id', '=', 'pengguna.id_pengguna')
+            ->whereBetween('login_logs.logged_in_at', [$start, $end])
+            ->when($cabangId, fn($q) => $q->where('pengguna.id_cabang', $cabangId))
+            ->selectRaw('COUNT(*) as total_logins, COUNT(DISTINCT login_logs.user_id) as unique_users')
+            ->first();
 
-        // Unique users (bukan jumlah login, tapi jumlah user unik yang login)
-        $uniqueQuery = LoginLog::whereBetween('logged_in_at', [$start, $end]);
-        if ($cabangId) {
-            $uniqueQuery->whereHas('pengguna', fn($q) => $q->where('id_cabang', $cabangId));
-        }
-        $uniqueUsers = $uniqueQuery->distinct('user_id')->count('user_id');
+        $totalLogins = (int) $summaryStats->total_logins;
+        $uniqueUsers = (int) $summaryStats->unique_users;
 
-        // ── Breakdown per cabang ───────────────────────────────────────────
+        // ── Breakdown per cabang — 1 JOIN query agregat ────────────────────
+        $branchStats = LoginLog::join('pengguna', 'login_logs.user_id', '=', 'pengguna.id_pengguna')
+            ->whereBetween('login_logs.logged_in_at', [$start, $end])
+            ->when($cabangId, fn($q) => $q->where('pengguna.id_cabang', $cabangId))
+            ->selectRaw('pengguna.id_cabang, COUNT(*) as total_logins, COUNT(DISTINCT login_logs.user_id) as unique_users')
+            ->groupBy('pengguna.id_cabang')
+            ->get()
+            ->keyBy('id_cabang');
+
         $branches = Cabang::where('status', 'aktif')
             ->when($cabangId, fn($q) => $q->where('id_cabang', $cabangId))
             ->get();
 
-        $branchBreakdown = $branches->map(function ($cabang) use ($start, $end) {
-            $logins = LoginLog::whereBetween('logged_in_at', [$start, $end])
-                ->whereHas('pengguna', fn($q) => $q->where('id_cabang', $cabang->id_cabang))
-                ->count();
-            $unique = LoginLog::whereBetween('logged_in_at', [$start, $end])
-                ->whereHas('pengguna', fn($q) => $q->where('id_cabang', $cabang->id_cabang))
-                ->distinct('user_id')
-                ->count('user_id');
+        $branchBreakdown = $branches->map(function ($cabang) use ($branchStats) {
+            $stat = $branchStats[$cabang->id_cabang] ?? null;
             return [
                 'id'           => $cabang->id_cabang,
                 'nama_cabang'  => $cabang->nama_cabang,
                 'kota'         => $cabang->kota,
-                'total_logins' => $logins,
-                'unique_users' => $unique,
+                'total_logins' => (int) ($stat->total_logins ?? 0),
+                'unique_users' => (int) ($stat->unique_users ?? 0),
             ];
         })->sortByDesc('total_logins')->values();
 

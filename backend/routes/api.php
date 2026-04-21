@@ -61,9 +61,10 @@ Route::post('/auth/register',    [AdminAuthController::class, 'register']);
 Route::middleware('auth:sanctum')->group(function () {
 
     // ── Shared auth ──────────────────────────────────────────────────────────
-    Route::post('/logout',      [UserAuthController::class, 'logout']);
-    Route::post('/auth/logout', [AdminAuthController::class, 'logout']);
-    Route::get('/auth/me',      [AdminAuthController::class, 'me']);
+    Route::post('/logout',        [UserAuthController::class, 'logout']);
+    Route::post('/auth/logout',   [AdminAuthController::class, 'logout']);
+    Route::post('/auth/refresh',  [AdminAuthController::class, 'refresh']);
+    Route::get('/auth/me',        [AdminAuthController::class, 'me']);
 
     // =========================================================================
     // SUPERADMIN PORTAL
@@ -84,6 +85,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/users',                [SuperUserController::class, 'index']);
         Route::post('/users',               [SuperUserController::class, 'store']);
         Route::put('/users/{id}',           [SuperUserController::class, 'update']);
+        Route::patch('/users/{id}/status',  [SuperUserController::class, 'updateStatus']);
         Route::delete('/users/{id}',        [SuperUserController::class, 'destroy']);
     });
 

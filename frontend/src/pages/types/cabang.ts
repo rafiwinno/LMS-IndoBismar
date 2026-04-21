@@ -21,9 +21,11 @@ export interface BranchUser {
   username: string;
   email: string | null;
   nomor_hp: string | null;
-  role: BranchUserRole;   // sudah di-map dari BE (bukan id_role)
+  role: BranchUserRole;
   id_role: number;
-  status: string;         // 'aktif' | 'nonaktif'
+  status: string;
+  is_online: boolean;
+  last_login: string | null;
 }
 
 // Response dari GET /superadmin/cabang/:id/users
