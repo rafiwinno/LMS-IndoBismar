@@ -15,6 +15,10 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->validateCsrfTokens(except: ['api/*']);
+        $middleware->alias([
+            'ensure.admin'   => \App\Http\Middleware\EnsureIsAdmin::class,
+            'ensure.trainer' => \App\Http\Middleware\EnsureIsTrainer::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->render(function (AuthenticationException $e, $request) {
