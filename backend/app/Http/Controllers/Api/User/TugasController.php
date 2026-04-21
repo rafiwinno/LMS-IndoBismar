@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\User;
 
 use App\Http\Controllers\Controller;
+use App\Models\Notifikasi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -82,6 +83,23 @@ class TugasController extends Controller
             'file_tugas'     => $path,
             'tanggal_kumpul' => now(),
         ]);
+
+        // Notifikasi ke trainer kursus
+        $trainer = DB::table('kursus')
+            ->where('id_kursus', $tugas->id_kursus)
+            ->value('id_trainer');
+
+        if ($trainer) {
+            $namaPeserta = $request->user()->nama;
+            Notifikasi::create([
+                'id_penerima'  => $trainer,
+                'judul'        => 'Tugas Baru Dikumpulkan',
+                'pesan'        => "{$namaPeserta} mengumpulkan tugas \"{$tugas->judul_tugas}\".",
+                'tipe'         => 'tugas_masuk',
+                'id_referensi' => $id_tugas,
+                'dibuat_pada'  => now(),
+            ]);
+        }
 
         return response()->json(['message' => 'Tugas berhasil dikumpulkan'], 201);
     }

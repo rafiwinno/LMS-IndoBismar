@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
-import { Clock, CheckCircle, ChevronLeft } from 'lucide-react';
+import { Clock, CheckCircle, ChevronLeft, AlertTriangle } from 'lucide-react';
 import API from '../../api/api';
 
 interface Pilihan {
@@ -35,6 +35,7 @@ export default function Quiz() {
   const [hasil, setHasil] = useState<{ nilai: number; benar: number; total: number } | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [timeLeft, setTimeLeft] = useState(1800);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   useEffect(() => {
     API.get(`/user/kuis/${id}`)
@@ -194,7 +195,7 @@ export default function Quiz() {
             </div>
             <div className="mt-6 pt-6 border-t border-gray-100 dark:border-white/8">
               <button
-                onClick={handleSubmit}
+                onClick={() => setShowConfirm(true)}
                 disabled={submitting}
                 className="w-full py-2.5 px-4 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
               >
@@ -258,7 +259,7 @@ export default function Quiz() {
                 </button>
               ) : (
                 <button
-                  onClick={handleSubmit}
+                  onClick={() => setShowConfirm(true)}
                   disabled={submitting}
                   className="px-5 py-2.5 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
                 >
@@ -269,6 +270,38 @@ export default function Quiz() {
           </div>
         </div>
       </div>
+      {/* Modal Konfirmasi */}
+      {showConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white dark:bg-[#161b27] rounded-2xl p-8 shadow-xl border border-gray-200 dark:border-white/8 max-w-sm w-full mx-4 text-center">
+            <div className="w-16 h-16 bg-amber-100 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertTriangle size={32} />
+            </div>
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Kumpulkan Kuis?</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+              {Object.keys(answers).length} dari {pertanyaan.length} soal dijawab.
+            </p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+              Setelah dikumpulkan, jawaban tidak bisa diubah.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowConfirm(false)}
+                className="flex-1 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-white/8 hover:bg-gray-200 dark:hover:bg-white/10 rounded-lg transition-colors"
+              >
+                Batal
+              </button>
+              <button
+                onClick={() => { setShowConfirm(false); handleSubmit(); }}
+                disabled={submitting}
+                className="flex-1 py-2.5 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors disabled:opacity-50"
+              >
+                Ya, Kumpulkan
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

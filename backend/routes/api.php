@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\User\NilaiController;
 use App\Http\Controllers\Api\User\ProfileController;
 use App\Http\Controllers\Api\User\DocumentController;
 use App\Http\Controllers\Api\User\TugasController;
+use App\Http\Controllers\Api\User\NotifikasiController;
 
 
 // Test API
@@ -25,7 +26,7 @@ Route::post('/logout',         [AuthController::class, 'logout'])->middleware('a
 
 // ===== USER / PESERTA =====
 // Semua route di sini butuh id_pengguna dikirim di body/query
-Route::middleware('auth:sanctum')->prefix('user')->group(function () {
+Route::middleware(['auth:sanctum', 'role:4'])->prefix('user')->group(function () {
 
     // Dashboard
     Route::get('/dashboard',   [DashboardController::class, 'stats']);
@@ -55,6 +56,11 @@ Route::middleware('auth:sanctum')->prefix('user')->group(function () {
     // Profil
     Route::get('/profil',              [ProfileController::class, 'show']);
     Route::put('/profil',              [ProfileController::class, 'update']);
+
+    // Notifikasi
+    Route::get('/notifikasi',                        [NotifikasiController::class, 'index']);
+    Route::patch('/notifikasi/baca-semua',           [NotifikasiController::class, 'bacaSemua']);
+    Route::patch('/notifikasi/{id}/baca',            [NotifikasiController::class, 'baca']);
 });
 
 // ===== TRAINER =====
