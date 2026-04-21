@@ -21,8 +21,8 @@ class ProgressController extends Controller
                     p.nama,
                     k.id_kursus,
                     k.judul_kursus  AS course,
-                    COUNT(DISTINCT pm.id_progress) AS tugas_selesai,
-                    COUNT(DISTINCT m.id_materi)    AS total_tugas,
+                    COUNT(DISTINCT pm.id_progress) AS materi_selesai,
+                    COUNT(DISTINCT m.id_materi)    AS total_materi,
                     CASE
                         WHEN COUNT(DISTINCT m.id_materi) = 0 THEN 0
                         ELSE ROUND(

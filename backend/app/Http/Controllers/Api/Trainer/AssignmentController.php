@@ -77,7 +77,7 @@ public function update(Request $request, $id)
     $request->validate([
         'judul_tugas'    => 'sometimes|required|string|max:200',
         'deskripsi'      => 'nullable|string',
-        'deadline'       => 'nullable|date',
+        'deadline'       => 'nullable|date|after:now',
         'nilai_maksimal' => 'nullable|integer|min:1|max:1000',
         'file_tugas'     => 'nullable|file|mimes:pdf|max:10240', // tambah ini
     ]);
