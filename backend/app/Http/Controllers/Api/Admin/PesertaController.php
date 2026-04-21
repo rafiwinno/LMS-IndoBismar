@@ -16,8 +16,11 @@ class PesertaController extends Controller
 {
     public function index(Request $request)
     {
+        $cabangId = $request->user()->id_cabang;
+
         $query = Pengguna::with(['role', 'cabang', 'dataPkl', 'pesertaKursus'])
-            ->where('id_role', 4);
+            ->where('id_role', 4)
+            ->where('id_cabang', $cabangId);
 
         if ($request->search) {
             $search = $request->search;
@@ -30,8 +33,7 @@ class PesertaController extends Controller
             });
         }
 
-        if ($request->status)    $query->where('status', $request->status);
-        if ($request->id_cabang) $query->where('id_cabang', $request->id_cabang);
+        if ($request->status) $query->where('status', $request->status);
 
         $peserta = $query->orderBy('dibuat_pada', 'desc')
             ->paginate($request->per_page ?? 15);
@@ -55,7 +57,6 @@ class PesertaController extends Controller
             'email'           => 'required|email|unique:pengguna,email',
             'password'        => 'required|string|min:8',
             'nomor_hp'        => 'nullable|string|max:20',
-            'id_cabang'       => 'required|exists:cabang,id_cabang',
             'asal_sekolah'    => 'nullable|string|max:150',
             'jurusan'         => 'nullable|string|max:100',
             'periode_mulai'   => 'nullable|date',
@@ -63,9 +64,10 @@ class PesertaController extends Controller
             'status'          => 'nullable|in:pending,aktif,ditolak',
         ]);
 
+        // Peserta selalu dibuat di cabang admin yang membuat
         $pengguna = Pengguna::create([
             'id_role'   => 4,
-            'id_cabang' => $request->id_cabang,
+            'id_cabang' => $request->user()->id_cabang,
             'nama'      => $request->nama,
             'username'  => $request->username,
             'email'     => $request->email,
@@ -87,14 +89,14 @@ class PesertaController extends Controller
         ], 201);
     }
 
-    public function show($id)
+    public function show(Request $request, $id)
     {
         $peserta = Pengguna::with([
             'role', 'cabang', 'dataPkl',
             'pesertaKursus.kursus.materi',
             'pesertaKursus.kursus.kuis',
             'penilaianPkl',
-        ])->findOrFail($id);
+        ])->where('id_cabang', $request->user()->id_cabang)->findOrFail($id);
 
         $progressMateri = ProgressMateri::where('id_pengguna', $id)
             ->where('status', 'selesai')
@@ -111,14 +113,16 @@ class PesertaController extends Controller
 
     public function update(Request $request, $id)
     {
-        $peserta = Pengguna::findOrFail($id);
+        // Verifikasi peserta milik cabang admin ini
+        $peserta = Pengguna::where('id_cabang', $request->user()->id_cabang)
+            ->where('id_role', 4)
+            ->findOrFail($id);
 
         $request->validate([
             'nama'            => 'sometimes|string|max:100',
             'email'           => "sometimes|email|unique:pengguna,email,$id,id_pengguna",
             'username'        => "sometimes|string|unique:pengguna,username,$id,id_pengguna",
             'nomor_hp'        => 'nullable|string|max:20',
-            'id_cabang'       => 'sometimes|exists:cabang,id_cabang',
             'password'        => 'nullable|string|min:8',
             'status'          => 'nullable|in:pending,aktif,ditolak',
             'asal_sekolah'    => 'nullable|string|max:150',
@@ -127,15 +131,12 @@ class PesertaController extends Controller
             'periode_selesai' => 'nullable|date',
         ]);
 
-        // Build update payload — status disertakan langsung tanpa array_filter
-        // supaya tidak ter-skip saat nilainya valid string
         $payload = [];
-        if ($request->has('nama'))      $payload['nama']      = $request->nama;
-        if ($request->has('email'))     $payload['email']     = $request->email;
-        if ($request->has('username'))  $payload['username']  = $request->username;
-        if ($request->has('nomor_hp'))  $payload['nomor_hp']  = $request->nomor_hp;
-        if ($request->has('id_cabang')) $payload['id_cabang'] = $request->id_cabang;
-        if ($request->has('status'))    $payload['status']    = $request->status;
+        if ($request->has('nama'))     $payload['nama']     = $request->nama;
+        if ($request->has('email'))    $payload['email']    = $request->email;
+        if ($request->has('username')) $payload['username'] = $request->username;
+        if ($request->has('nomor_hp')) $payload['nomor_hp'] = $request->nomor_hp;
+        if ($request->has('status'))   $payload['status']   = $request->status;
         if ($request->filled('password')) {
             $payload['password'] = Hash::make($request->password);
         }
@@ -162,21 +163,27 @@ class PesertaController extends Controller
         ]);
     }
 
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
-        $peserta = Pengguna::findOrFail($id);
+        $peserta = Pengguna::where('id_cabang', $request->user()->id_cabang)
+            ->where('id_role', 4)
+            ->findOrFail($id);
 
-        // Hapus semua data terkait (FK constraints) sebelum hapus pengguna
-        DB::table('progress_materi')->where('id_pengguna', $id)->delete();
-        DB::table('pengumpulan_tugas')->where('id_pengguna', $id)->delete();
-        DB::table('attempt_kuis')->where('id_pengguna', $id)->delete();
-        DB::table('peserta_kursus')->where('id_pengguna', $id)->delete();
-        DB::table('penilaian_pkl')->where('id_pengguna', $id)->delete();
-        DB::table('nilai_non_teknis')->where('id_pengguna', $id)->delete();
-        DB::table('dokumen_verifikasi')->where('id_pengguna', $id)->delete();
-        DB::table('data_peserta_pkl')->where('id_pengguna', $id)->delete();
-
-        $peserta->delete();
+        DB::transaction(function () use ($id, $peserta) {
+            DB::table('jawaban_kuis')
+                ->whereIn('id_attempt', DB::table('attempt_kuis')->where('id_pengguna', $id)->pluck('id_attempt'))
+                ->delete();
+            DB::table('progress_materi')->where('id_pengguna', $id)->delete();
+            DB::table('pengumpulan_tugas')->where('id_pengguna', $id)->delete();
+            DB::table('attempt_kuis')->where('id_pengguna', $id)->delete();
+            DB::table('peserta_kursus')->where('id_pengguna', $id)->delete();
+            DB::table('penilaian_pkl')->where('id_pengguna', $id)->delete();
+            DB::table('nilai_non_teknis')->where('id_pengguna', $id)->delete();
+            DB::table('dokumen_verifikasi')->where('id_pengguna', $id)->delete();
+            DB::table('data_peserta_pkl')->where('id_pengguna', $id)->delete();
+            DB::table('notifikasi')->where('id_referensi', $id)->delete();
+            $peserta->delete();
+        });
 
         return response()->json(['message' => 'Peserta berhasil dihapus.']);
     }
@@ -187,7 +194,9 @@ class PesertaController extends Controller
             'status' => 'required|in:pending,aktif,ditolak',
         ]);
 
-        $peserta = Pengguna::findOrFail($id);
+        $peserta = Pengguna::where('id_cabang', $request->user()->id_cabang)
+            ->where('id_role', 4)
+            ->findOrFail($id);
         $peserta->update(['status' => $request->status]);
 
         return response()->json([
@@ -207,7 +216,9 @@ class PesertaController extends Controller
             'catatan' => 'nullable|string|max:500',
         ]);
 
-        $peserta = Pengguna::with('dataPkl')->findOrFail($id);
+        $peserta = Pengguna::with('dataPkl')
+            ->where('id_cabang', $request->user()->id_cabang)
+            ->findOrFail($id);
 
         $dokumen = DB::table('dokumen_verifikasi')->where('id_pengguna', $id)->first();
         if (! $dokumen && ! $peserta->dataPkl) {

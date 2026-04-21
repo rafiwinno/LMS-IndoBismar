@@ -15,7 +15,11 @@ class TugasController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Tugas::with(['kursus.pesertaKursus', 'pengumpulan']);
+        $cabangId  = $request->user()->id_cabang;
+        $kursusIds = \App\Models\Kursus::where('id_cabang', $cabangId)->pluck('id_kursus');
+
+        $query = Tugas::with(['kursus.pesertaKursus', 'pengumpulan'])
+            ->whereIn('id_kursus', $kursusIds);
 
         if ($request->id_kursus) {
             $query->where('id_kursus', $request->id_kursus);
@@ -51,8 +55,17 @@ class TugasController extends Controller
      */
     public function store(Request $request)
     {
+        $cabangId = $request->user()->id_cabang;
+
         $request->validate([
-            'id_kursus'   => 'required|exists:kursus,id_kursus',
+            'id_kursus'   => [
+                'required',
+                'exists:kursus,id_kursus',
+                function ($attr, $val, $fail) use ($cabangId) {
+                    $ok = \App\Models\Kursus::where('id_kursus', $val)->where('id_cabang', $cabangId)->exists();
+                    if (! $ok) $fail('Kursus tidak ditemukan di cabang Anda.');
+                },
+            ],
             'judul_tugas' => 'required|string|max:200',
             'deskripsi'   => 'nullable|string',
             'deadline'    => 'required|date|after:now',
@@ -69,9 +82,12 @@ class TugasController extends Controller
     /**
      * GET /api/tugas/{id}
      */
-    public function show($id)
+    public function show(Request $request, $id)
     {
-        $tugas = Tugas::with(['kursus', 'pengumpulan.pengguna'])->findOrFail($id);
+        $kursusIds = \App\Models\Kursus::where('id_cabang', $request->user()->id_cabang)->pluck('id_kursus');
+        $tugas = Tugas::with(['kursus', 'pengumpulan.pengguna'])
+            ->whereIn('id_kursus', $kursusIds)
+            ->findOrFail($id);
 
         return response()->json($this->formatTugasDetail($tugas));
     }
@@ -81,7 +97,8 @@ class TugasController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $tugas = Tugas::findOrFail($id);
+        $kursusIds = \App\Models\Kursus::where('id_cabang', $request->user()->id_cabang)->pluck('id_kursus');
+        $tugas = Tugas::whereIn('id_kursus', $kursusIds)->findOrFail($id);
 
         $request->validate([
             'judul_tugas' => 'sometimes|string|max:200',
@@ -100,9 +117,13 @@ class TugasController extends Controller
     /**
      * DELETE /api/tugas/{id}
      */
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
-        Tugas::findOrFail($id)->delete();
+        $kursusIds = \App\Models\Kursus::where('id_cabang', $request->user()->id_cabang)->pluck('id_kursus');
+        $tugas = Tugas::whereIn('id_kursus', $kursusIds)->findOrFail($id);
+        // Hapus submission terkait dulu
+        \App\Models\PengumpulanTugas::where('id_tugas', $id)->delete();
+        $tugas->delete();
 
         return response()->json(['message' => 'Tugas berhasil dihapus.']);
     }
@@ -111,9 +132,10 @@ class TugasController extends Controller
      * GET /api/tugas/{id}/submissions
      * Daftar pengumpulan tugas
      */
-    public function submissions($id)
+    public function submissions(Request $request, $id)
     {
-        Tugas::findOrFail($id);
+        $kursusIds = \App\Models\Kursus::where('id_cabang', $request->user()->id_cabang)->pluck('id_kursus');
+        Tugas::whereIn('id_kursus', $kursusIds)->findOrFail($id);
 
         $submissions = PengumpulanTugas::with('pengguna')
             ->where('id_tugas', $id)
@@ -141,7 +163,11 @@ class TugasController extends Controller
             'file_tugas'  => 'required|file|max:51200|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,zip,txt',
         ]);
 
-        Tugas::findOrFail($id);
+        $tugas = Tugas::findOrFail($id);
+
+        if ($tugas->deadline && now()->isAfter($tugas->deadline)) {
+            return response()->json(['message' => 'Batas waktu pengumpulan sudah lewat.'], 422);
+        }
 
         $idPengguna = $request->user()->id_pengguna;
 
