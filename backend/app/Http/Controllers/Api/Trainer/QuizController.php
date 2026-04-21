@@ -80,10 +80,16 @@ class QuizController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
+        $effectiveWaktuMulai = $request->waktu_mulai ?? $quiz->waktu_mulai;
+        $waktuSelesaiRules = ['nullable', 'date'];
+        if ($effectiveWaktuMulai) {
+            $waktuSelesaiRules[] = 'after:' . $effectiveWaktuMulai;
+        }
+
         $request->validate([
             'judul_kuis'    => 'sometimes|required|string|max:200',
             'waktu_mulai'   => 'nullable|date',
-            'waktu_selesai' => 'nullable|date',
+            'waktu_selesai' => $waktuSelesaiRules,
         ]);
 
         $quiz->update([
