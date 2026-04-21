@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\User;
 
 use App\Http\Controllers\Controller;
+use App\Models\Notifikasi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -50,13 +51,33 @@ class DocumentController extends Controller
             // Update kolom yang sesuai
             DB::table('dokumen_verifikasi')
                 ->where('id_pengguna', $id_pengguna)
-                ->update([$jenis => $path]);
+                ->update([$jenis => $path, 'status' => 'pending']);
         } else {
             // Insert row baru
             DB::table('dokumen_verifikasi')->insert([
                 'id_pengguna'   => $id_pengguna,
                 $jenis          => $path,
                 'status'        => 'pending',
+            ]);
+        }
+
+        // Kirim notifikasi ke semua admin cabang yang sama
+        $pengguna    = $request->user();
+        $labelJenis  = $jenis === 'surat_siswa' ? 'Surat Pernyataan Magang' : 'Surat Pernyataan Orang Tua';
+
+        $adminCabang = DB::table('pengguna')
+            ->where('id_cabang', $pengguna->id_cabang)
+            ->whereIn('id_role', [1, 2])
+            ->where('status', 'aktif')
+            ->pluck('id_pengguna');
+
+        foreach ($adminCabang as $adminId) {
+            Notifikasi::create([
+                'id_penerima'  => $adminId,
+                'judul'        => 'Dokumen Menunggu Verifikasi',
+                'pesan'        => "Peserta \"{$pengguna->nama}\" mengupload {$labelJenis} dan menunggu verifikasi.",
+                'tipe'         => 'dokumen_menunggu',
+                'id_referensi' => $id_pengguna,
             ]);
         }
 

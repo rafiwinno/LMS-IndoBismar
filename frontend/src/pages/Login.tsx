@@ -21,12 +21,20 @@ export default function Login() {
 
   const handleLogin = (user: any, token: string) => {
     saveToken(token);
-    saveUser(user);
-    const role = user.id_role;
-    if (role === 1)      navigate('/superadmin/dashboard', { replace: true });
-    else if (role === 2) navigate('/admin/dashboard',      { replace: true });
-    else if (role === 3) navigate('/trainer/dashboard',    { replace: true });
-    else                 navigate('/dashboard',            { replace: true });
+    const idRole = user.id_role;
+    saveUser({
+      id_pengguna: user.id_pengguna,
+      id_role:     user.id_role,
+      id_cabang:   user.id_cabang,
+      nama:        user.nama,
+      username:    user.username,
+      email:       user.email,
+      nomor_hp:    user.nomor_hp,
+    });
+    if (idRole === 1)      navigate('/superadmin/dashboard', { replace: true });
+    else if (idRole === 2) navigate('/admin/dashboard',      { replace: true });
+    else if (idRole === 3) navigate('/trainer/dashboard',    { replace: true });
+    else                   navigate('/dashboard',            { replace: true });
   };
 
   return (
@@ -94,11 +102,11 @@ export default function Login() {
 
         {/* Form area */}
         <div className="flex-1 flex items-center justify-center px-6 py-10">
-          <div className="w-full max-w-100">
-            {mode === 'main'     && <UserLoginForm   onLogin={handleLogin} onSwitchAdmin={() => setMode('admin')} onSwitchTrainer={() => setMode('trainer')} onSwitchRegister={() => setMode('register')} />}
-            {mode === 'admin'    && <AdminLoginForm  onLogin={handleLogin} onBack={() => setMode('main')} />}
+          <div className="w-full max-w-sm">
+            {mode === 'main'     && <UserLoginForm    onLogin={handleLogin} onSwitchAdmin={() => setMode('admin')} onSwitchTrainer={() => setMode('trainer')} onSwitchRegister={() => setMode('register')} />}
+            {mode === 'admin'    && <AdminLoginForm   onLogin={handleLogin} onBack={() => setMode('main')} />}
             {mode === 'trainer'  && <TrainerLoginForm onLogin={handleLogin} onBack={() => setMode('main')} />}
-            {mode === 'register' && <RegisterForm    onBack={() => setMode('main')} />}
+            {mode === 'register' && <RegisterForm     onBack={() => setMode('main')} />}
           </div>
         </div>
       </div>
@@ -156,10 +164,9 @@ function UserLoginForm({ onLogin, onSwitchAdmin, onSwitchTrainer, onSwitchRegist
       </div>
 
       {error && (
-        <div className="mb-5 px-4 py-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2.5">
-          <span className="text-red-500 text-base leading-none mt-0.5">!</span>
+        <div className="mb-5 px-4 py-3 bg-red-50 border border-red-200 rounded-lg">
           <p className="text-red-600 text-sm">
-            {error}{isLocked && <span className="font-semibold"> Coba lagi dalam {countdown} detik.</span>}
+            {error}<span className="text-red-500 font-bold">!</span>{isLocked && <span className="font-semibold"> Coba lagi dalam {countdown} detik.</span>}
           </p>
         </div>
       )}
@@ -193,7 +200,7 @@ function UserLoginForm({ onLogin, onSwitchAdmin, onSwitchTrainer, onSwitchRegist
 
         <button
           type="submit" disabled={loading || isLocked}
-          className="w-full py-2.5 bg-red-600 hover:bg-red-700 active:bg-red-800 disabled:opacity-60 text-white text-sm font-semibold rounded-lg transition-colors mt-1"
+          className="w-full py-2.5 bg-red-600 hover:bg-red-700 active:bg-red-800 disabled:opacity-60 text-white text-sm font-semibold rounded-lg transition-colors mt-1 cursor-pointer disabled:cursor-not-allowed"
         >
           {loading ? 'Masuk...' : isLocked ? `Tunggu ${countdown} detik...` : 'Masuk'}
         </button>
@@ -208,25 +215,29 @@ function UserLoginForm({ onLogin, onSwitchAdmin, onSwitchTrainer, onSwitchRegist
       <div className="space-y-2.5">
         <button
           onClick={onSwitchAdmin}
-          className="w-full py-2.5 bg-white hover:bg-gray-50 active:bg-gray-100 text-gray-700 text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2 border border-gray-200 shadow-sm"
+          className="w-full py-2.5 bg-white hover:bg-gray-50 active:bg-gray-100 text-gray-700 text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2 border border-gray-200 shadow-sm cursor-pointer"
         >
           <Shield className="w-4 h-4 text-amber-500" />
           Masuk sebagai Admin
         </button>
         <button
           onClick={onSwitchTrainer}
-          className="w-full py-2.5 bg-white hover:bg-gray-50 active:bg-gray-100 text-gray-700 text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2 border border-gray-200 shadow-sm"
+          className="w-full py-2.5 bg-white hover:bg-gray-50 active:bg-gray-100 text-gray-700 text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2 border border-gray-200 shadow-sm cursor-pointer"
         >
           <GraduationCap className="w-4 h-4 text-green-500" />
           Masuk sebagai Trainer
         </button>
-        <button
-          onClick={onSwitchRegister}
-          className="w-full py-2.5 text-gray-500 hover:text-gray-700 text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
-        >
-          <UserPlus className="w-4 h-4" />
-          Belum punya akun? Daftar sekarang
-        </button>
+        <p className="flex items-center justify-center gap-1.5 text-sm text-gray-500 py-1">
+          <UserPlus className="w-3.5 h-3.5 text-red-600 shrink-0" />
+          Belum punya akun?{' '}
+          <button
+            type="button"
+            onClick={onSwitchRegister}
+            className="text-red-600 font-semibold hover:text-red-700 hover:underline cursor-pointer transition-colors"
+          >
+            Daftar sekarang
+          </button>
+        </p>
       </div>
     </div>
   );
@@ -275,7 +286,7 @@ function AdminLoginForm({ onLogin, onBack }: any) {
     <div>
       <button
         onClick={onBack}
-        className="flex items-center gap-1.5 text-gray-400 hover:text-gray-700 text-sm mb-6 transition-colors"
+        className="flex items-center gap-1.5 text-gray-400 hover:text-gray-700 text-sm mb-6 transition-colors cursor-pointer"
       >
         <ArrowLeft className="w-4 h-4" /> Kembali
       </button>
@@ -289,10 +300,9 @@ function AdminLoginForm({ onLogin, onBack }: any) {
       </div>
 
       {error && (
-        <div className="mb-5 px-4 py-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2.5">
-          <span className="text-red-500 text-base leading-none mt-0.5">!</span>
+        <div className="mb-5 px-4 py-3 bg-red-50 border border-red-200 rounded-lg">
           <p className="text-red-600 text-sm">
-            {error}{isLocked && <span className="font-semibold"> Coba lagi dalam {countdown} detik.</span>}
+            {error}<span className="text-red-500 font-bold">!</span>{isLocked && <span className="font-semibold"> Coba lagi dalam {countdown} detik.</span>}
           </p>
         </div>
       )}
@@ -378,7 +388,7 @@ function TrainerLoginForm({ onLogin, onBack }: any) {
     <div>
       <button
         onClick={onBack}
-        className="flex items-center gap-1.5 text-gray-400 hover:text-gray-700 text-sm mb-6 transition-colors"
+        className="flex items-center gap-1.5 text-gray-400 hover:text-gray-700 text-sm mb-6 transition-colors cursor-pointer"
       >
         <ArrowLeft className="w-4 h-4" /> Kembali
       </button>
@@ -392,10 +402,9 @@ function TrainerLoginForm({ onLogin, onBack }: any) {
       </div>
 
       {error && (
-        <div className="mb-5 px-4 py-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2.5">
-          <span className="text-red-500 text-base leading-none mt-0.5">!</span>
+        <div className="mb-5 px-4 py-3 bg-red-50 border border-red-200 rounded-lg">
           <p className="text-red-600 text-sm">
-            {error}{isLocked && <span className="font-semibold"> Coba lagi dalam {countdown} detik.</span>}
+            {error}<span className="text-red-500 font-bold">!</span>{isLocked && <span className="font-semibold"> Coba lagi dalam {countdown} detik.</span>}
           </p>
         </div>
       )}
@@ -491,7 +500,7 @@ function RegisterForm({ onBack }: any) {
     <div>
       <button
         onClick={onBack}
-        className="flex items-center gap-1.5 text-gray-400 hover:text-gray-700 text-sm mb-6 transition-colors"
+        className="flex items-center gap-1.5 text-gray-400 hover:text-gray-700 text-sm mb-6 transition-colors cursor-pointer"
       >
         <ArrowLeft className="w-4 h-4" /> Kembali
       </button>
@@ -513,12 +522,12 @@ function RegisterForm({ onBack }: any) {
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-2 gap-3">
           {[
-            { key: 'nama',     label: 'Nama Lengkap', type: 'text',  placeholder: 'Nama lengkap', colSpan: 2 },
-            { key: 'username', label: 'Username',     type: 'text',  placeholder: 'Username unik', colSpan: 1 },
-            { key: 'nomor_hp', label: 'Nomor HP',     type: 'tel',   placeholder: '08xxxxxxxxxx',  colSpan: 1 },
-            { key: 'email',    label: 'Email',        type: 'email', placeholder: 'email@example.com', colSpan: 2 },
-            { key: 'asal_sekolah', label: 'Asal Sekolah', type: 'text', placeholder: 'SMKN 1 ...', colSpan: 1 },
-            { key: 'jurusan',      label: 'Jurusan',      type: 'text', placeholder: 'Teknik Informatika', colSpan: 1 },
+            { key: 'nama',         label: 'Nama Lengkap',  type: 'text',  placeholder: 'Nama lengkap',       colSpan: 2 },
+            { key: 'username',     label: 'Username',      type: 'text',  placeholder: 'Username unik',       colSpan: 1 },
+            { key: 'nomor_hp',     label: 'Nomor HP',      type: 'tel',   placeholder: '08xxxxxxxxxx',        colSpan: 1 },
+            { key: 'email',        label: 'Email',         type: 'email', placeholder: 'email@example.com',   colSpan: 2 },
+            { key: 'asal_sekolah', label: 'Asal Sekolah',  type: 'text',  placeholder: 'SMKN 1 ...',          colSpan: 1 },
+            { key: 'jurusan',      label: 'Jurusan',       type: 'text',  placeholder: 'Teknik Informatika',  colSpan: 1 },
           ].map(({ key, label, type, placeholder, colSpan }) => (
             <div key={key} className={colSpan === 2 ? 'col-span-2' : ''}>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">{label}</label>
@@ -561,7 +570,7 @@ function RegisterForm({ onBack }: any) {
 
         <button
           type="submit" disabled={loading}
-          className="w-full py-2.5 bg-red-600 hover:bg-red-700 active:bg-red-800 disabled:opacity-60 text-white text-sm font-semibold rounded-lg transition-colors"
+          className="w-full py-2.5 bg-red-600 hover:bg-red-700 active:bg-red-800 disabled:opacity-60 text-white text-sm font-semibold rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed"
         >
           {loading ? 'Mendaftar...' : 'Daftar Sekarang'}
         </button>

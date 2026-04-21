@@ -1,12 +1,16 @@
-import React, { useEffect, useState } from 'react';
-import { Users, BookOpen, FileText, ClipboardList, TrendingUp } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Users, BookOpen, FileText, ClipboardList, TrendingUp, RefreshCw } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, LineChart, Line } from 'recharts';
 import { api } from '../../lib/api';
 import { useTheme } from '../../context/ThemeContext';
 
+const POLL_INTERVAL = 30_000; // 30 detik
+
 export function Dashboard() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [newActivityCount, setNewActivityCount] = useState(0);
+  const lastActivityTimeRef = useRef<string | null>(null);
   const { theme } = useTheme();
   const isDark = theme === 'dark';
 
@@ -16,8 +20,38 @@ export function Dashboard() {
     ? { borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 4px 16px rgba(0,0,0,0.5)', backgroundColor: '#161b22', color: '#f3f4f6' }
     : { borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', backgroundColor: '#fff', color: '#111' };
 
+  const fetchDashboard = async (isInitial = false) => {
+    try {
+      const res = await api.dashboard();
+      setData(res);
+
+      const activities: any[] = res?.recent_activity ?? [];
+      const latestTime = activities[0]?.time ?? null;
+
+      if (!isInitial && lastActivityTimeRef.current && latestTime && latestTime !== lastActivityTimeRef.current) {
+        // Hitung berapa aktivitas baru sejak fetch terakhir
+        const newCount = activities.filter(
+          (a: any) => a.time && a.time > lastActivityTimeRef.current!
+        ).length;
+        if (newCount > 0) setNewActivityCount(n => n + newCount);
+      }
+
+      lastActivityTimeRef.current = latestTime;
+    } catch (e) {
+      if (isInitial) console.error(e);
+    } finally {
+      if (isInitial) setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    api.dashboard().then(setData).catch(console.error).finally(() => setLoading(false));
+    fetchDashboard(true);
+
+    const interval = setInterval(() => {
+      if (!document.hidden) fetchDashboard(false);
+    }, POLL_INTERVAL);
+
+    return () => clearInterval(interval);
   }, []);
 
   const stats = data?.stats || {};
@@ -93,7 +127,23 @@ export function Dashboard() {
         </div>
 
         <div className="bg-white dark:bg-[#161b22] p-6 rounded-xl shadow-sm border border-gray-100 dark:border-white/8">
-          <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">Aktivitas Terbaru</h3>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Aktivitas Terbaru</h3>
+              {newActivityCount > 0 && (
+                <span className="px-2 py-0.5 text-xs font-bold bg-red-500 text-white rounded-full animate-pulse">
+                  +{newActivityCount} baru
+                </span>
+              )}
+            </div>
+            <button
+              onClick={() => { fetchDashboard(false); setNewActivityCount(0); }}
+              title="Refresh aktivitas"
+              className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+            >
+              <RefreshCw className="w-4 h-4" />
+            </button>
+          </div>
           {activities.length === 0 ? (
             <p className="text-sm text-gray-400 text-center py-8">Belum ada aktivitas</p>
           ) : (

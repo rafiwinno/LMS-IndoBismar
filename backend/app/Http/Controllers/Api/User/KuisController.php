@@ -13,20 +13,22 @@ class KuisController extends Controller
     {
         $id_pengguna = $request->user()->id_pengguna;
 
+        $attemptSubQuery = DB::table('attempt_kuis')
+            ->where('id_pengguna', $id_pengguna)
+            ->groupBy('id_kuis')
+            ->select('id_kuis', DB::raw('MAX(skor) as skor'));
+
         $kuis = DB::table('kuis')
             ->join('kursus', 'kuis.id_kursus', '=', 'kursus.id_kursus')
-            ->leftJoin('attempt_kuis', function ($join) use ($id_pengguna) {
-                $join->on('attempt_kuis.id_kuis', '=', 'kuis.id_kuis')
-                     ->where('attempt_kuis.id_pengguna', '=', $id_pengguna);
-            })
+            ->leftJoinSub($attemptSubQuery, 'ak', 'ak.id_kuis', '=', 'kuis.id_kuis')
             ->select(
                 'kuis.id_kuis',
                 'kuis.judul_kuis',
                 'kuis.waktu_mulai',
                 'kuis.waktu_selesai',
                 'kursus.judul_kursus',
-                'attempt_kuis.skor',
-                DB::raw('CASE WHEN attempt_kuis.id_attempt IS NOT NULL THEN "sudah" ELSE "belum" END as status_attempt')
+                'ak.skor',
+                DB::raw('CASE WHEN ak.id_kuis IS NOT NULL THEN "sudah" ELSE "belum" END as status_attempt')
             )
             ->get();
 
