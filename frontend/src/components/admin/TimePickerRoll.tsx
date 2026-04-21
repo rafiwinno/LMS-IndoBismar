@@ -63,18 +63,18 @@ function RollColumn({ count, value, onChange }: { count: number; value: number; 
               onClick={() => clickItem(i)}
               style={{ height: ITEM_H }}
               className={`flex items-center justify-center cursor-pointer select-none transition-colors ${
-                isSelected ? 'bg-indigo-50' : ''
+                isSelected ? 'bg-red-50 dark:bg-red-900/30' : ''
               }`}
             >
               <span
                 className={`font-mono font-semibold transition-all duration-100 ${
                   isSelected
-                    ? 'text-indigo-600 text-xl'
+                    ? 'text-red-500 text-xl'
                     : dist === 1
-                    ? 'text-gray-500 text-base'
+                    ? 'text-gray-500 dark:text-gray-400 text-base'
                     : dist === 2
-                    ? 'text-gray-300 text-sm'
-                    : 'text-gray-200 text-xs'
+                    ? 'text-gray-300 dark:text-gray-600 text-sm'
+                    : 'text-gray-200 dark:text-gray-700 text-xs'
                 }`}
               >
                 {String(i).padStart(2, '0')}
@@ -89,27 +89,19 @@ function RollColumn({ count, value, onChange }: { count: number; value: number; 
 
       {/* Border highlight di tengah — pointer-events-none, z di atas scroll */}
       <div
-        className="absolute left-0 right-0 pointer-events-none border-y-2 border-indigo-300"
+        className="absolute left-0 right-0 pointer-events-none border-y-2 border-red-300"
         style={{ top: ITEM_H * 2, height: ITEM_H, zIndex: 2 }}
       />
 
       {/* Fade atas */}
       <div
-        className="absolute inset-x-0 top-0 pointer-events-none"
-        style={{
-          height: ITEM_H * 2,
-          background: 'linear-gradient(to bottom, rgba(255,255,255,1) 30%, rgba(255,255,255,0))',
-          zIndex: 3,
-        }}
+        className="absolute inset-x-0 top-0 pointer-events-none bg-gradient-to-b from-white dark:from-[#1c2128] to-transparent"
+        style={{ height: ITEM_H * 2, zIndex: 3 }}
       />
       {/* Fade bawah */}
       <div
-        className="absolute inset-x-0 bottom-0 pointer-events-none"
-        style={{
-          height: ITEM_H * 2,
-          background: 'linear-gradient(to top, rgba(255,255,255,1) 30%, rgba(255,255,255,0))',
-          zIndex: 3,
-        }}
+        className="absolute inset-x-0 bottom-0 pointer-events-none bg-gradient-to-t from-white dark:from-[#1c2128] to-transparent"
+        style={{ height: ITEM_H * 2, zIndex: 3 }}
       />
     </div>
   );
@@ -167,12 +159,12 @@ export function TimePickerRoll({ value, onChange, placeholder = 'HH:MM' }: Props
   return (
     <div ref={containerRef} className="relative">
       {/* Input */}
-      <div className="flex items-center gap-2 border border-gray-300 rounded-lg px-3 py-2 bg-white focus-within:ring-2 focus-within:ring-indigo-500">
+      <div className="flex items-center gap-2 border border-gray-300 dark:border-white/10 rounded-lg px-3 py-2 bg-white dark:bg-[#161b22] focus-within:ring-2 focus-within:ring-red-500">
         <input
           type="text"
           placeholder={placeholder}
           maxLength={5}
-          className="w-14 text-sm outline-none font-mono text-center"
+          className="w-14 text-sm outline-none font-mono text-center bg-transparent text-gray-800 dark:text-white placeholder-gray-400"
           value={inputVal}
           onChange={handleInputChange}
           onBlur={handleInputBlur}
@@ -185,7 +177,7 @@ export function TimePickerRoll({ value, onChange, placeholder = 'HH:MM' }: Props
           }}
         />
         <Clock
-          className="w-4 h-4 text-gray-400 cursor-pointer hover:text-indigo-500 transition-colors flex-shrink-0"
+          className="w-4 h-4 text-gray-400 cursor-pointer hover:text-red-500 transition-colors flex-shrink-0"
           onClick={() => {
             if (!open && containerRef.current) {
               const rect = containerRef.current.getBoundingClientRect();
@@ -199,7 +191,7 @@ export function TimePickerRoll({ value, onChange, placeholder = 'HH:MM' }: Props
       {/* Dropdown roll picker */}
       {open && (
         <div
-          className={`absolute z-50 bg-white rounded-2xl shadow-2xl border border-gray-100 p-4 ${openUp ? 'bottom-full mb-1' : 'mt-1'}`}
+          className={`absolute z-50 bg-white dark:bg-[#1c2128] rounded-2xl shadow-2xl border border-gray-100 dark:border-white/10 p-4 ${openUp ? 'bottom-full mb-1' : 'mt-1'}`}
           style={{ minWidth: 170 }}
         >
           <p className="text-xs text-gray-400 text-center mb-3 font-medium">Scroll atau klik untuk memilih</p>
@@ -235,7 +227,7 @@ export function TimePickerRoll({ value, onChange, placeholder = 'HH:MM' }: Props
           </div>
 
           <button
-            className="w-full mt-4 py-2 bg-indigo-600 text-white text-sm rounded-xl hover:bg-indigo-700 transition-colors font-semibold"
+            className="w-full mt-4 py-2 bg-red-600 text-white text-sm rounded-xl hover:bg-red-700 transition-colors font-semibold"
             onClick={() => setOpen(false)}
           >
             Selesai

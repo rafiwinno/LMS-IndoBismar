@@ -13,7 +13,9 @@ class KuisController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Kuis::with(['kursus', 'attemptKuis']);
+        $kursusIds = \App\Models\Kursus::where('id_cabang', $request->user()->id_cabang)->pluck('id_kursus');
+
+        $query = Kuis::with(['kursus', 'attemptKuis'])->whereIn('id_kursus', $kursusIds);
 
         if ($request->id_kursus) $query->where('id_kursus', $request->id_kursus);
         if ($request->search)    $query->where('judul_kuis', 'like', "%{$request->search}%");
@@ -32,8 +34,17 @@ class KuisController extends Controller
 
     public function store(Request $request)
     {
+        $cabangId = $request->user()->id_cabang;
+
         $request->validate([
-            'id_kursus'     => 'required|exists:kursus,id_kursus',
+            'id_kursus'     => [
+                'required',
+                'exists:kursus,id_kursus',
+                function ($attr, $val, $fail) use ($cabangId) {
+                    $ok = \App\Models\Kursus::where('id_kursus', $val)->where('id_cabang', $cabangId)->exists();
+                    if (! $ok) $fail('Kursus tidak ditemukan di cabang Anda.');
+                },
+            ],
             'judul_kuis'    => 'required|string|max:200',
             'waktu_mulai'   => 'required|date',
             'waktu_selesai' => 'required|date|after:waktu_mulai',
@@ -61,15 +72,19 @@ class KuisController extends Controller
         ], 201);
     }
 
-    public function show($id)
+    public function show(Request $request, $id)
     {
-        $kuis = Kuis::with(['kursus', 'pertanyaan.pilihanJawaban', 'attemptKuis'])->findOrFail($id);
+        $kursusIds = \App\Models\Kursus::where('id_cabang', $request->user()->id_cabang)->pluck('id_kursus');
+        $kuis = Kuis::with(['kursus', 'pertanyaan.pilihanJawaban', 'attemptKuis'])
+            ->whereIn('id_kursus', $kursusIds)
+            ->findOrFail($id);
         return response()->json($this->formatKuisDetail($kuis));
     }
 
     public function update(Request $request, $id)
     {
-        $kuis = Kuis::findOrFail($id);
+        $kursusIds = \App\Models\Kursus::where('id_cabang', $request->user()->id_cabang)->pluck('id_kursus');
+        $kuis = Kuis::whereIn('id_kursus', $kursusIds)->findOrFail($id);
 
         $request->validate([
             'judul_kuis'    => 'sometimes|string|max:200',
@@ -132,12 +147,19 @@ class KuisController extends Controller
         ]);
     }
 
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
-        $kuis = Kuis::findOrFail($id);
+        $kursusIds = \App\Models\Kursus::where('id_cabang', $request->user()->id_cabang)->pluck('id_kursus');
+        $kuis = Kuis::whereIn('id_kursus', $kursusIds)->findOrFail($id);
+
+        foreach ($kuis->attemptKuis as $attempt) {
+            $attempt->jawabanKuis()->delete();
+        }
+        $kuis->attemptKuis()->delete();
         $kuis->pertanyaan()->each(fn($p) => $p->pilihanJawaban()->delete());
         $kuis->pertanyaan()->delete();
         $kuis->delete();
+
         return response()->json(['message' => 'Kuis berhasil dihapus.']);
     }
 
@@ -221,7 +243,7 @@ class KuisController extends Controller
     {
         $request->validate([
             'scores'   => 'required|array',
-            'scores.*' => 'required|integer|min:0',
+            'scores.*' => 'required|integer|min:0|max:100',
         ]);
 
         $attempt = AttemptKuis::findOrFail($attemptId);
@@ -248,9 +270,10 @@ class KuisController extends Controller
         return response()->json(['message' => 'Penilaian essay berhasil.', 'skor_total' => $totalSkor]);
     }
 
-    public function results($id)
+    public function results(Request $request, $id)
     {
-        Kuis::findOrFail($id);
+        $kursusIds = \App\Models\Kursus::where('id_cabang', $request->user()->id_cabang)->pluck('id_kursus');
+        Kuis::whereIn('id_kursus', $kursusIds)->findOrFail($id);
 
         $attempts = AttemptKuis::with(['pengguna', 'jawabanKuis.pertanyaan.pilihanJawaban', 'jawabanKuis.pilihan'])
             ->where('id_kuis', $id)
@@ -284,7 +307,7 @@ class KuisController extends Controller
                         'pertanyaan'      => $j->pertanyaan?->pertanyaan,
                         'bobot_nilai'     => $j->pertanyaan?->bobot_nilai,
                         'jawaban_dipilih' => $j->pilihan?->teks_jawaban,
-                        'benar'           => $j->skor > 0,
+                        'benar'           => $j->skor > 0 || (bool)($j->pilihan?->benar),
                         'jawaban_benar'   => $j->pertanyaan?->pilihanJawaban->firstWhere('benar', true)?->teks_jawaban,
                     ])->values(),
             ]),

@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, Users, BookOpen,
-  GraduationCap, UserSquare2,
-  BarChart3, X, LogOut, Sun, Moon,
+  UserSquare2, ClipboardList,
+  BarChart3, X, LogOut, Sun, Moon, Bell,
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -21,19 +21,28 @@ interface SidebarProps {
 }
 
 // id_role: 1=superadmin, 2=admin, 3=trainer
-const ALL_MENU_ITEMS = [
-  { id: 'dashboard',    label: 'Dashboard',    icon: LayoutDashboard, roleIds: [1, 2, 3] },
-  { id: 'participants', label: 'Participants',  icon: Users,           roleIds: [1, 2] },
-  { id: 'courses',      label: 'Courses',       icon: BookOpen,        roleIds: [1, 2, 3] },
-  { id: 'exams',        label: 'Exams',         icon: GraduationCap,   roleIds: [1, 2, 3] },
-  { id: 'trainers',     label: 'Trainers',      icon: UserSquare2,     roleIds: [1, 2] },
-  { id: 'reports',      label: 'Reports',       icon: BarChart3,       roleIds: [1, 2] },
+const ADMIN_MENU_ITEMS = [
+  { id: 'dashboard',    label: 'Dashboard',    icon: LayoutDashboard, roleIds: [2, 3] },
+  { id: 'participants', label: 'Peserta',       icon: Users,           roleIds: [2] },
+  { id: 'courses',      label: 'Course',        icon: BookOpen,        roleIds: [2, 3] },
+  { id: 'exams',        label: 'Tugas & Kuis',  icon: ClipboardList,   roleIds: [2, 3] },
+  { id: 'trainers',     label: 'Trainer',       icon: UserSquare2,     roleIds: [2] },
+  { id: 'reports',        label: 'Laporan',       icon: BarChart3,       roleIds: [2] },
+  { id: 'notifications',  label: 'Notifikasi',    icon: Bell,            roleIds: [2] },
+];
+
+const SUPERADMIN_MENU_ITEMS = [
+  { id: 'dashboard', label: 'Dashboard',   icon: LayoutDashboard },
+  { id: 'users',     label: 'Pengguna',    icon: Users },
+  { id: 'branches',  label: 'Cabang',      icon: BarChart3 },
 ];
 
 export function Sidebar({ activeTab, setActiveTab, isOpen, setIsOpen, onLogout, user }: SidebarProps) {
   const { theme, toggleTheme } = useTheme();
   const idRole = user?.id_role ?? null;
-  const menuItems = idRole ? ALL_MENU_ITEMS.filter(item => item.roleIds.includes(idRole)) : ALL_MENU_ITEMS;
+  const menuItems = idRole === 1
+    ? SUPERADMIN_MENU_ITEMS
+    : ADMIN_MENU_ITEMS.filter(item => item.roleIds.includes(idRole ?? 2));
 
   const initials = user?.nama
     ? user.nama.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase()

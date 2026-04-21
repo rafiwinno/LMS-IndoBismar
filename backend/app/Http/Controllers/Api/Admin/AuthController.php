@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Pengguna;
 use App\Models\Notifikasi;
+use App\Models\LoginLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
@@ -77,6 +78,12 @@ class AuthController extends Controller
 
         $token = $pengguna->createToken('lms-admin-token')->plainTextToken;
 
+        LoginLog::create([
+            'user_id'      => $pengguna->id_pengguna,
+            'ip_address'   => $request->ip(),
+            'logged_in_at' => now(),
+        ]);
+
         return response()->json([
             'message' => 'Login admin berhasil.',
             'token'   => $token,
@@ -143,7 +150,14 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
-        $request->user()->currentAccessToken()->delete();
+        $user = $request->user();
+
+        LoginLog::where('user_id', $user->id_pengguna)
+            ->whereNull('logged_out_at')
+            ->latest('logged_in_at')
+            ->first()?->update(['logged_out_at' => now()]);
+
+        $user->currentAccessToken()->delete();
         return response()->json(['message' => 'Logout berhasil.']);
     }
 

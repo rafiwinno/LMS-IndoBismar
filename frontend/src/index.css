@@ -1,68 +1,92 @@
 @import "tailwindcss";
-@custom-variant dark (&:where(.dark, .dark *));
+@variant dark (&:where(.dark, .dark *));
 
-html, body, #root {
-  height: 100%;
+/* ─── Design System: Light mode ─────────────────────────────────────────── */
+:root {
+  --color-bg-page:    #f8fafc;
+  --color-bg-card:    #ffffff;
+  --color-bg-sidebar: #ffffff;
+  --color-bg-topbar:  #ffffff;
+  --color-bg-muted:   #f1f5f9;
+
+  --color-text-primary:   #0f172a;
+  --color-text-secondary: #334155;
+  --color-text-label:     #475569;
+  --color-text-muted:     #94a3b8;
+
+  --color-border-theme:  #e2e8f0;
+  --color-border-subtle: #e2e8f0;
+  --color-border-muted:  #f1f5f9;
+
+  --shadow-card:    0 1px 3px 0 rgb(0 0 0 / 0.07), 0 1px 2px -1px rgb(0 0 0 / 0.07);
+  --shadow-topbar:  0 1px 0 0 #e2e8f0;
 }
 
-html.dark,
-html.dark body {
-  background-color: #0a0c10;
-  color-scheme: dark;
+/* ─── Design System: Dark mode ──────────────────────────────────────────── */
+.dark {
+  --color-bg-page:    #0d1117;
+  --color-bg-card:    #161b22;
+  --color-bg-sidebar: #161b22;
+  --color-bg-topbar:  #161b22;
+  --color-bg-muted:   #1c2128;
+
+  --color-text-primary:   #f0f6fc;
+  --color-text-secondary: #c9d1d9;
+  --color-text-label:     #8b949e;
+  --color-text-muted:     #6e7681;
+
+  --color-border-theme:  #30363d;
+  --color-border-subtle: #21262d;
+  --color-border-muted:  #1c2128;
+
+  --shadow-card:   0 1px 3px 0 rgb(0 0 0 / 0.3);
+  --shadow-topbar: 0 1px 0 0 #30363d;
 }
 
-/* Dark scrollbar */
-html.dark * {
-  scrollbar-color: rgba(255,255,255,0.15) transparent;
-}
-html.dark *::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-html.dark *::-webkit-scrollbar-track {
-  background: transparent;
-}
-html.dark *::-webkit-scrollbar-thumb {
-  background-color: rgba(255,255,255,0.15);
-  border-radius: 9999px;
+/* ─── Base: ensure text color follows theme everywhere ─────────────────── */
+html {
+  background-color: var(--color-bg-page);
+  color: var(--color-text-primary);
 }
 
-@keyframes slide-in {
-  from { opacity: 0; transform: translateX(100%); }
-  to   { opacity: 1; transform: translateX(0); }
+/* Input, select, textarea don't inherit color in all browsers */
+input, select, textarea, button {
+  color: inherit;
 }
-.animate-slide-in { animation: slide-in 0.25s ease-out; }
 
-#no-print { display: contents; }
-
-@media print {
-  #no-print { display: none !important; }
-
-  /* Layout fixes */
-  .flex.h-screen  { height: auto !important; display: block !important; }
-  .flex-1.flex.flex-col { width: 100% !important; display: block !important; }
-  main {
-    overflow: visible !important;
-    height: auto !important;
-    padding: 16px !important;
-  }
-
-  /* Expand all overflow containers so table rows are fully visible */
-  .overflow-x-auto,
-  .overflow-y-auto,
-  .overflow-hidden { overflow: visible !important; }
-
-  /* Remove fixed heights */
-  .h-72, .h-80 { height: 280px !important; }
-
-  /* Keep colors */
-  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-
-  /* Hide interactive buttons inside reports (Download CSV, Export buttons) */
-  button { display: none !important; }
-
-  /* Page breaks */
-  .grid { page-break-inside: avoid; }
-  table { page-break-inside: auto; }
-  tr { page-break-inside: avoid; }
+/* Red buttons always white text */
+.bg-red-500, .bg-red-600, .bg-red-700,
+.hover\:bg-red-600:hover, .hover\:bg-red-700:hover {
+  color: #ffffff !important;
 }
+
+/* ─── Utility classes ───────────────────────────────────────────────────── */
+.bg-page    { background-color: var(--color-bg-page); }
+.bg-card    { background-color: var(--color-bg-card); }
+.bg-sidebar { background-color: var(--color-bg-sidebar); }
+.bg-topbar  { background-color: var(--color-bg-topbar); }
+.bg-muted   { background-color: var(--color-bg-muted); }
+
+.text-primary   { color: var(--color-text-primary); }
+.text-secondary { color: var(--color-text-secondary); }
+.text-label     { color: var(--color-text-label); }
+.text-muted     { color: var(--color-text-muted); }
+
+.border-theme  { border-color: var(--color-border-theme); }
+.border-subtle { border-color: var(--color-border-subtle); }
+.border-muted  { border-color: var(--color-border-muted); }
+
+.shadow-card   { box-shadow: var(--shadow-card); }
+.shadow-topbar { box-shadow: var(--shadow-topbar); }
+
+.card {
+  background-color: var(--color-bg-card);
+  color: var(--color-text-primary);
+  box-shadow: var(--shadow-card);
+  border: 1px solid var(--color-border-subtle);
+}
+
+.bg-card    { color: var(--color-text-primary); }
+.bg-sidebar { color: var(--color-text-primary); }
+.bg-topbar  { color: var(--color-text-primary); }
+.bg-page    { color: var(--color-text-primary); }

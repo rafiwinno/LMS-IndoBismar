@@ -9,25 +9,36 @@ use App\Models\Materi;
 use App\Models\Tugas;
 use App\Models\AttemptKuis;
 use App\Models\PesertaKursus;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        // ── Stat Cards — 5 simple queries ────────────────────────────────────
-        $totalPeserta = Pengguna::where('id_role', 4)->where('status', 'aktif')->count();
-        $totalKursus  = Kursus::where('status', 'publish')->count();
-        $totalMateri  = Materi::count();
-        $totalTugas   = Tugas::count();
-        $avgScore     = AttemptKuis::where('status', 'selesai')->avg('skor') ?? 0;
+        $admin    = $request->user();
+        $adminId  = $admin->id_pengguna;
+        $cabangId = $admin->id_cabang;
 
-        // ── Kuis selesai per minggu — 1 GROUP BY query ───────────────────────
-        $weekStart = now()->subWeeks(5)->startOfWeek();
-        $weeklyCounts = DB::table('attempt_kuis')
-            ->where('status', 'selesai')
-            ->where('waktu_selesai', '>=', $weekStart)
-            ->selectRaw('YEARWEEK(waktu_selesai, 1) as yw, COUNT(*) as total')
+        // Kursus IDs milik cabang ini — dipakai untuk scope semua query
+        $kursusIds = Kursus::where('id_cabang', $cabangId)->pluck('id_kursus');
+
+        // ── Stat Cards — scoped by cabang ────────────────────────────────────
+        $totalPeserta = Pengguna::where('id_role', 4)->where('id_cabang', $cabangId)->where('status', 'aktif')->count();
+        $totalKursus  = Kursus::where('id_cabang', $cabangId)->where('status', 'publish')->count();
+        $totalMateri  = Materi::whereIn('id_kursus', $kursusIds)->count();
+        $totalTugas   = Tugas::whereIn('id_kursus', $kursusIds)->count();
+        $avgScore     = AttemptKuis::whereHas('kuis', fn($q) => $q->whereIn('id_kursus', $kursusIds))
+            ->where('status', 'selesai')->avg('skor') ?? 0;
+
+        // ── Kuis selesai per minggu (cabang ini) ─────────────────────────────
+        $weekStart    = now()->subWeeks(5)->startOfWeek();
+        $weeklyCounts = DB::table('attempt_kuis as ak')
+            ->join('kuis as k', 'k.id_kuis', '=', 'ak.id_kuis')
+            ->whereIn('k.id_kursus', $kursusIds)
+            ->where('ak.status', 'selesai')
+            ->where('ak.waktu_selesai', '>=', $weekStart)
+            ->selectRaw('YEARWEEK(ak.waktu_selesai, 1) as yw, COUNT(*) as total')
             ->groupBy('yw')
             ->pluck('total', 'yw');
 
@@ -39,11 +50,12 @@ class DashboardController extends Controller
             ];
         });
 
-        // ── Completion rate per kursus — withCount, no row loading ───────────
+        // ── Completion rate per kursus (cabang ini) ───────────────────────────
         $courseData = Kursus::withCount([
                 'pesertaKursus',
                 'pesertaKursus as selesai_count' => fn($q) => $q->where('status', 'selesai'),
             ])
+            ->where('id_cabang', $cabangId)
             ->where('status', 'publish')
             ->take(5)
             ->get()
@@ -54,12 +66,14 @@ class DashboardController extends Controller
                     : 0,
             ]);
 
-        // ── Materi dibuka per hari — 1 query grouped by date ─────────────────
-        $days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-        $dayStart    = now()->subDays(6)->startOfDay();
-        $dailyCounts = DB::table('progress_materi')
-            ->where('waktu_update', '>=', $dayStart)
-            ->selectRaw('DATE(waktu_update) as tgl, COUNT(*) as total')
+        // ── Materi dibuka per hari (cabang ini) ───────────────────────────────
+        $days     = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        $dayStart = now()->subDays(6)->startOfDay();
+        $dailyCounts = DB::table('progress_materi as pm')
+            ->join('materi as m', 'm.id_materi', '=', 'pm.id_materi')
+            ->whereIn('m.id_kursus', $kursusIds)
+            ->where('pm.waktu_update', '>=', $dayStart)
+            ->selectRaw('DATE(pm.waktu_update) as tgl, COUNT(*) as total')
             ->groupBy('tgl')
             ->pluck('total', 'tgl');
 
@@ -71,33 +85,47 @@ class DashboardController extends Controller
             ];
         });
 
-        // ── Recent Activity ──────────────────────────────────────────────────
-        $recentActivity = collect();
-
-        // Tugas dikumpulkan
+        // ── Recent Activity (cabang ini) ──────────────────────────────────────
         $submissions = DB::table('pengumpulan_tugas as pt')
             ->join('pengguna as p', 'p.id_pengguna', '=', 'pt.id_pengguna')
             ->join('tugas as t', 't.id_tugas', '=', 'pt.id_tugas')
-            ->select('p.nama as user', DB::raw("'submitted assignment' as action"), 't.judul_tugas as target', 'pt.tanggal_kumpul as time')
+            ->whereIn('t.id_kursus', $kursusIds)
+            ->select('p.nama as user', DB::raw("'mengumpulkan tugas' as action"), 't.judul_tugas as target', 'pt.tanggal_kumpul as time')
             ->orderBy('pt.tanggal_kumpul', 'desc')
-            ->limit(3)
+            ->limit(5)
             ->get();
 
-        // Kuis selesai
         $attempts = DB::table('attempt_kuis as ak')
             ->join('pengguna as p', 'p.id_pengguna', '=', 'ak.id_pengguna')
             ->join('kuis as k', 'k.id_kuis', '=', 'ak.id_kuis')
+            ->whereIn('k.id_kursus', $kursusIds)
             ->select('p.nama as user', DB::raw("'completed exam' as action"), 'k.judul_kuis as target', 'ak.waktu_selesai as time')
             ->where('ak.status', 'selesai')
             ->orderBy('ak.waktu_selesai', 'desc')
-            ->limit(3)
+            ->limit(5)
             ->get();
 
-        $recentActivity = $recentActivity
+        $dokumenUploads = DB::table('notifikasi as n')
+            ->join('pengguna as p', 'p.id_pengguna', '=', 'n.id_referensi')
+            ->where('n.tipe', 'dokumen_menunggu')
+            ->where('n.id_penerima', $adminId)
+            ->select(
+                'p.nama as user',
+                DB::raw("'mengupload dokumen' as action"),
+                DB::raw("'menunggu verifikasi' as target"),
+                DB::raw('MAX(n.dibuat_pada) as time')
+            )
+            ->groupBy('n.id_referensi', 'p.nama')
+            ->orderByDesc('time')
+            ->limit(5)
+            ->get();
+
+        $recentActivity = collect()
             ->concat($submissions)
             ->concat($attempts)
+            ->concat($dokumenUploads)
             ->sortByDesc('time')
-            ->take(5)
+            ->take(8)
             ->values()
             ->map(fn($a) => [
                 'user'   => $a->user,

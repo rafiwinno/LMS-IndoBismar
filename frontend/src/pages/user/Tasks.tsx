@@ -1,104 +1,279 @@
-import { Link } from 'react-router-dom';
-import { Calendar, Clock, CheckCircle, AlertCircle, FileText } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { CheckCircle, AlertCircle, FileText, Clock, Search, Upload, Star, HelpCircle } from 'lucide-react';
+import API from '../../api/api';
+
+interface Tugas {
+  id_tugas: number; judul_tugas: string; deskripsi: string | null;
+  judul_kursus: string; deadline: string; nilai_maksimal: number;
+  id_pengumpulan: number | null; nilai: number | null;
+  status_pengumpulan: 'sudah' | 'belum';
+}
+
+interface Kuis {
+  id_kuis: number; judul_kuis: string; judul_kursus: string;
+  waktu_mulai: string; waktu_selesai: string;
+  skor: number | null; status_attempt: string;
+}
 
 export default function Tasks() {
-  const tasks = [
-    { id: 1, course: 'Dasar Pemrograman Web', title: 'Tugas 1: Membuat Halaman Profil Sederhana', type: 'Tugas', deadline: '15 Okt 2023, 23:59', status: 'Sudah Dikumpulkan', score: 85 },
-    { id: 2, course: 'Dasar Pemrograman Web', title: 'Kuis 1: HTML & CSS Dasar', type: 'Kuis', deadline: '20 Okt 2023, 23:59', status: 'Belum', score: null },
-    { id: 3, course: 'Troubleshooting Hardware', title: 'Tugas Praktik: Merakit PC Virtual', type: 'Tugas', deadline: '25 Okt 2023, 23:59', status: 'Belum', score: null },
-    { id: 4, course: 'Pengenalan Jaringan Komputer', title: 'Ujian Akhir Modul Jaringan', type: 'Kuis', deadline: '10 Okt 2023, 23:59', status: 'Sudah Dikumpulkan', score: 92 },
-  ];
+  const [tab, setTab]               = useState<'tugas' | 'kuis'>('tugas');
+  const [tugasList, setTugasList]   = useState<Tugas[]>([]);
+  const [kuisList, setKuisList]     = useState<Kuis[]>([]);
+  const [loading, setLoading]       = useState(true);
+  const [filter, setFilter]         = useState('semua');
+  const [search, setSearch]         = useState('');
+  const location  = useLocation();
+  const navigate  = useNavigate();
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  // Upload state
+  const [uploading, setUploading]   = useState<number | null>(null);
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadError, setUploadError] = useState('');
+  const [uploadSuccess, setUploadSuccess] = useState('');
+
+  const fetchAll = () => {
+    setLoading(true);
+    Promise.all([
+      API.get('/user/tugas'),
+      API.get('/user/kuis'),
+    ])
+      .then(([t, k]) => {
+        setTugasList(t.data.data ?? []);
+        setKuisList(k.data.data ?? []);
+      })
+      .catch(err => console.error(err))
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => { fetchAll(); }, [location.key]);
+
+  const handleUpload = async (id_tugas: number) => {
+    if (!uploadFile) return;
+    setUploadError(''); setUploadSuccess('');
+    setUploading(id_tugas);
+    try {
+      const fd = new FormData();
+      fd.append('file_tugas', uploadFile);
+      await API.post(`/user/tugas/${id_tugas}/kumpul`, fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      setUploadSuccess('Tugas berhasil dikumpulkan!');
+      setUploadFile(null);
+      fetchAll();
+    } catch (err: any) {
+      setUploadError(err.response?.data?.message || 'Gagal mengumpulkan tugas.');
+    } finally {
+      setUploading(null);
+    }
+  };
+
+  // Filter & search helpers
+  const filteredTugas = tugasList.filter(t => {
+    const matchSearch = search
+      ? t.judul_tugas.toLowerCase().includes(search) || t.judul_kursus.toLowerCase().includes(search)
+      : true;
+    const matchFilter =
+      filter === 'belum'   ? t.status_pengumpulan === 'belum' :
+      filter === 'selesai' ? t.status_pengumpulan === 'sudah' : true;
+    return matchSearch && matchFilter;
+  });
+
+  const filteredKuis = kuisList.filter(k => {
+    const matchSearch = search
+      ? k.judul_kuis.toLowerCase().includes(search) || k.judul_kursus.toLowerCase().includes(search)
+      : true;
+    const matchFilter =
+      filter === 'belum'   ? k.status_attempt === 'belum' :
+      filter === 'selesai' ? k.status_attempt === 'sudah' : true;
+    return matchSearch && matchFilter;
+  });
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Tugas & Kuis</h1>
-          <p className="text-slate-500 text-sm mt-1">Kelola dan kerjakan tugas dari trainer Anda</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Tugas & Kuis</h1>
+          <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Kerjakan tugas dan kuis dari trainer Anda</p>
         </div>
-        
-        <div className="flex gap-2">
-          <button className="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
-            Semua
-          </button>
-          <button className="px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
-            Belum Selesai
-          </button>
-          <button className="px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
-            Selesai
-          </button>
+        <div className="flex items-center gap-2 flex-wrap">
+          {['semua', 'belum', 'selesai'].map(f => (
+            <button key={f} onClick={() => setFilter(f)}
+              className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${filter === f ? 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/10' : 'text-gray-600 dark:text-gray-400 bg-white dark:bg-[#161b27] border border-gray-200 dark:border-white/8 hover:bg-gray-50'}`}>
+              {f === 'semua' ? 'Semua' : f === 'belum' ? 'Belum Selesai' : 'Selesai'}
+            </button>
+          ))}
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-[#161b27] border border-gray-200 dark:border-white/8 rounded-lg w-44">
+            <Search size={15} className="text-gray-400 flex-shrink-0" />
+            <input ref={searchRef} type="text" placeholder="Cari..." defaultValue={search}
+              className="bg-transparent outline-none w-full text-sm text-gray-900 dark:text-white placeholder-gray-400"
+              onChange={e => setSearch(e.target.value.toLowerCase())} />
+          </div>
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-slate-600">
-            <thead className="bg-slate-50 text-slate-700 font-semibold border-b border-slate-200">
-              <tr>
-                <th className="px-6 py-4">Nama Tugas/Kuis</th>
-                <th className="px-6 py-4">Course</th>
-                <th className="px-6 py-4">Tenggat Waktu</th>
-                <th className="px-6 py-4">Status</th>
-                <th className="px-6 py-4 text-right">Aksi</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {tasks.map((task) => (
-                <tr key={task.id} className="hover:bg-slate-50 transition-colors">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-lg ${task.type === 'Kuis' ? 'bg-purple-100 text-purple-600' : 'bg-blue-100 text-blue-600'}`}>
-                        <FileText size={18} />
-                      </div>
-                      <div>
-                        <p className="font-semibold text-slate-900">{task.title}</p>
-                        <p className="text-xs text-slate-500">{task.type}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 font-medium text-slate-700">{task.course}</td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-1.5 text-slate-600">
-                      <Calendar size={14} />
-                      <span>{task.deadline}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    {task.status === 'Sudah Dikumpulkan' ? (
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
-                        <CheckCircle size={14} /> Selesai
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-rose-100 text-rose-700">
-                        <AlertCircle size={14} /> Belum
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    {task.status === 'Sudah Dikumpulkan' ? (
-                      <div className="flex items-center justify-end gap-3">
-                        <span className="text-sm font-bold text-slate-900">
-                          Nilai: <span className={task.score && task.score >= 80 ? 'text-emerald-600' : 'text-amber-600'}>{task.score || '-'}</span>
-                        </span>
-                        <button className="text-blue-600 hover:text-blue-800 font-medium text-sm">
-                          Lihat
-                        </button>
-                      </div>
-                    ) : (
-                      <Link 
-                        to={task.type === 'Kuis' ? `/tasks/quiz/${task.id}` : '#'}
-                        className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
-                      >
-                        Kerjakan
-                      </Link>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+      {/* Tabs */}
+      <div className="inline-flex bg-gray-100 dark:bg-white/6 p-1 rounded-xl gap-1">
+        {[{ key: 'tugas', label: 'Tugas', icon: FileText }, { key: 'kuis', label: 'Kuis', icon: HelpCircle }].map(({ key, label, icon: Icon }) => (
+          <button key={key} onClick={() => setTab(key as any)}
+            className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold transition-all ${tab === key ? 'bg-white dark:bg-[#161b27] text-gray-900 dark:text-white shadow-sm' : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'}`}>
+            <Icon size={15} />{label}
+          </button>
+        ))}
       </div>
+
+      {loading ? (
+        <div className="text-center text-gray-400 py-16">Memuat...</div>
+      ) : tab === 'tugas' ? (
+        /* ── TUGAS TAB ── */
+        filteredTugas.length === 0 ? (
+          <div className="text-center text-gray-400 py-16">Tidak ada tugas ditemukan.</div>
+        ) : (
+          <div className="bg-white dark:bg-[#161b27] rounded-2xl shadow-sm border border-gray-200 dark:border-white/8 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-gray-50 dark:bg-white/5 text-gray-700 dark:text-gray-300 font-semibold border-b border-gray-200 dark:border-white/8">
+                  <tr>
+                    <th className="px-6 py-4">Tugas</th>
+                    <th className="px-6 py-4">Kursus</th>
+                    <th className="px-6 py-4">Deadline</th>
+                    <th className="px-6 py-4">Status</th>
+                    <th className="px-6 py-4 text-right">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 dark:divide-white/8">
+                  {filteredTugas.map(t => (
+                    <tr key={t.id_tugas} className="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 rounded-lg bg-indigo-100 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex-shrink-0">
+                            <FileText size={16} />
+                          </div>
+                          <div>
+                            <p className="font-semibold text-gray-900 dark:text-white">{t.judul_tugas}</p>
+                            {t.deskripsi && <p className="text-xs text-gray-400 mt-0.5 truncate max-w-xs">{t.deskripsi}</p>}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-gray-600 dark:text-gray-400 font-medium">{t.judul_kursus}</td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400">
+                          <Clock size={13} />
+                          <span className="text-sm">{new Date(t.deadline).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        {t.status_pengumpulan === 'sudah' ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">
+                            <CheckCircle size={13} /> Dikumpulkan
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-rose-100 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400">
+                            <AlertCircle size={13} /> Belum
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        {t.status_pengumpulan === 'sudah' ? (
+                          <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
+                            {t.nilai !== null ? `Nilai: ${t.nilai}` : '✓ Dikumpulkan'}
+                          </span>
+                        ) : (
+                          <div className="flex items-center justify-end gap-2">
+                            <label className="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-indigo-300 dark:border-indigo-500/50 text-indigo-600 dark:text-indigo-400 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-colors">
+                              <Upload size={13} />
+                              {uploadFile && uploading === null ? uploadFile.name.slice(0, 12) + '...' : 'Pilih File'}
+                              <input type="file" className="hidden"
+                                accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.txt"
+                                onChange={e => { setUploadFile(e.target.files?.[0] || null); setUploadError(''); setUploadSuccess(''); }} />
+                            </label>
+                            <button
+                              disabled={!uploadFile || uploading === t.id_tugas}
+                              onClick={() => handleUpload(t.id_tugas)}
+                              className="px-3 py-1.5 text-xs font-medium bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50 transition-colors">
+                              {uploading === t.id_tugas ? 'Mengirim...' : 'Kumpulkan'}
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {(uploadError || uploadSuccess) && (
+              <div className={`px-6 py-3 text-sm border-t border-gray-100 dark:border-white/8 ${uploadError ? 'text-red-500' : 'text-emerald-600'}`}>
+                {uploadError || uploadSuccess}
+              </div>
+            )}
+          </div>
+        )
+      ) : (
+        /* ── KUIS TAB ── */
+        filteredKuis.length === 0 ? (
+          <div className="text-center text-gray-400 py-16">Tidak ada kuis ditemukan.</div>
+        ) : (
+          <div className="bg-white dark:bg-[#161b27] rounded-2xl shadow-sm border border-gray-200 dark:border-white/8 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-gray-50 dark:bg-white/5 text-gray-700 dark:text-gray-300 font-semibold border-b border-gray-200 dark:border-white/8">
+                  <tr>
+                    <th className="px-6 py-4">Kuis</th>
+                    <th className="px-6 py-4">Kursus</th>
+                    <th className="px-6 py-4">Batas Waktu</th>
+                    <th className="px-6 py-4">Status</th>
+                    <th className="px-6 py-4 text-right">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 dark:divide-white/8">
+                  {filteredKuis.map(k => (
+                    <tr key={k.id_kuis} className="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400">
+                            <HelpCircle size={16} />
+                          </div>
+                          <p className="font-semibold text-gray-900 dark:text-white">{k.judul_kuis}</p>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-gray-600 dark:text-gray-400 font-medium">{k.judul_kursus}</td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400">
+                          <Clock size={13} />
+                          <span>{new Date(k.waktu_selesai).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        {k.status_attempt === 'sudah' ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">
+                            <CheckCircle size={13} /> Selesai
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-rose-100 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400">
+                            <AlertCircle size={13} /> Belum
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        {k.status_attempt === 'sudah' ? (
+                          <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">Nilai: {k.skor ?? '-'}</span>
+                        ) : (
+                          <Link to={`/tasks/quiz/${k.id_kuis}`}
+                            className="inline-flex items-center px-4 py-1.5 text-xs font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors">
+                            Kerjakan
+                          </Link>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )
+      )}
     </div>
   );
 }
