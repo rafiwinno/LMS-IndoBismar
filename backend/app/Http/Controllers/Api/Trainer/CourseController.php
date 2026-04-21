@@ -113,10 +113,6 @@ class CourseController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        if ($course->gambar_kursus) {
-            Storage::disk('public')->delete($course->gambar_kursus);
-        }
-
         Cache::forget("trainer_courses_{$request->user()->id_pengguna}");
         $course->delete();
 

@@ -14,20 +14,22 @@ class ProgressController extends Controller
     {
         $trainerId = $request->user()->id_pengguna;
 
-        $data = Cache::remember("trainer_progress_v2_{$trainerId}", 120, function () use ($trainerId) {
+        $data = Cache::remember("trainer_progress_v3_{$trainerId}", 120, function () use ($trainerId) {
             return DB::select("
                 SELECT
                     p.id_pengguna   AS id,
                     p.nama,
                     k.id_kursus,
                     k.judul_kursus  AS course,
-                    COUNT(DISTINCT pm.id_progress) AS materi_selesai,
-                    COUNT(DISTINCT m.id_materi)    AS total_materi,
+                    COUNT(DISTINCT pm.id_progress)    AS materi_selesai,
+                    COUNT(DISTINCT m.id_materi)        AS total_materi,
+                    COUNT(DISTINCT pt.id_pengumpulan) AS tugas_dikumpul,
+                    COUNT(DISTINCT t.id_tugas)         AS total_tugas,
                     CASE
-                        WHEN COUNT(DISTINCT m.id_materi) = 0 THEN 0
+                        WHEN (COUNT(DISTINCT m.id_materi) + COUNT(DISTINCT t.id_tugas)) = 0 THEN 0
                         ELSE ROUND(
-                            COUNT(DISTINCT pm.id_progress) * 100.0 /
-                            COUNT(DISTINCT m.id_materi)
+                            (COUNT(DISTINCT pm.id_progress) + COUNT(DISTINCT pt.id_pengumpulan)) * 100.0 /
+                            (COUNT(DISTINCT m.id_materi) + COUNT(DISTINCT t.id_tugas))
                         )
                     END AS progress
                 FROM peserta_kursus pk
@@ -38,6 +40,10 @@ class ProgressController extends Controller
                     ON pm.id_pengguna = pk.id_pengguna
                     AND pm.id_materi  = m.id_materi
                     AND pm.status     = 'selesai'
+                LEFT JOIN tugas t ON t.id_kursus = k.id_kursus
+                LEFT JOIN pengumpulan_tugas pt
+                    ON pt.id_tugas    = t.id_tugas
+                    AND pt.id_pengguna = pk.id_pengguna
                 WHERE k.id_trainer = ?
                 GROUP BY p.id_pengguna, p.nama, k.id_kursus, k.judul_kursus
             ", [$trainerId]);

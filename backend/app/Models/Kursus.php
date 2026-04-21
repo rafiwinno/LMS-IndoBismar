@@ -1,8 +1,10 @@
 <?php
 namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Kursus extends Model {
+    use SoftDeletes;
     protected $table = 'kursus';
     protected $primaryKey = 'id_kursus';
     const CREATED_AT = 'dibuat_pada';

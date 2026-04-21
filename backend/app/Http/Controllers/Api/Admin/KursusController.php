@@ -95,27 +95,7 @@ class KursusController extends Controller
 
     public function destroy($id)
     {
-        $kursus = Kursus::with(['materi', 'tugas.pengumpulan', 'kuis.pertanyaan.pilihanJawaban', 'kuis.attemptKuis.jawabanKuis', 'pesertaKursus'])->findOrFail($id);
-
-        foreach ($kursus->kuis as $kuis) {
-            foreach ($kuis->attemptKuis as $attempt) {
-                $attempt->jawabanKuis()->delete();
-            }
-            $kuis->attemptKuis()->delete();
-            foreach ($kuis->pertanyaan as $pertanyaan) {
-                $pertanyaan->pilihanJawaban()->delete();
-            }
-            $kuis->pertanyaan()->delete();
-        }
-        $kursus->kuis()->delete();
-
-        foreach ($kursus->tugas as $tugas) {
-            $tugas->pengumpulan()->delete();
-        }
-        $kursus->tugas()->delete();
-
-        $kursus->materi()->delete();
-        $kursus->pesertaKursus()->delete();
+        $kursus = Kursus::findOrFail($id);
         $kursus->delete();
 
         return response()->json(['message' => 'Kursus berhasil dihapus.']);

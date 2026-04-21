@@ -170,59 +170,62 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ── Trainer Portal (trainer's own portal) ─────────────────────────────────
     // All specific paths BEFORE /trainer/{id} wildcard
+    Route::middleware('ensure.trainer')->group(function () {
 
-    // Courses
-    Route::get('/trainer/courses',                              [TrainerCourseController::class, 'index']);
-    Route::post('/trainer/courses',                             [TrainerCourseController::class, 'store']);
-    Route::get('/trainer/courses/{id}',                         [TrainerCourseController::class, 'show']);
-    Route::put('/trainer/courses/{id}',                         [TrainerCourseController::class, 'update']);
-    Route::delete('/trainer/courses/{id}',                      [TrainerCourseController::class, 'destroy']);
-    Route::patch('/trainer/courses/{id}/publish',               [TrainerCourseController::class, 'publish']);
-    Route::patch('/trainer/courses/{id}/unpublish',             [TrainerCourseController::class, 'unpublish']);
-    Route::get('/trainer/courses/{id}/peserta',                 [TrainerCourseController::class, 'peserta']);
-    Route::post('/trainer/courses/{id}/enroll',                 [TrainerCourseController::class, 'enroll']);
-    Route::delete('/trainer/courses/{id}/peserta/{id_pengguna}',[TrainerCourseController::class, 'unenroll']);
+        // Courses
+        Route::get('/trainer/courses',                              [TrainerCourseController::class, 'index']);
+        Route::post('/trainer/courses',                             [TrainerCourseController::class, 'store']);
+        Route::get('/trainer/courses/{id}',                         [TrainerCourseController::class, 'show']);
+        Route::put('/trainer/courses/{id}',                         [TrainerCourseController::class, 'update']);
+        Route::delete('/trainer/courses/{id}',                      [TrainerCourseController::class, 'destroy']);
+        Route::patch('/trainer/courses/{id}/publish',               [TrainerCourseController::class, 'publish']);
+        Route::patch('/trainer/courses/{id}/unpublish',             [TrainerCourseController::class, 'unpublish']);
+        Route::get('/trainer/courses/{id}/peserta',                 [TrainerCourseController::class, 'peserta']);
+        Route::post('/trainer/courses/{id}/enroll',                 [TrainerCourseController::class, 'enroll']);
+        Route::delete('/trainer/courses/{id}/peserta/{id_pengguna}',[TrainerCourseController::class, 'unenroll']);
 
-    // Assignments (nested under course)
-    Route::get('/trainer/courses/{id}/assignments',  [TrainerAssignmentController::class, 'index']);
-    Route::post('/trainer/assignments',              [TrainerAssignmentController::class, 'store']);
-    Route::put('/trainer/assignments/{id}',          [TrainerAssignmentController::class, 'update']);
-    Route::delete('/trainer/assignments/{id}',       [TrainerAssignmentController::class, 'destroy']);
+        // Assignments (nested under course)
+        Route::get('/trainer/courses/{id}/assignments',  [TrainerAssignmentController::class, 'index']);
+        Route::post('/trainer/assignments',              [TrainerAssignmentController::class, 'store']);
+        Route::put('/trainer/assignments/{id}',          [TrainerAssignmentController::class, 'update']);
+        Route::delete('/trainer/assignments/{id}',       [TrainerAssignmentController::class, 'destroy']);
 
-    // Submissions (trainer grades student submissions)
-    Route::get('/trainer/submissions/pending-count',     [TrainerSubmissionController::class, 'pendingCount']);
-    Route::get('/trainer/assignments/{id}/submissions',  [TrainerSubmissionController::class, 'index']);
-    Route::put('/trainer/submissions/{id}/grade',        [TrainerSubmissionController::class, 'grade']);
+        // Submissions (trainer grades student submissions)
+        Route::get('/trainer/submissions/pending-count',     [TrainerSubmissionController::class, 'pendingCount']);
+        Route::get('/trainer/assignments/{id}/submissions',  [TrainerSubmissionController::class, 'index']);
+        Route::put('/trainer/submissions/{id}/grade',        [TrainerSubmissionController::class, 'grade']);
 
-    // Quizzes (nested under course)
-    Route::get('/trainer/courses/{id}/quizzes',   [TrainerQuizController::class, 'index']);
-    Route::post('/trainer/quizzes',               [TrainerQuizController::class, 'store']);
-    Route::get('/trainer/quizzes/{id}',           [TrainerQuizController::class, 'show']);
-    Route::put('/trainer/quizzes/{id}',           [TrainerQuizController::class, 'update']);
-    Route::delete('/trainer/quizzes/{id}',        [TrainerQuizController::class, 'destroy']);
-    Route::post('/trainer/quizzes/{id}/questions',[TrainerQuizController::class, 'storeQuestion']);
-    Route::put('/trainer/questions/{id}',         [TrainerQuizController::class, 'updateQuestion']);
-    Route::delete('/trainer/questions/{id}',      [TrainerQuizController::class, 'destroyQuestion']);
-    Route::get('/trainer/quizzes/{id}/results',                         [TrainerQuizController::class, 'results']);
-    Route::patch('/trainer/quizzes/attempts/{attemptId}/grade-essay',   [TrainerQuizController::class, 'gradeEssay']);
+        // Quizzes (nested under course)
+        Route::get('/trainer/courses/{id}/quizzes',   [TrainerQuizController::class, 'index']);
+        Route::post('/trainer/quizzes',               [TrainerQuizController::class, 'store']);
+        Route::get('/trainer/quizzes/{id}',           [TrainerQuizController::class, 'show']);
+        Route::put('/trainer/quizzes/{id}',           [TrainerQuizController::class, 'update']);
+        Route::delete('/trainer/quizzes/{id}',        [TrainerQuizController::class, 'destroy']);
+        Route::post('/trainer/quizzes/{id}/questions',[TrainerQuizController::class, 'storeQuestion']);
+        Route::put('/trainer/questions/{id}',         [TrainerQuizController::class, 'updateQuestion']);
+        Route::delete('/trainer/questions/{id}',      [TrainerQuizController::class, 'destroyQuestion']);
+        Route::get('/trainer/quizzes/{id}/results',                         [TrainerQuizController::class, 'results']);
+        Route::patch('/trainer/quizzes/attempts/{attemptId}/grade-essay',   [TrainerQuizController::class, 'gradeEssay']);
 
-    // Materials (nested under course)
-    Route::get('/trainer/courses/{id}/materials', [TrainerMaterialController::class, 'index']);
-    Route::post('/trainer/materials',             [TrainerMaterialController::class, 'store']);
-    Route::put('/trainer/materials/{id}',         [TrainerMaterialController::class, 'update']);
-    Route::post('/trainer/materials/{id}',        [TrainerMaterialController::class, 'update']); // method spoofing untuk FormData upload
-    Route::delete('/trainer/materials/{id}',      [TrainerMaterialController::class, 'destroy']);
+        // Materials (nested under course)
+        Route::get('/trainer/courses/{id}/materials', [TrainerMaterialController::class, 'index']);
+        Route::post('/trainer/materials',             [TrainerMaterialController::class, 'store']);
+        Route::put('/trainer/materials/{id}',         [TrainerMaterialController::class, 'update']);
+        Route::post('/trainer/materials/{id}',        [TrainerMaterialController::class, 'update']); // method spoofing untuk FormData upload
+        Route::delete('/trainer/materials/{id}',      [TrainerMaterialController::class, 'destroy']);
 
-    // Progress peserta
-    Route::get('/trainer/peserta/progress',       [TrainerProgressController::class, 'index']);
-    Route::get('/trainer/peserta/semua',          [TrainerProgressController::class, 'allPesertaCabang']);
+        // Progress peserta
+        Route::get('/trainer/peserta/progress',       [TrainerProgressController::class, 'index']);
+        Route::get('/trainer/peserta/semua',          [TrainerProgressController::class, 'allPesertaCabang']);
 
-    // Notifications
-    Route::get('/trainer/notifications',          [TrainerNotificationController::class, 'index']);
+        // Notifications
+        Route::get('/trainer/notifications',          [TrainerNotificationController::class, 'index']);
 
-    // Feedback
-    Route::get('/trainer/feedback',               [TrainerFeedbackController::class, 'index']);
-    Route::post('/trainer/feedback',              [TrainerFeedbackController::class, 'store']);
+        // Feedback
+        Route::get('/trainer/feedback',               [TrainerFeedbackController::class, 'index']);
+        Route::post('/trainer/feedback',              [TrainerFeedbackController::class, 'store']);
+
+    }); // end ensure.trainer
 
     // ── Jadwal (must also be before /trainer/{id}) ────────────────────────────
     Route::get('/trainer/jadwal/all',     [AdminTrainerController::class, 'allJadwal']);
