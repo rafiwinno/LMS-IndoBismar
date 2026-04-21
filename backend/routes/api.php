@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\User\KuisController     as UserKuisController;
 use App\Http\Controllers\Api\User\NilaiController    as UserNilaiController;
 use App\Http\Controllers\Api\User\ProfileController  as UserProfileController;
 use App\Http\Controllers\Api\User\DocumentController as UserDocumentController;
+use App\Http\Controllers\Api\User\FeedbackController as UserFeedbackController;
 
 // ── Admin Controllers ─────────────────────────────────────────────────────────
 use App\Http\Controllers\Api\Admin\AuthController        as AdminAuthController;
@@ -111,6 +112,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/tugas',                        [\App\Http\Controllers\Api\User\TugasController::class, 'index']);
         Route::get('/tugas/{id_tugas}',             [\App\Http\Controllers\Api\User\TugasController::class, 'show']);
         Route::post('/tugas/{id_tugas}/kumpul',     [\App\Http\Controllers\Api\User\TugasController::class, 'kumpul']);
+
+        Route::get('/feedback',          [UserFeedbackController::class, 'index']);
 
         Route::get('/profil',            [UserProfileController::class, 'show']);
         Route::put('/profil',            [UserProfileController::class, 'update']);

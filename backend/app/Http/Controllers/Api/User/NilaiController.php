@@ -42,10 +42,27 @@ class NilaiController extends Controller
             )
             ->get();
 
+        // Nilai tugas peserta (hanya yang sudah dinilai)
+        $nilaiTugas = DB::table('pengumpulan_tugas')
+            ->join('tugas', 'pengumpulan_tugas.id_tugas', '=', 'tugas.id_tugas')
+            ->join('kursus', 'tugas.id_kursus', '=', 'kursus.id_kursus')
+            ->where('pengumpulan_tugas.id_pengguna', $id_pengguna)
+            ->whereNotNull('pengumpulan_tugas.nilai')
+            ->select(
+                'tugas.judul_tugas',
+                'kursus.judul_kursus',
+                'pengumpulan_tugas.nilai',
+                'tugas.nilai_maksimal',
+                'pengumpulan_tugas.tanggal_kumpul',
+                'pengumpulan_tugas.feedback'
+            )
+            ->get();
+
         return response()->json([
             'nilai_pkl'        => $nilaiPkl,
             'nilai_non_teknis' => $nilaiNonTeknis,
             'riwayat_kuis'     => $riwayatKuis,
+            'nilai_tugas'      => $nilaiTugas,
         ]);
     }
 }
