@@ -148,6 +148,14 @@ class AuthController extends Controller
         ], 201);
     }
 
+    public function refresh(Request $request)
+    {
+        $user = $request->user();
+        $user->currentAccessToken()->delete();
+        $token = $user->createToken('lms-admin-token')->plainTextToken;
+        return response()->json(['token' => $token]);
+    }
+
     public function logout(Request $request)
     {
         $user = $request->user();

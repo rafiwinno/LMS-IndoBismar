@@ -118,17 +118,22 @@ function UsersModal({ branch, onClose }: { branch: Branch; onClose: ()=>void }) 
                       {group.map(user => (
                         <div key={user.id}
                           className="flex items-center gap-3 bg-card rounded-xl px-4 py-3 border border-subtle hover:border-red-200 dark:hover:border-red-500/30 hover:shadow-sm transition-all">
-                          <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
-                            style={{ background: avatarColor(user.nama) }}>
-                            {getInitials(user.nama)}
+                          <div className="relative shrink-0">
+                            <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold"
+                              style={{ background: avatarColor(user.nama) }}>
+                              {getInitials(user.nama)}
+                            </div>
+                            {user.is_online && (
+                              <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 border-2 border-white dark:border-[#161b22]" />
+                            )}
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-xs font-semibold text-primary truncate">{user.nama}</p>
                             <p className="text-[10px] text-muted truncate">@{user.username}</p>
-                            <div className="flex items-center gap-1 mt-1">
-                              <span className={`w-1.5 h-1.5 rounded-full ${user.status==='aktif'?'bg-emerald-400':'bg-muted border border-theme'}`} />
-                              <span className={`text-[10px] font-semibold ${user.status==='aktif'?'text-emerald-600 dark:text-emerald-400':'text-muted'}`}>
-                                {user.status==='aktif'?'Aktif':'Nonaktif'}
+                            <div className="flex items-center gap-1.5 mt-1">
+                              <span className={`w-1.5 h-1.5 rounded-full ${user.is_online ? 'bg-emerald-400 animate-pulse' : user.status==='aktif'?'bg-emerald-400':'bg-muted border border-theme'}`} />
+                              <span className={`text-[10px] font-semibold ${user.is_online?'text-emerald-600 dark:text-emerald-400':user.status==='aktif'?'text-emerald-600 dark:text-emerald-400':'text-muted'}`}>
+                                {user.is_online ? 'Online' : user.status==='aktif' ? 'Aktif' : 'Nonaktif'}
                               </span>
                             </div>
                           </div>
@@ -326,7 +331,10 @@ function BranchModal({ isOpen, onClose, onSuccess, initialData, cities }:
 }
 
 // ─── Delete Dialog ────────────────────────────────────────────────────────────
-function DeleteDialog({ branch, onCancel, onConfirm }:{ branch:Branch; onCancel:()=>void; onConfirm:()=>void }) {
+function DeleteDialog({ branch, onCancel, onConfirm, onForceConfirm, error, userCount }:{
+  branch:Branch; onCancel:()=>void; onConfirm:()=>void; onForceConfirm:()=>void;
+  error:string|null; userCount:number|null;
+}) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
       onClick={e=>{if(e.target===e.currentTarget)onCancel()}}>
@@ -338,9 +346,31 @@ function DeleteDialog({ branch, onCancel, onConfirm }:{ branch:Branch; onCancel:
         <p className="text-xs text-label mt-2">
           Cabang <span className="font-semibold text-secondary">"{branch.nama_cabang}"</span> ({branch.kode}) akan dihapus permanen.
         </p>
-        <div className="flex gap-2 mt-5">
-          <button type="button" onClick={onCancel} className="flex-1 py-2 rounded-lg border border-theme text-xs font-semibold text-secondary hover:bg-muted transition-colors">Batal</button>
-          <button type="button" onClick={onConfirm} className="flex-1 py-2 rounded-lg bg-red-600 text-white text-xs font-bold hover:bg-red-700 transition-colors">Hapus</button>
+        {error && (
+          <div className="mt-3 px-3 py-2 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-lg text-xs text-red-600 dark:text-red-400 text-left flex items-start gap-2">
+            <AlertCircle size={13} className="shrink-0 mt-0.5" />
+            <span>{error}</span>
+          </div>
+        )}
+        {userCount !== null && (
+          <div className="mt-3 px-3 py-2.5 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-lg text-xs text-amber-700 dark:text-amber-400 text-left">
+            <p className="font-semibold mb-1">Hapus beserta {userCount} user?</p>
+            <p className="text-amber-600 dark:text-amber-500">Semua akun user di cabang ini akan ikut dihapus permanen dan tidak bisa dikembalikan.</p>
+          </div>
+        )}
+        <div className="flex flex-col gap-2 mt-5">
+          {userCount !== null && (
+            <button type="button" onClick={onForceConfirm}
+              className="w-full py-2 rounded-lg bg-red-700 text-white text-xs font-bold hover:bg-red-800 transition-colors">
+              Hapus Cabang + {userCount} User
+            </button>
+          )}
+          <div className="flex gap-2">
+            <button type="button" onClick={onCancel} className="flex-1 py-2 rounded-lg border border-theme text-xs font-semibold text-secondary hover:bg-muted transition-colors">Batal</button>
+            {userCount === null && (
+              <button type="button" onClick={onConfirm} className="flex-1 py-2 rounded-lg bg-red-600 text-white text-xs font-bold hover:bg-red-700 transition-colors">Hapus</button>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -489,9 +519,10 @@ export default function Branches() {
   const [cities,       setCities]       = useState<string[]>([]);
   const [loading,      setLoading]      = useState(true);
   const [exporting,    setExporting]    = useState(false);
-  const [search,       setSearch]       = useState('');
-  const [filterStatus, setFilterStatus] = useState('');
-  const [filterKota,   setFilterKota]   = useState('');
+  const [search,          setSearch]          = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [filterStatus,    setFilterStatus]    = useState('');
+  const [filterKota,      setFilterKota]      = useState('');
   const [page,         setPage]         = useState(1);
   const [totalAll,     setTotalAll]     = useState(0);
   const [activeCount,  setActiveCount]  = useState(0);
@@ -506,20 +537,26 @@ export default function Branches() {
     setToast({msg,type}); setTimeout(()=>setToast(null),3000);
   };
 
+  // Debounce search 300ms
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
   const fetchBranches = useCallback(async () => {
     setLoading(true);
     try {
       const params: Record<string,string> = {};
-      if (search) params.search=search; if (filterStatus) params.status=filterStatus; if (filterKota) params.kota=filterKota;
+      if (debouncedSearch) params.search=debouncedSearch; if (filterStatus) params.status=filterStatus; if (filterKota) params.kota=filterKota;
       const res = await api.get('/superadmin/cabang',{params});
       setBranches(res.data.data); setTotalAll(res.data.total);
       setActiveCount(res.data.active); setCities(res.data.cities??[]);
     } catch { showToast('Gagal memuat data cabang.','error'); }
     finally { setLoading(false); }
-  },[search,filterStatus,filterKota]);
+  },[debouncedSearch,filterStatus,filterKota]);
 
   useEffect(()=>{ fetchBranches(); },[fetchBranches]);
-  useEffect(()=>{ setPage(1); },[search,filterStatus,filterKota]);
+  useEffect(()=>{ setPage(1); },[debouncedSearch,filterStatus,filterKota]);
 
   const totalPages = Math.max(1,Math.ceil(branches.length/PER_PAGE));
   const paged      = branches.slice((page-1)*PER_PAGE, page*PER_PAGE);
@@ -546,16 +583,27 @@ export default function Branches() {
     finally { setExporting(false); }
   };
 
-  const handleDelete = async () => {
+  const [deleteError,     setDeleteError]     = useState<string|null>(null);
+  const [deleteUserCount, setDeleteUserCount] = useState<number|null>(null);
+  const [forceDelete,     setForceDelete]     = useState(false);
+
+  const handleDelete = async (force = false) => {
     if (!delTarget) return;
+    setDeleteError(null);
     try {
-      await api.delete(`/superadmin/cabang/${delTarget.id}`);
+      await api.delete(`/superadmin/cabang/${delTarget.id}`, { params: force ? { force: 1 } : {} });
       setDelTarget(null); setDetailTarget(null);
-      showToast(`Cabang "${delTarget.nama_cabang}" dihapus.`,'error');
+      setDeleteError(null); setDeleteUserCount(null); setForceDelete(false);
+      showToast(`Cabang "${delTarget.nama_cabang}" dihapus.`, 'success');
       fetchBranches();
     } catch (err:any) {
-      setDelTarget(null);
-      showToast(err.response?.data?.message||'Gagal menghapus.','error');
+      const data = err.response?.data;
+      if (data?.can_force) {
+        setDeleteUserCount(data.user_count);
+        setDeleteError(data.message);
+      } else {
+        setDeleteError(data?.message || 'Gagal menghapus cabang.');
+      }
     }
   };
 
@@ -694,7 +742,7 @@ export default function Branches() {
       <BranchModal isOpen={editTarget!==null} onClose={()=>setEditTarget(null)}
         onSuccess={()=>{ showToast('Cabang berhasil diupdate!'); fetchBranches(); }}
         initialData={editTarget} cities={cities}/>
-      {delTarget    && <DeleteDialog branch={delTarget}    onCancel={()=>setDelTarget(null)}    onConfirm={handleDelete}/>}
+      {delTarget    && <DeleteDialog branch={delTarget}    onCancel={()=>{setDelTarget(null);setDeleteError(null);setDeleteUserCount(null);setForceDelete(false);}}    onConfirm={()=>handleDelete(false)} onForceConfirm={()=>handleDelete(true)} error={deleteError} userCount={deleteUserCount}/>}
       {detailTarget && <DetailDrawer branch={detailTarget} onClose={()=>setDetailTarget(null)}  onEdit={()=>{ setEditTarget(detailTarget); setDetailTarget(null); }} onViewUsers={()=>openUsersModal(detailTarget)}/>}
       {usersTarget  && <UsersModal   branch={usersTarget}  onClose={()=>setUsersTarget(null)}/>}
     </div>

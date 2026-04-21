@@ -4,6 +4,7 @@ import {
   Shield, X, ChevronLeft, ChevronRight,
   User, Mail, Lock, Building2, Download,
   Wifi, SlidersHorizontal, Users as UsersIcon,
+  CheckSquare, Square, CheckCheck, ToggleLeft,
 } from 'lucide-react';
 import api from '../../services/api';
 
@@ -352,10 +353,11 @@ export default function Users() {
   const [branches,     setBranches]     = useState<Branch[]>([]);
   const [loading,      setLoading]      = useState(true);
   const [exporting,    setExporting]    = useState(false);
-  const [search,       setSearch]       = useState('');
-  const [filterRole,   setFilterRole]   = useState('');
-  const [filterCabang, setFilterCabang] = useState('');
-  const [page,         setPage]         = useState(1);
+  const [search,          setSearch]          = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [filterRole,      setFilterRole]      = useState('');
+  const [filterCabang,    setFilterCabang]    = useState('');
+  const [page,            setPage]            = useState(1);
   const [lastPage,     setLastPage]     = useState(1);
   const [total,        setTotal]        = useState(0);
   const [showCreate,   setShowCreate]   = useState(false);
@@ -363,6 +365,8 @@ export default function Users() {
   const [delTarget,    setDelTarget]    = useState<UserItem|null>(null);
   const [detailTarget, setDetailTarget] = useState<UserItem|null>(null);
   const [toast,        setToast]        = useState<{msg:string;type:'success'|'error'}|null>(null);
+  const [selected,     setSelected]     = useState<Set<number>>(new Set());
+  const [bulkLoading,  setBulkLoading]  = useState(false);
 
   const showToast = (msg:string, type:'success'|'error'='success') => {
     setToast({msg,type}); setTimeout(()=>setToast(null),3000);
@@ -370,19 +374,25 @@ export default function Users() {
 
   useEffect(()=>{ api.get('/superadmin/branches').then(r=>setBranches(r.data.data ?? r.data)).catch(()=>{}); },[]);
 
+  // Debounce search 300ms
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
       const p: Record<string,any> = { page };
-      if (search) p.search=search; if (filterRole) p.role=filterRole; if (filterCabang) p.id_cabang=filterCabang;
+      if (debouncedSearch) p.search=debouncedSearch; if (filterRole) p.role=filterRole; if (filterCabang) p.id_cabang=filterCabang;
       const res = await api.get('/superadmin/users',{params:p});
       setUsers(res.data.data); setLastPage(res.data.last_page); setTotal(res.data.total);
     } catch { showToast('Gagal memuat data user.','error'); }
     finally { setLoading(false); }
-  },[page,search,filterRole,filterCabang]);
+  },[page,debouncedSearch,filterRole,filterCabang]);
 
   useEffect(()=>{ fetchUsers(); },[fetchUsers]);
-  useEffect(()=>{ setPage(1); },[search,filterRole,filterCabang]);
+  useEffect(()=>{ setPage(1); },[debouncedSearch,filterRole,filterCabang]);
   useEffect(()=>{ const t=setInterval(fetchUsers,30_000); return ()=>clearInterval(t); },[fetchUsers]);
 
   const handleExportCSV = async () => {
@@ -414,7 +424,7 @@ export default function Users() {
     try {
       await api.delete(`/superadmin/users/${delTarget.id}`);
       setDelTarget(null); setDetailTarget(null);
-      showToast(`User "${delTarget.nama}" dihapus.`,'error');
+      showToast(`User "${delTarget.nama}" dihapus.`,'success');
       fetchUsers();
     } catch { showToast('Gagal menghapus user.','error'); }
   };
@@ -429,6 +439,45 @@ export default function Users() {
   const hasFilter    = search||filterRole||filterCabang;
   const resetFilters = () => { setSearch(''); setFilterRole(''); setFilterCabang(''); setPage(1); };
   const onlineCount  = users.filter(u=>u.is_online).length;
+
+  const allSelected  = users.length > 0 && users.every(u => selected.has(u.id));
+  const someSelected = users.some(u => selected.has(u.id));
+
+  const toggleSelect = (id: number) => setSelected(prev => {
+    const next = new Set(prev);
+    next.has(id) ? next.delete(id) : next.add(id);
+    return next;
+  });
+
+  const toggleSelectAll = () => {
+    if (allSelected) setSelected(new Set());
+    else setSelected(new Set(users.map(u => u.id)));
+  };
+
+  const handleBulkDelete = async () => {
+    if (!selected.size) return;
+    if (!window.confirm(`Hapus ${selected.size} user yang dipilih? Tindakan ini tidak bisa dibatalkan.`)) return;
+    setBulkLoading(true);
+    try {
+      await Promise.all([...selected].map(id => api.delete(`/superadmin/users/${id}`)));
+      showToast(`${selected.size} user berhasil dihapus.`);
+      setSelected(new Set());
+      fetchUsers();
+    } catch { showToast('Sebagian user gagal dihapus.', 'error'); }
+    finally { setBulkLoading(false); }
+  };
+
+  const handleBulkStatus = async (status: 'aktif' | 'nonaktif') => {
+    if (!selected.size) return;
+    setBulkLoading(true);
+    try {
+      await Promise.all([...selected].map(id => api.patch(`/superadmin/users/${id}/status`, { status })));
+      showToast(`${selected.size} user diubah menjadi ${status}.`);
+      setSelected(new Set());
+      fetchUsers();
+    } catch { showToast('Sebagian user gagal diubah statusnya.', 'error'); }
+    finally { setBulkLoading(false); }
+  };
 
   return (
     <div className="space-y-5 max-w-[1400px] mx-auto">
@@ -500,11 +549,59 @@ export default function Users() {
           </div>
         </div>
 
+        {/* Bulk action bar — muncul saat ada yang dipilih */}
+        {someSelected && (
+          <div className="px-5 py-2.5 bg-red-50 dark:bg-red-900/20 border-b border-red-200 dark:border-red-500/30 flex items-center gap-3 flex-wrap">
+            <span className="text-xs font-bold text-red-700 dark:text-red-300 flex items-center gap-1.5">
+              <CheckCheck size={13}/>{selected.size} user dipilih
+            </span>
+            <div className="flex items-center gap-2 ml-auto flex-wrap">
+              <button type="button" onClick={()=>handleBulkStatus('aktif')} disabled={bulkLoading}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border
+                  border-emerald-300 dark:border-emerald-500/50
+                  bg-emerald-50 dark:bg-emerald-500/15
+                  text-emerald-700 dark:text-emerald-300
+                  hover:bg-emerald-100 dark:hover:bg-emerald-500/25
+                  text-xs font-semibold disabled:opacity-50 transition-colors">
+                <ToggleLeft size={12}/> Aktifkan
+              </button>
+              <button type="button" onClick={()=>handleBulkStatus('nonaktif')} disabled={bulkLoading}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border
+                  border-slate-300 dark:border-slate-600
+                  bg-white dark:bg-slate-700/50
+                  text-slate-600 dark:text-slate-300
+                  hover:bg-slate-100 dark:hover:bg-slate-700
+                  text-xs font-semibold disabled:opacity-50 transition-colors">
+                <ToggleLeft size={12}/> Nonaktifkan
+              </button>
+              <button type="button" onClick={handleBulkDelete} disabled={bulkLoading}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border
+                  border-red-300 dark:border-red-500/50
+                  bg-white dark:bg-red-500/15
+                  text-red-600 dark:text-red-300
+                  hover:bg-red-50 dark:hover:bg-red-500/25
+                  text-xs font-semibold disabled:opacity-50 transition-colors">
+                {bulkLoading ? <span className="w-3 h-3 border-2 border-red-400 dark:border-red-300 border-t-transparent rounded-full animate-spin"/> : <Trash2 size={12}/>}
+                Hapus
+              </button>
+              <button type="button" onClick={()=>setSelected(new Set())}
+                className="p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-red-100 dark:hover:bg-red-500/20 transition-colors">
+                <X size={13}/>
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Table */}
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
               <tr className="border-b border-subtle">
+                <th className="px-5 py-3 w-8">
+                  <button type="button" onClick={toggleSelectAll} className="text-muted hover:text-secondary transition-colors">
+                    {allSelected ? <CheckSquare size={15} className="text-red-600 dark:text-red-400"/> : someSelected ? <CheckSquare size={15} className="text-red-400"/> : <Square size={15}/>}
+                  </button>
+                </th>
                 {['Pengguna','Role','Cabang','Status','Last Login',''].map((h,i)=>(
                   <th key={i} className={`px-5 py-3 text-[10px] font-bold text-muted uppercase tracking-wider ${i===5?'text-right':''}`}>{h}</th>
                 ))}
@@ -513,13 +610,13 @@ export default function Users() {
             <tbody className="divide-y divide-theme">
               {loading ? (
                 Array.from({length:6}).map((_,i)=>(
-                  <tr key={i}>{Array.from({length:6}).map((_,j)=>(
+                  <tr key={i}>{Array.from({length:7}).map((_,j)=>(
                     <td key={j} className="px-5 py-3.5"><Skel className="h-3.5 w-20" /></td>
                   ))}</tr>
                 ))
               ) : users.length===0 ? (
                 <tr>
-                  <td colSpan={6} className="py-20 text-center">
+                  <td colSpan={7} className="py-20 text-center">
                     <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center mx-auto mb-3">
                       <UsersIcon size={20} className="text-muted" />
                     </div>
@@ -529,7 +626,15 @@ export default function Users() {
                   </td>
                 </tr>
               ) : users.map(user=>(
-                <tr key={user.id} className="hover:bg-muted/60 transition-colors group">
+                <tr key={user.id} className={`hover:bg-muted/60 transition-colors group ${selected.has(user.id)?'bg-red-50/50 dark:bg-red-500/5':''}`}>
+                  {/* Checkbox */}
+                  <td className="px-5 py-3.5">
+                    <button type="button" onClick={()=>toggleSelect(user.id)} className="text-muted hover:text-secondary transition-colors">
+                      {selected.has(user.id)
+                        ? <CheckSquare size={15} className="text-red-600 dark:text-red-400"/>
+                        : <Square size={15}/>}
+                    </button>
+                  </td>
                   {/* User */}
                   <td className="px-5 py-3.5">
                     <div className="flex items-center gap-3">
