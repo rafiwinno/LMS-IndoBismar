@@ -10,11 +10,16 @@ class Material extends Model
     protected $primaryKey = 'id_materi';
     public $timestamps = false;
 
+    protected $casts = [
+        'dibuat_pada' => 'datetime',
+    ];
+
     protected $fillable = [
         'id_kursus',
         'judul_materi',
         'tipe_materi',
         'file_materi',
-        'urutan'
+        'urutan',
+        'sub_bab',
     ];
 }

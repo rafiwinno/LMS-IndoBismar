@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\User\KuisController     as UserKuisController;
 use App\Http\Controllers\Api\User\NilaiController    as UserNilaiController;
 use App\Http\Controllers\Api\User\ProfileController  as UserProfileController;
 use App\Http\Controllers\Api\User\DocumentController as UserDocumentController;
+use App\Http\Controllers\Api\User\FeedbackController as UserFeedbackController;
 
 // ── Admin Controllers ─────────────────────────────────────────────────────────
 use App\Http\Controllers\Api\Admin\AuthController        as AdminAuthController;
@@ -46,14 +47,14 @@ Route::get('/test', fn() => response()->json(['message' => 'API working']));
 // =============================================================================
 
 // Peserta login/register (used by student portal)
-Route::post('/register',      [UserAuthController::class, 'register']);
-Route::post('/login/peserta', [UserAuthController::class, 'loginPeserta']);
-Route::post('/login/staff',   [UserAuthController::class, 'loginStaff']);
+Route::post('/register',      [UserAuthController::class, 'register'])->middleware('throttle:10,1');
+Route::post('/login/peserta', [UserAuthController::class, 'loginPeserta'])->middleware('throttle:5,1');
+Route::post('/login/staff',   [UserAuthController::class, 'loginStaff'])->middleware('throttle:5,1');
 
 // Admin/Trainer/Superadmin login (used by admin portal via api.ts)
-Route::post('/auth/login',       [AdminAuthController::class, 'login']);
-Route::post('/auth/login-admin', [AdminAuthController::class, 'loginAdmin']);
-Route::post('/auth/register',    [AdminAuthController::class, 'register']);
+Route::post('/auth/login',       [AdminAuthController::class, 'login'])->middleware('throttle:5,1');
+Route::post('/auth/login-admin', [AdminAuthController::class, 'loginAdmin'])->middleware('throttle:5,1');
+Route::post('/auth/register',    [AdminAuthController::class, 'register'])->middleware('throttle:10,1');
 
 // =============================================================================
 // AUTHENTICATED ROUTES
@@ -68,7 +69,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // =========================================================================
     // SUPERADMIN PORTAL
     // =========================================================================
-    Route::prefix('superadmin')->group(function () {
+    Route::prefix('superadmin')->middleware('admin:1')->group(function () {
         Route::get('/dashboard',            [SuperDashboardController::class, 'index']);
         Route::get('/dashboard/login-recap',[SuperDashboardController::class, 'loginRecap']);
 
@@ -111,6 +112,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/tugas',                        [\App\Http\Controllers\Api\User\TugasController::class, 'index']);
         Route::get('/tugas/{id_tugas}',             [\App\Http\Controllers\Api\User\TugasController::class, 'show']);
         Route::post('/tugas/{id_tugas}/kumpul',     [\App\Http\Controllers\Api\User\TugasController::class, 'kumpul']);
+
+        Route::get('/feedback',          [UserFeedbackController::class, 'index']);
 
         Route::get('/profil',            [UserProfileController::class, 'show']);
         Route::put('/profil',            [UserProfileController::class, 'update']);
@@ -200,54 +203,56 @@ Route::middleware('auth:sanctum')->group(function () {
     }); // end admin:1,2
 
     // ── Trainer Portal (trainer's own portal) ─────────────────────────────────
-    // All specific paths BEFORE /trainer/{id} wildcard
+    Route::middleware('admin:3')->group(function () {
 
-    // Courses
-    Route::get('/trainer/courses',                              [TrainerCourseController::class, 'index']);
-    Route::post('/trainer/courses',                             [TrainerCourseController::class, 'store']);
-    Route::get('/trainer/courses/{id}',                         [TrainerCourseController::class, 'show']);
-    Route::put('/trainer/courses/{id}',                         [TrainerCourseController::class, 'update']);
-    Route::delete('/trainer/courses/{id}',                      [TrainerCourseController::class, 'destroy']);
-    Route::patch('/trainer/courses/{id}/publish',               [TrainerCourseController::class, 'publish']);
-    Route::get('/trainer/courses/{id}/peserta',                 [TrainerCourseController::class, 'peserta']);
-    Route::post('/trainer/courses/{id}/enroll',                 [TrainerCourseController::class, 'enroll']);
-    Route::delete('/trainer/courses/{id}/peserta/{id_pengguna}',[TrainerCourseController::class, 'unenroll']);
+        // Courses
+        Route::get('/trainer/courses',                              [TrainerCourseController::class, 'index']);
+        Route::post('/trainer/courses',                             [TrainerCourseController::class, 'store']);
+        Route::get('/trainer/courses/{id}',                         [TrainerCourseController::class, 'show']);
+        Route::put('/trainer/courses/{id}',                         [TrainerCourseController::class, 'update']);
+        Route::delete('/trainer/courses/{id}',                      [TrainerCourseController::class, 'destroy']);
+        Route::patch('/trainer/courses/{id}/publish',               [TrainerCourseController::class, 'publish']);
+        Route::get('/trainer/courses/{id}/peserta',                 [TrainerCourseController::class, 'peserta']);
+        Route::post('/trainer/courses/{id}/enroll',                 [TrainerCourseController::class, 'enroll']);
+        Route::delete('/trainer/courses/{id}/peserta/{id_pengguna}',[TrainerCourseController::class, 'unenroll']);
 
-    // Assignments (nested under course)
-    Route::get('/trainer/courses/{id}/assignments',  [TrainerAssignmentController::class, 'index']);
-    Route::post('/trainer/assignments',              [TrainerAssignmentController::class, 'store']);
-    Route::put('/trainer/assignments/{id}',          [TrainerAssignmentController::class, 'update']);
-    Route::delete('/trainer/assignments/{id}',       [TrainerAssignmentController::class, 'destroy']);
+        // Assignments (nested under course)
+        Route::get('/trainer/courses/{id}/assignments',  [TrainerAssignmentController::class, 'index']);
+        Route::post('/trainer/assignments',              [TrainerAssignmentController::class, 'store']);
+        Route::put('/trainer/assignments/{id}',          [TrainerAssignmentController::class, 'update']);
+        Route::delete('/trainer/assignments/{id}',       [TrainerAssignmentController::class, 'destroy']);
 
-    // Submissions (trainer grades student submissions)
-    Route::get('/trainer/assignments/{id}/submissions', [TrainerSubmissionController::class, 'index']);
-    Route::put('/trainer/submissions/{id}/grade',       [TrainerSubmissionController::class, 'grade']);
+        // Submissions (trainer grades student submissions)
+        Route::get('/trainer/assignments/{id}/submissions', [TrainerSubmissionController::class, 'index']);
+        Route::put('/trainer/submissions/{id}/grade',       [TrainerSubmissionController::class, 'grade']);
 
-    // Quizzes (nested under course)
-    Route::get('/trainer/courses/{id}/quizzes',   [TrainerQuizController::class, 'index']);
-    Route::post('/trainer/quizzes',               [TrainerQuizController::class, 'store']);
-    Route::get('/trainer/quizzes/{id}',           [TrainerQuizController::class, 'show']);
-    Route::put('/trainer/quizzes/{id}',           [TrainerQuizController::class, 'update']);
-    Route::delete('/trainer/quizzes/{id}',        [TrainerQuizController::class, 'destroy']);
-    Route::post('/trainer/quizzes/{id}/questions',[TrainerQuizController::class, 'storeQuestion']);
-    Route::delete('/trainer/questions/{id}',      [TrainerQuizController::class, 'destroyQuestion']);
+        // Quizzes (nested under course)
+        Route::get('/trainer/courses/{id}/quizzes',   [TrainerQuizController::class, 'index']);
+        Route::post('/trainer/quizzes',               [TrainerQuizController::class, 'store']);
+        Route::get('/trainer/quizzes/{id}',           [TrainerQuizController::class, 'show']);
+        Route::put('/trainer/quizzes/{id}',           [TrainerQuizController::class, 'update']);
+        Route::delete('/trainer/quizzes/{id}',        [TrainerQuizController::class, 'destroy']);
+        Route::post('/trainer/quizzes/{id}/questions',[TrainerQuizController::class, 'storeQuestion']);
+        Route::delete('/trainer/questions/{id}',      [TrainerQuizController::class, 'destroyQuestion']);
 
-    // Materials (nested under course)
-    Route::get('/trainer/courses/{id}/materials', [TrainerMaterialController::class, 'index']);
-    Route::post('/trainer/materials',             [TrainerMaterialController::class, 'store']);
-    Route::put('/trainer/materials/{id}',         [TrainerMaterialController::class, 'update']);
-    Route::delete('/trainer/materials/{id}',      [TrainerMaterialController::class, 'destroy']);
+        // Materials (nested under course)
+        Route::get('/trainer/courses/{id}/materials', [TrainerMaterialController::class, 'index']);
+        Route::post('/trainer/materials',             [TrainerMaterialController::class, 'store']);
+        Route::put('/trainer/materials/{id}',         [TrainerMaterialController::class, 'update']);
+        Route::delete('/trainer/materials/{id}',      [TrainerMaterialController::class, 'destroy']);
 
-    // Progress peserta
-    Route::get('/trainer/peserta/progress',       [TrainerProgressController::class, 'index']);
-    Route::get('/trainer/peserta/semua',          [TrainerProgressController::class, 'allPesertaCabang']);
+        // Progress peserta
+        Route::get('/trainer/peserta/progress',       [TrainerProgressController::class, 'index']);
+        Route::get('/trainer/peserta/semua',          [TrainerProgressController::class, 'allPesertaCabang']);
 
-    // Notifications
-    Route::get('/trainer/notifications',          [TrainerNotificationController::class, 'index']);
+        // Notifications
+        Route::get('/trainer/notifications',          [TrainerNotificationController::class, 'index']);
 
-    // Feedback
-    Route::get('/trainer/feedback',               [TrainerFeedbackController::class, 'index']);
-    Route::post('/trainer/feedback',              [TrainerFeedbackController::class, 'store']);
+        // Feedback
+        Route::get('/trainer/feedback',               [TrainerFeedbackController::class, 'index']);
+        Route::post('/trainer/feedback',              [TrainerFeedbackController::class, 'store']);
+
+    }); // end admin:3
 
 });
 

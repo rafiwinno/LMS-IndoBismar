@@ -53,6 +53,7 @@ export default function CourseDetail() {
   const [materi, setMateri] = useState<Materi[]>([]);
   const [kuisList, setKuisList] = useState<KuisItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState('');
   const [activeMateri, setActiveMateri] = useState<Materi | null>(null);
   const [openBab, setOpenBab] = useState<Record<string, boolean>>({});
   const [markingDone, setMarkingDone] = useState(false);
@@ -63,6 +64,7 @@ export default function CourseDetail() {
 
   const fetchData = () => {
     setLoading(true);
+    setFetchError('');
     Promise.all([
       API.get(`/user/kursus/${id}`),
       API.get('/user/tugas'),
@@ -76,11 +78,12 @@ export default function CourseDetail() {
           babKeys[key] = true;
         });
         setOpenBab(babKeys);
-        // Filter tugas for this course
         const allTugas: TugasItem[] = tugasRes.data.data ?? [];
-        setTugasList(allTugas.filter((t: any) => String(t.id_kursus) === String(id)));
+        setTugasList(allTugas.filter((t: TugasItem & { id_kursus: number }) => t.id_kursus === Number(id)));
       })
-      .catch(err => console.error(err))
+      .catch(err => {
+        setFetchError(err.response?.data?.message || 'Gagal memuat detail kursus. Coba refresh halaman.');
+      })
       .finally(() => setLoading(false));
   };
 
@@ -123,8 +126,8 @@ export default function CourseDetail() {
           : m
       ));
       setActiveMateri(prev => prev ? { ...prev, status_progress: 'selesai' } : null);
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Gagal menandai materi selesai.');
     } finally {
       setMarkingDone(false);
     }
@@ -133,6 +136,13 @@ export default function CourseDetail() {
   if (loading) return (
     <div className="text-center text-gray-500 dark:text-gray-400 py-12">
       Memuat detail kursus...
+    </div>
+  );
+
+  if (fetchError) return (
+    <div className="text-center py-12">
+      <p className="text-red-500 font-medium">{fetchError}</p>
+      <button onClick={fetchData} className="mt-3 text-sm text-gray-500 hover:text-gray-700 underline">Coba lagi</button>
     </div>
   );
 

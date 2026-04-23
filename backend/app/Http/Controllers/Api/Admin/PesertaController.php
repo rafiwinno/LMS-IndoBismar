@@ -345,22 +345,22 @@ class PesertaController extends Controller
             ->where('id_pengguna', $p->id_pengguna)
             ->first();
 
-        $suratSiswa = $dokumen->surat_siswa      ?? null;
-        $suratOrtu  = $dokumen->surat_orang_tua  ?? null;
-        $statusDok  = $dokumen->status            ?? ($p->dataPkl->status_dokumen ?? null);
-        $catatan    = $p->dataPkl->catatan_dokumen ?? null;
+        $suratSiswa = $dokumen?->surat_siswa     ?? null;
+        $suratOrtu  = $dokumen?->surat_orang_tua ?? null;
+        $statusDok  = $dokumen?->status          ?? ($p->dataPkl?->status_dokumen ?? null);
+        $catatan    = $p->dataPkl?->catatan_dokumen ?? null;
 
         return [
             'id'               => $p->id_pengguna,
             'nama'             => $p->nama,
             'email'            => $p->email,
             'nomor_hp'         => $p->nomor_hp,
-            'asal_sekolah'     => $p->dataPkl->asal_sekolah ?? null,
-            'jurusan'          => $p->dataPkl->jurusan ?? null,
+            'asal_sekolah'     => $p->dataPkl?->asal_sekolah ?? null,
+            'jurusan'          => $p->dataPkl?->jurusan ?? null,
             'enrolled_courses' => $kursusCount,
             'progress'         => $progress,
             'status'           => $p->status,
-            'cabang'           => $p->cabang->nama_cabang ?? null,
+            'cabang'           => $p->cabang?->nama_cabang ?? null,
             'join_date'        => $p->dibuat_pada,
             'status_dokumen'   => $statusDok,
             'catatan_dokumen'  => $catatan,

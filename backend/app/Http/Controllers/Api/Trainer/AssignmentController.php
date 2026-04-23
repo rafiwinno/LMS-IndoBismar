@@ -46,8 +46,10 @@ class AssignmentController extends Controller
         }
 
         $filePath = null;
-         if ($request->hasFile('file_tugas')) {
-        $filePath = $request->file('file_tugas')->store('tugas', 'public');
+        if ($request->hasFile('file_tugas')) {
+            $file     = $request->file('file_tugas');
+            $safeName = uniqid() . '_' . time() . '.' . $file->getClientOriginalExtension();
+            $filePath = $file->storeAs('tugas', $safeName, 'public');
         }
 
 
@@ -82,13 +84,16 @@ public function update(Request $request, $id)
         'file_tugas'     => 'nullable|file|mimes:pdf|max:10240', // tambah ini
     ]);
 
-    // Handle upload file baru
+    // Handle upload file baru — simpan dulu sebelum hapus yang lama
     if ($request->hasFile('file_tugas')) {
-        // Hapus file lama jika ada
-        if ($assignment->file_tugas) {
-            Storage::disk('public')->delete($assignment->file_tugas);
+        $file      = $request->file('file_tugas');
+        $safeName  = uniqid() . '_' . time() . '.' . $file->getClientOriginalExtension();
+        $newPath   = $file->storeAs('tugas', $safeName, 'public');
+        $oldPath   = $assignment->file_tugas;
+        $assignment->file_tugas = $newPath;
+        if ($oldPath) {
+            Storage::disk('public')->delete($oldPath);
         }
-        $assignment->file_tugas = $request->file('file_tugas')->store('tugas', 'public');
     }
 
     $assignment->judul_tugas    = $request->judul_tugas    ?? $assignment->judul_tugas;

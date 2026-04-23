@@ -74,7 +74,9 @@ class TugasController extends Controller
             'file_tugas' => 'required|file|max:51200|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,zip,txt',
         ]);
 
-        $path = $request->file('file_tugas')->store("tugas/{$id_tugas}", 'public');
+        $file     = $request->file('file_tugas');
+        $safeName = uniqid() . '_' . time() . '.' . $file->getClientOriginalExtension();
+        $path     = $file->storeAs("tugas/{$id_tugas}", $safeName, 'local');
 
         // Simpan pengumpulan tugas
         DB::table('pengumpulan_tugas')->insert([
@@ -87,9 +89,11 @@ class TugasController extends Controller
         return response()->json(['message' => 'Tugas berhasil dikumpulkan'], 201);
     }
 
-    // Detail satu tugas
-    public function show($id_tugas)
+    // Detail satu tugas beserta status pengumpulan peserta
+    public function show(Request $request, $id_tugas)
     {
+        $id_pengguna = $request->user()->id_pengguna;
+
         $tugas = DB::table('tugas')
             ->join('kursus', 'tugas.id_kursus', '=', 'kursus.id_kursus')
             ->where('tugas.id_tugas', $id_tugas)
@@ -100,6 +104,28 @@ class TugasController extends Controller
             return response()->json(['message' => 'Tugas tidak ditemukan'], 404);
         }
 
-        return response()->json(['data' => $tugas]);
+        // Cek apakah peserta terdaftar di kursus ini
+        $terdaftar = DB::table('peserta_kursus')
+            ->where('id_pengguna', $id_pengguna)
+            ->where('id_kursus', $tugas->id_kursus)
+            ->exists();
+
+        if (!$terdaftar) {
+            return response()->json(['message' => 'Kamu tidak terdaftar di kursus ini'], 403);
+        }
+
+        // Ambil status pengumpulan milik peserta ini
+        $pengumpulan = DB::table('pengumpulan_tugas')
+            ->where('id_tugas', $id_tugas)
+            ->where('id_pengguna', $id_pengguna)
+            ->select('id_pengumpulan', 'tanggal_kumpul', 'nilai', 'feedback')
+            ->first();
+
+        return response()->json([
+            'data' => array_merge((array) $tugas, [
+                'status_pengumpulan' => $pengumpulan ? 'sudah' : 'belum',
+                'pengumpulan'        => $pengumpulan,
+            ]),
+        ]);
     }
 }

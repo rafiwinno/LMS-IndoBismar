@@ -107,10 +107,10 @@ export const api = {
   gradeTugas: (subId: number, data: any) =>
     apiFetch(`/tugas/submissions/${subId}/grade`, { method: 'PATCH', body: JSON.stringify(data) }),
   // Tugas (student)
-  getMyTugas: () => apiFetch('/tugas/saya'),
-  getMySubmission: (tugasId: number) => apiFetch(`/tugas/${tugasId}/my-submission`),
+  getMyTugas: () => apiFetch('/user/tugas'),
+  getMySubmission: (tugasId: number) => apiFetch(`/user/tugas/${tugasId}`),
   submitTugas: (tugasId: number, data: FormData) =>
-    apiFetch(`/tugas/${tugasId}/submit`, { method: 'POST', body: data }),
+    apiFetch(`/user/tugas/${tugasId}/kumpul`, { method: 'POST', body: data }),
 
   // Kuis
   getKuis: (params?: string) => apiFetch(`/kuis${params ? '?' + params : ''}`),

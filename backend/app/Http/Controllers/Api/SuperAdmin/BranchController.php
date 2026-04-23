@@ -45,12 +45,12 @@ class BranchController extends Controller
             ->groupBy('id_cabang')
             ->pluck('total', 'id_cabang');
 
-        // id_role = 2 → admin
+        // id_role = 2 → admin (semua admin per cabang)
         $admins = Pengguna::where('id_role', 2)
             ->select('id_cabang', 'nama')
             ->get()
             ->groupBy('id_cabang')
-            ->map(fn($g) => $g->first()->nama);
+            ->map(fn($g) => $g->pluck('nama')->implode(', '));
 
         $cities = Cabang::distinct()->pluck('kota')->sort()->values();
 

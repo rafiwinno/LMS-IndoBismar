@@ -25,7 +25,7 @@ class DashboardController extends Controller
 
         // ── Stat Cards — scoped by cabang ────────────────────────────────────
         $totalPeserta = Pengguna::where('id_role', 4)->where('id_cabang', $cabangId)->where('status', 'aktif')->count();
-        $totalKursus  = Kursus::where('id_cabang', $cabangId)->where('status', 'publish')->count();
+        $totalKursus  = Kursus::where('id_cabang', $cabangId)->where('status', 'aktif')->count();
         $totalMateri  = Materi::whereIn('id_kursus', $kursusIds)->count();
         $totalTugas   = Tugas::whereIn('id_kursus', $kursusIds)->count();
         $avgScore     = AttemptKuis::whereHas('kuis', fn($q) => $q->whereIn('id_kursus', $kursusIds))
@@ -56,7 +56,7 @@ class DashboardController extends Controller
                 'pesertaKursus as selesai_count' => fn($q) => $q->where('status', 'selesai'),
             ])
             ->where('id_cabang', $cabangId)
-            ->where('status', 'publish')
+            ->where('status', 'aktif')
             ->take(5)
             ->get()
             ->map(fn($k) => [

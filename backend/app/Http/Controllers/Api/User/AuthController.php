@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api\User;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\User;
+use App\Models\Pengguna;
 use App\Models\Notifikasi;
 use App\Models\LoginLog;
 use Illuminate\Support\Facades\Hash;
@@ -25,7 +25,7 @@ class AuthController extends Controller
             'jurusan'      => 'nullable|string|max:100',
         ]);
 
-        $user = User::create([
+        $user = Pengguna::create([
             'nama'      => $request->nama,
             'username'  => $request->username,
             'email'     => $request->email,
@@ -45,7 +45,7 @@ class AuthController extends Controller
 
         // Kirim notifikasi ke semua admin cabang yang sama
         if ($user->id_cabang) {
-            $adminCabang = User::where('id_cabang', $user->id_cabang)
+            $adminCabang = Pengguna::where('id_cabang', $user->id_cabang)
                 ->whereIn('id_role', [1, 2])
                 ->where('status', 'aktif')
                 ->get();
@@ -74,7 +74,7 @@ class AuthController extends Controller
             'password' => 'required'
         ]);
 
-        $user = User::where('email', $request->email)
+        $user = Pengguna::where('email', $request->email)
                     ->where('id_role', 4)
                     ->first();
 
@@ -84,7 +84,7 @@ class AuthController extends Controller
             ], 401);
         }
 
-        $token = $user->createToken('auth_token')->plainTextToken;
+        $token = $user->createToken('auth_token', ['*'], now()->addHours(8))->plainTextToken;
 
         return response()->json([
             'message' => 'Login berhasil',
@@ -96,7 +96,7 @@ class AuthController extends Controller
     // LOGIN ADMIN / TRAINER (USERNAME)
     public function loginStaff(Request $request)
     {
-        $user = User::where('username', $request->username)
+        $user = Pengguna::where('username', $request->username)
                     ->whereIn('id_role', [1, 2, 3])
                     ->first();
 
@@ -106,7 +106,7 @@ class AuthController extends Controller
             ], 401);
         }
 
-        $token = $user->createToken('auth_token')->plainTextToken;
+        $token = $user->createToken('auth_token', ['*'], now()->addHours(8))->plainTextToken;
 
         LoginLog::create([
             'user_id'      => $user->id_pengguna,

@@ -36,7 +36,7 @@ class AuthController extends Controller
             ], 403);
         }
 
-        $token = $pengguna->createToken('lms-token')->plainTextToken;
+        $token = $pengguna->createToken('lms-token', ['*'], now()->addHours(8))->plainTextToken;
 
         return response()->json([
             'message' => 'Login berhasil.',
@@ -76,7 +76,7 @@ class AuthController extends Controller
             ], 403);
         }
 
-        $token = $pengguna->createToken('lms-admin-token')->plainTextToken;
+        $token = $pengguna->createToken('lms-admin-token', ['*'], now()->addHours(8))->plainTextToken;
 
         LoginLog::create([
             'user_id'      => $pengguna->id_pengguna,

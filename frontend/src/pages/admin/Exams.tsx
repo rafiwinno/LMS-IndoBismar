@@ -198,6 +198,10 @@ export function Exams() {
 
   // ── Buat Kuis ──────────────────────────────────────────────────────────────
   const handleCreateKuis = async () => {
+    if (form.waktu_mulai && form.waktu_selesai && new Date(form.waktu_mulai) >= new Date(form.waktu_selesai)) {
+      setError('Waktu mulai harus lebih awal dari waktu selesai.');
+      return;
+    }
     setSaving(true); setError('');
     try {
       const res = await api.createKuis({ ...form, pertanyaan: [] });
