@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, Users, BookOpen,
   UserSquare2, ClipboardList,
-  BarChart3, X, LogOut, Sun, Moon, Bell,
+  BarChart3, X, LogOut, Sun, Moon,
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -28,7 +28,6 @@ const ADMIN_MENU_ITEMS = [
   { id: 'exams',        label: 'Tugas & Kuis',  icon: ClipboardList,   roleIds: [2, 3] },
   { id: 'trainers',     label: 'Trainer',       icon: UserSquare2,     roleIds: [2] },
   { id: 'reports',        label: 'Laporan',       icon: BarChart3,       roleIds: [2] },
-  { id: 'notifications',  label: 'Notifikasi',    icon: Bell,            roleIds: [2] },
 ];
 
 const SUPERADMIN_MENU_ITEMS = [
@@ -130,9 +129,9 @@ export function Sidebar({ activeTab, setActiveTab, isOpen, setIsOpen, onLogout, 
                 ? <Sun size={19} className="text-gray-400 dark:text-gray-500" />
                 : <Moon size={19} className="text-gray-400 dark:text-gray-500" />
               }
-              <span>{theme === 'dark' ? 'Light' : 'Dark'} Mode</span>
+              <span>{theme === 'dark' ? 'Dark' : 'Light'} Mode</span>
             </div>
-            <div className={`w-10 h-5 rounded-full relative transition-colors duration-200 ${theme === 'dark' ? 'bg-red-600' : 'bg-gray-300'}`}>
+            <div className={`w-10 h-5 rounded-full relative transition-colors duration-200 ${theme === 'dark' ? 'bg-red-600' : 'bg-gray-400'}`}>
               <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all duration-200 ${theme === 'dark' ? 'left-5' : 'left-0.5'}`} />
             </div>
           </button>

@@ -25,7 +25,7 @@ class DashboardController extends Controller
 
         // ── Stat Cards — scoped by cabang ────────────────────────────────────
         $totalPeserta = Pengguna::where('id_role', 4)->where('id_cabang', $cabangId)->where('status', 'aktif')->count();
-        $totalKursus  = Kursus::where('id_cabang', $cabangId)->where('status', 'aktif')->count();
+        $totalKursus  = Kursus::where('id_cabang', $cabangId)->where('status', 'publish')->count();
         $totalMateri  = Materi::whereIn('id_kursus', $kursusIds)->count();
         $totalTugas   = Tugas::whereIn('id_kursus', $kursusIds)->count();
         $avgScore     = AttemptKuis::whereHas('kuis', fn($q) => $q->whereIn('id_kursus', $kursusIds))
@@ -45,7 +45,7 @@ class DashboardController extends Controller
         $progressData = collect(range(5, 0))->map(function ($weekBack) use ($weeklyCounts) {
             $yw = now()->subWeeks($weekBack)->startOfWeek()->format('oW'); // ISO year+week
             return [
-                'name'     => 'Week ' . (6 - $weekBack),
+                'name'     => 'Minggu ' . (6 - $weekBack),
                 'progress' => (int) ($weeklyCounts->get((int) $yw, 0)),
             ];
         });
@@ -56,7 +56,7 @@ class DashboardController extends Controller
                 'pesertaKursus as selesai_count' => fn($q) => $q->where('status', 'selesai'),
             ])
             ->where('id_cabang', $cabangId)
-            ->where('status', 'aktif')
+            ->where('status', 'publish')
             ->take(5)
             ->get()
             ->map(fn($k) => [
@@ -67,7 +67,7 @@ class DashboardController extends Controller
             ]);
 
         // ── Materi dibuka per hari (cabang ini) ───────────────────────────────
-        $days     = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        $days     = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
         $dayStart = now()->subDays(6)->startOfDay();
         $dailyCounts = DB::table('progress_materi as pm')
             ->join('materi as m', 'm.id_materi', '=', 'pm.id_materi')
@@ -99,7 +99,7 @@ class DashboardController extends Controller
             ->join('pengguna as p', 'p.id_pengguna', '=', 'ak.id_pengguna')
             ->join('kuis as k', 'k.id_kuis', '=', 'ak.id_kuis')
             ->whereIn('k.id_kursus', $kursusIds)
-            ->select('p.nama as user', DB::raw("'completed exam' as action"), 'k.judul_kuis as target', 'ak.waktu_selesai as time')
+            ->select('p.nama as user', DB::raw("'menyelesaikan kuis' as action"), 'k.judul_kuis as target', 'ak.waktu_selesai as time')
             ->where('ak.status', 'selesai')
             ->orderBy('ak.waktu_selesai', 'desc')
             ->limit(5)

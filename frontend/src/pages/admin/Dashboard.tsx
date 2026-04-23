@@ -63,11 +63,11 @@ export function Dashboard() {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-        <StatCard title="Total Peserta"    value={loading ? null : String(stats.total_peserta ?? 0)}  icon={Users}         color="bg-blue-500" />
-        <StatCard title="Total Kursus"     value={loading ? null : String(stats.total_kursus ?? 0)}   icon={BookOpen}      color="bg-red-500" />
-        <StatCard title="Total Materi"     value={loading ? null : String(stats.total_materi ?? 0)}   icon={FileText}      color="bg-emerald-500" />
-        <StatCard title="Total Tugas"      value={loading ? null : String(stats.total_tugas ?? 0)}    icon={ClipboardList} color="bg-amber-500" />
-        <StatCard title="Rata-rata Nilai"  value={loading ? null : String(stats.average_score ?? 0)}  icon={TrendingUp}    color="bg-purple-500" />
+        <StatCard title="Total Peserta"    value={loading ? null : String(stats.total_peserta ?? 0)}  icon={Users}         color="text-blue-500"    bg="bg-blue-500/10" />
+        <StatCard title="Total Kursus"     value={loading ? null : String(stats.total_kursus ?? 0)}   icon={BookOpen}      color="text-red-500"     bg="bg-red-500/10" />
+        <StatCard title="Total Materi"     value={loading ? null : String(stats.total_materi ?? 0)}   icon={FileText}      color="text-emerald-500" bg="bg-emerald-500/10" />
+        <StatCard title="Total Tugas"      value={loading ? null : String(stats.total_tugas ?? 0)}    icon={ClipboardList} color="text-amber-500"   bg="bg-amber-500/10" />
+        <StatCard title="Rata-rata Nilai"  value={loading ? null : String(stats.average_score ?? 0)}  icon={TrendingUp}    color="text-purple-500"  bg="bg-purple-500/10" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -95,7 +95,7 @@ export function Dashboard() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-white dark:bg-[#161b22] p-6 rounded-xl shadow-sm border border-gray-100 dark:border-white/8">
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">Completion Kursus</h3>
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">Penyelesaian Kursus</h3>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={courseData}>
@@ -171,11 +171,11 @@ export function Dashboard() {
   );
 }
 
-function StatCard({ title, value, icon: Icon, color }: { title: string; value: string | null; icon: any; color: string }) {
+function StatCard({ title, value, icon: Icon, color, bg }: { title: string; value: string | null; icon: any; color: string; bg: string }) {
   return (
-    <div className="bg-white dark:bg-[#161b22] p-5 rounded-xl shadow-sm border border-gray-100 dark:border-white/8 flex items-center space-x-4">
-      <div className={`p-3 rounded-xl ${color} flex-shrink-0`}>
-        <Icon className="w-6 h-6 text-white" />
+    <div className="bg-white dark:bg-[#161b22] p-5 rounded-xl shadow-sm border border-gray-100 dark:border-white/8 flex items-center gap-4">
+      <div className={`w-10 h-10 rounded-lg ${bg} flex items-center justify-center shrink-0`}>
+        <Icon size={18} className={color} />
       </div>
       <div>
         <p className="text-xs font-medium text-gray-500 dark:text-gray-400">{title}</p>

@@ -120,7 +120,7 @@ export default function TrainerSidebar({ isOpen, setIsOpen }: SidebarProps) {
                 ? <Sun size={19} className="text-gray-400 dark:text-gray-500" />
                 : <Moon size={19} className="text-gray-400 dark:text-gray-500" />
               }
-              <span>{theme === 'dark' ? 'Light' : 'Dark'} Mode</span>
+              <span>{theme === 'dark' ? 'Dark' : 'Light'} Mode</span>
             </div>
             <div className={`w-10 h-5 rounded-full relative transition-colors duration-200 ${theme === 'dark' ? 'bg-red-600' : 'bg-gray-400'}`}>
               <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all duration-200 ${theme === 'dark' ? 'left-5' : 'left-0.5'}`} />

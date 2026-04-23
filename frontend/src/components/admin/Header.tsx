@@ -172,7 +172,7 @@ export default function Header({ onMenuClick, user }: HeaderProps) {
 
         {/* User avatar */}
         <div className="flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-white/5 p-1.5 pr-3 rounded-full transition-colors cursor-pointer">
-          <div className="w-8 h-8 bg-red-500/20 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center font-bold text-sm">
+          <div className="w-8 h-8 bg-red-600 text-white rounded-full flex items-center justify-center font-bold text-xs shrink-0 select-none">
             {initials}
           </div>
           <div className="hidden md:block text-left">
