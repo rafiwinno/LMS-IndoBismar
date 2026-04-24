@@ -28,11 +28,12 @@ class NilaiController extends Controller
             ->where('id_pengguna', $id_pengguna)
             ->get();
 
-        // Riwayat kuis peserta
+        // Riwayat kuis peserta (hanya yang sudah selesai)
         $riwayatKuis = DB::table('attempt_kuis')
             ->join('kuis', 'attempt_kuis.id_kuis', '=', 'kuis.id_kuis')
             ->join('kursus', 'kuis.id_kursus', '=', 'kursus.id_kursus')
             ->where('attempt_kuis.id_pengguna', $id_pengguna)
+            ->where('attempt_kuis.status', 'selesai')
             ->select(
                 'kuis.judul_kuis',
                 'kursus.judul_kursus',

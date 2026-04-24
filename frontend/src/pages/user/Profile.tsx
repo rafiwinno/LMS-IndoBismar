@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+﻿import { useEffect, useState, useCallback } from 'react';
 import { User, Mail, Phone, Lock, Save } from 'lucide-react';
 import API from '../../api/api';
 import { ProfileSkeleton } from '../../components/ui/Skeleton';
@@ -27,7 +27,7 @@ export default function Profile() {
       const data = res.data.data;
       setProfil(data);
       setForm({ nama: data.nama, nomor_hp: data.nomor_hp ?? '' });
-    } catch (err) { console.error(err); }
+    } catch { setErrorMsg('Gagal memuat profil.'); }
   }, []);
 
   useEffect(() => { fetchProfil().finally(() => setLoading(false)); }, [fetchProfil]);

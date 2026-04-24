@@ -238,11 +238,16 @@ class KuisController extends Controller
             ->where('id_kuis', $id_kuis)
             ->get();
 
-        $pertanyaanDenganPilihan = $pertanyaan->map(function ($item) {
-            $item->pilihan = DB::table('pilihan_jawaban')
-                ->where('id_pertanyaan', $item->id_pertanyaan)
-                ->select('id_pilihan', 'teks_jawaban') // tidak kirim benar ke frontend
-                ->get();
+        $idPertanyaan = $pertanyaan->pluck('id_pertanyaan');
+
+        $semuaPilihan = DB::table('pilihan_jawaban')
+            ->whereIn('id_pertanyaan', $idPertanyaan)
+            ->select('id_pilihan', 'id_pertanyaan', 'teks_jawaban')
+            ->get()
+            ->groupBy('id_pertanyaan');
+
+        $pertanyaanDenganPilihan = $pertanyaan->map(function ($item) use ($semuaPilihan) {
+            $item->pilihan = $semuaPilihan->get($item->id_pertanyaan, collect());
             return $item;
         });
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
   PlayCircle, FileText, CheckCircle, Circle,
@@ -58,6 +58,7 @@ export default function CourseDetail() {
   const [kuisList, setKuisList] = useState<KuisItem[]>([]);
   const [tugasList, setTugasList] = useState<TugasItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
   const [activeMateri, setActiveMateri] = useState<Materi | null>(null);
   const [openBab, setOpenBab] = useState<Record<string, boolean>>({});
   const [markingDone, setMarkingDone] = useState(false);
@@ -79,7 +80,7 @@ export default function CourseDetail() {
         });
         setOpenBab(babKeys);
       })
-      .catch(err => console.error(err))
+      .catch(() => setFetchError(true))
       .finally(() => setLoading(false));
   };
 
@@ -103,8 +104,8 @@ export default function CourseDetail() {
           : m
       ));
       setActiveMateri(prev => prev ? { ...prev, status_progress: 'selesai' } : null);
-    } catch (err) {
-      console.error(err);
+    } catch {
+      // progress tidak diupdate jika gagal
     } finally {
       setMarkingDone(false);
     }
@@ -130,6 +131,8 @@ export default function CourseDetail() {
       setUploading(null);
     }
   };
+
+  if (fetchError) return <div className="text-center text-red-500 py-12">Gagal memuat kursus. Silakan refresh halaman.</div>;
 
   if (loading) return (
     <div className="text-center text-gray-500 dark:text-gray-400 py-12">

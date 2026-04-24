@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { BookOpen } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import API from '../../api/api';
@@ -15,13 +15,14 @@ export default function Courses() {
   const [courses, setCourses] = useState<Kursus[]>([]);
   const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   const search = searchParams.get('search') ?? '';
 
   useEffect(() => {
     API.get('/user/kursus')
       .then(res => setCourses(res.data.data))
-      .catch(err => console.error(err))
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, []);
 
@@ -30,6 +31,7 @@ export default function Courses() {
   );
 
   if (loading) return <CoursesSkeleton />;
+  if (error) return <div className="text-center text-red-500 py-12">Gagal memuat kursus. Silakan refresh halaman.</div>;
 
   return (
     <div className="space-y-6">

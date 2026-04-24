@@ -59,7 +59,7 @@ export default function Quiz() {
         if (msg === 'Kamu sudah mengerjakan kuis ini') {
           navigate(fromCourse ? `/courses/${fromCourse}` : '/tasks');
         } else {
-          console.error(err);
+          navigate(fromCourse ? `/courses/${fromCourse}` : '/tasks');
         }
       } finally {
         setLoading(false);

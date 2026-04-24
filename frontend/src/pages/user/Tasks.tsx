@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { CheckCircle, AlertCircle, FileText, Clock, Search } from 'lucide-react';
 import API from '../../api/api';
@@ -16,6 +16,7 @@ interface Kuis {
 export default function Tasks() {
   const [kuisList, setKuisList] = useState<Kuis[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [filter, setFilter] = useState('semua');
   const location = useLocation();
   const navigate = useNavigate();
@@ -26,7 +27,7 @@ export default function Tasks() {
     setLoading(true);
     API.get('/user/kuis')
       .then(res => setKuisList(res.data.data))
-      .catch(err => console.error(err))
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
   };
 
@@ -48,6 +49,8 @@ export default function Tasks() {
       filter === 'selesai' ? k.status_attempt === 'sudah' : true;
     return matchSearch && matchStatus;
   });
+
+  if (error) return <div className="text-center text-red-500 py-12">Gagal memuat kuis. Silakan refresh halaman.</div>;
 
   return (
     <div className="space-y-6">

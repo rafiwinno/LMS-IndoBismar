@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { Award, TrendingUp, BookOpen, CheckCircle, Clock, ClipboardList } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import API from '../../api/api';
@@ -35,6 +35,7 @@ export default function Grades() {
   const [riwayatKuis, setRiwayatKuis] = useState<RiwayatKuis[]>([]);
   const [riwayatTugas, setRiwayatTugas] = useState<RiwayatTugas[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     API.get('/user/nilai')
@@ -43,7 +44,7 @@ export default function Grades() {
         setRiwayatKuis(res.data.riwayat_kuis);
         setRiwayatTugas(res.data.riwayat_tugas ?? []);
       })
-      .catch(err => console.error(err))
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, []);
 
@@ -57,6 +58,7 @@ export default function Grades() {
   }));
 
   if (loading) return <GradesSkeleton />;
+  if (error) return <div className="text-center text-red-500 py-12">Gagal memuat nilai. Silakan refresh halaman.</div>;
 
   return (
     <div className="space-y-6">

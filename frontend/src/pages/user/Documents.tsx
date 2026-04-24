@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { FileText, UploadCloud, AlertCircle, BadgeCheck, CheckCircle, Loader2, ShieldCheck, Clock } from 'lucide-react';
 import API from '../../api/api';
 import { DocumentsSkeleton } from '../../components/ui/Skeleton';
@@ -44,7 +44,7 @@ export default function Documents() {
     try {
       const res = await API.get('/user/dokumen');
       setDokumen(res.data.data);
-    } catch (err) { console.error(err); }
+    } catch { setErrorMsg('Gagal memuat dokumen.'); }
     finally { setLoading(false); }
   };
 

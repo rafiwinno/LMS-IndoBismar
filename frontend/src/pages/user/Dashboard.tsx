@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { BookOpen, CheckCircle, Clock, Award, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import API from '../../api/api';
@@ -16,16 +16,18 @@ interface DashboardStats {
 export default function Dashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const user = getUser();
 
   useEffect(() => {
     API.get('/user/dashboard')
       .then(res => setStats(res.data))
-      .catch(err => console.error(err))
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, []);
 
   if (loading) return <DashboardSkeleton />;
+  if (error) return <div className="text-center text-red-500 py-12">Gagal memuat data. Silakan refresh halaman.</div>;
 
   const statCards = [
     { label: 'Total Kursus',    value: stats?.total_kursus ?? 0,    icon: BookOpen,    color: 'text-red-500',    bg: 'bg-red-500/10' },
