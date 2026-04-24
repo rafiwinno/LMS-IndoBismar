@@ -22,8 +22,8 @@ class DashboardController extends Controller
         $activeCities  = Cabang::where('status', 'aktif')->distinct()->count('kota');
 
         $newUsersMonth = Pengguna::whereIn('id_role', [2, 3, 4])
-            ->whereYear('created_at',  $now->year)
-            ->whereMonth('created_at', $now->month)
+            ->whereYear('dibuat_pada',  $now->year)
+            ->whereMonth('dibuat_pada', $now->month)
             ->count();
 
         // Weekly chart — batch query dengan timezone conversion agar hitungan per hari tepat WIB
