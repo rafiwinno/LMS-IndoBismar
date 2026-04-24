@@ -240,6 +240,7 @@ class QuizController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
+        JawabanKuis::where('id_pertanyaan', $question->id_pertanyaan)->delete();
         $question->pilihan()->delete();
         $question->delete();
 
@@ -311,6 +312,11 @@ class QuizController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
+        $sudahDinilai = JawabanKuis::whereIn('id_jawaban', array_keys($request->scores))
+            ->where('id_attempt', $attemptId)
+            ->where('skor', '>', 0)
+            ->exists();
+
         foreach ($request->scores as $jawabanId => $skor) {
             $jawaban = JawabanKuis::where('id_jawaban', $jawabanId)
                 ->where('id_attempt', $attemptId)
@@ -326,14 +332,16 @@ class QuizController extends Controller
         $totalSkor = JawabanKuis::where('id_attempt', $attemptId)->sum('skor');
         $attempt->update(['skor' => $totalSkor]);
 
-        Notifikasi::create([
-            'id_penerima'  => $attempt->id_pengguna,
-            'judul'        => 'Jawaban Essay Anda Telah Dinilai',
-            'pesan'        => "Kuis \"{$quiz->judul_kuis}\" telah selesai dinilai. Total skor Anda: {$totalSkor}.",
-            'tipe'         => 'penilaian',
-            'id_referensi' => $attempt->id_attempt,
-            'dibaca'       => false,
-        ]);
+        if (!$sudahDinilai) {
+            Notifikasi::create([
+                'id_penerima'  => $attempt->id_pengguna,
+                'judul'        => 'Jawaban Essay Anda Telah Dinilai',
+                'pesan'        => "Kuis \"{$quiz->judul_kuis}\" telah selesai dinilai. Total skor Anda: {$totalSkor}.",
+                'tipe'         => 'penilaian',
+                'id_referensi' => $attempt->id_attempt,
+                'dibaca'       => false,
+            ]);
+        }
 
         return response()->json(['message' => 'Penilaian essay berhasil.', 'skor_total' => $totalSkor]);
     }
