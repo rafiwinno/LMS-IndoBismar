@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Pengguna;
 use App\Models\Notifikasi;
 use App\Models\LoginLog;
+use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Hash;
@@ -58,6 +59,15 @@ class AuthController extends Controller
             ->first();
 
         if (! $pengguna || ! Hash::check($request->password, $pengguna->password)) {
+            try { ActivityLog::create([
+                'user_id'      => null,
+                'action'       => 'failed_login',
+                'target_type'  => 'auth',
+                'target_id'    => null,
+                'target_label' => $request->username,
+                'changes'      => ['reason' => 'invalid_credentials'],
+                'ip_address'   => $request->ip(),
+            ]); } catch (\Throwable) {}
             return response()->json(['message' => 'Username atau password salah.'], 401);
         }
 

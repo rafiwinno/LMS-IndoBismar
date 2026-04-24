@@ -465,11 +465,11 @@ export default function Users() {
     if (!window.confirm(`Hapus ${selected.size} user yang dipilih? Tindakan ini tidak bisa dibatalkan.`)) return;
     setBulkLoading(true);
     try {
-      await Promise.all([...selected].map(id => api.delete(`/superadmin/users/${id}`)));
+      await api.post('/superadmin/users/bulk-delete', { ids: [...selected] });
       showToast(`${selected.size} user berhasil dihapus.`);
       setSelected(new Set());
       fetchUsers();
-    } catch { showToast('Sebagian user gagal dihapus.', 'error'); }
+    } catch { showToast('Gagal menghapus user.', 'error'); }
     finally { setBulkLoading(false); }
   };
 
@@ -477,11 +477,11 @@ export default function Users() {
     if (!selected.size) return;
     setBulkLoading(true);
     try {
-      await Promise.all([...selected].map(id => api.patch(`/superadmin/users/${id}/status`, { status })));
+      await api.post('/superadmin/users/bulk-status', { ids: [...selected], status });
       showToast(`${selected.size} user diubah menjadi ${status}.`);
       setSelected(new Set());
       fetchUsers();
-    } catch { showToast('Sebagian user gagal diubah statusnya.', 'error'); }
+    } catch { showToast('Gagal mengubah status user.', 'error'); }
     finally { setBulkLoading(false); }
   };
 

@@ -74,7 +74,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // =========================================================================
     // SUPERADMIN PORTAL
     // =========================================================================
-    Route::prefix('superadmin')->middleware('role:1')->group(function () {
+    Route::prefix('superadmin')->middleware(['role:1', 'throttle:60,1'])->group(function () {
         Route::get('/dashboard',            [SuperDashboardController::class, 'index']);
         Route::get('/dashboard/login-recap',[SuperDashboardController::class, 'loginRecap']);
 
@@ -87,11 +87,13 @@ Route::middleware('auth:sanctum')->group(function () {
         // alias /branches untuk frontend yang pakai endpoint ini
         Route::get('/branches',             [SuperBranchController::class, 'index']);
 
-        Route::get('/users',                [SuperUserController::class, 'index']);
-        Route::post('/users',               [SuperUserController::class, 'store']);
-        Route::put('/users/{id}',           [SuperUserController::class, 'update']);
-        Route::patch('/users/{id}/status',  [SuperUserController::class, 'updateStatus']);
-        Route::delete('/users/{id}',        [SuperUserController::class, 'destroy']);
+        Route::get('/users',                    [SuperUserController::class, 'index']);
+        Route::post('/users',                   [SuperUserController::class, 'store']);
+        Route::post('/users/bulk-status',       [SuperUserController::class, 'bulkStatus']);
+        Route::post('/users/bulk-delete',       [SuperUserController::class, 'bulkDelete']);
+        Route::put('/users/{id}',               [SuperUserController::class, 'update']);
+        Route::patch('/users/{id}/status',      [SuperUserController::class, 'updateStatus']);
+        Route::delete('/users/{id}',            [SuperUserController::class, 'destroy']);
     });
 
     // =========================================================================

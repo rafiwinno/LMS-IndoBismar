@@ -9,6 +9,7 @@ use App\Models\LoginLog;
 use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 
 class UserController extends Controller
 {
@@ -229,6 +230,66 @@ class UserController extends Controller
         ]); } catch (\Throwable) {}
 
         return response()->json(['message' => 'Status user berhasil diubah.']);
+    }
+
+    // POST /superadmin/users/bulk-status
+    public function bulkStatus(Request $request)
+    {
+        $request->validate([
+            'ids'    => 'required|array|min:1',
+            'ids.*'  => 'integer',
+            'status' => 'required|in:aktif,nonaktif',
+        ]);
+
+        $ids = $request->ids;
+
+        DB::transaction(function () use ($ids, $request) {
+            Pengguna::whereIn('id_pengguna', $ids)
+                ->whereIn('id_role', [2, 3, 4])
+                ->update(['status' => $request->status]);
+        });
+
+        try { ActivityLog::create([
+            'user_id'      => $request->user()?->id_pengguna,
+            'action'       => 'bulk_update_status',
+            'target_type'  => 'user',
+            'target_id'    => null,
+            'target_label' => implode(',', $ids),
+            'changes'      => ['status' => $request->status, 'count' => count($ids)],
+            'ip_address'   => $request->ip(),
+        ]); } catch (\Throwable) {}
+
+        return response()->json(['message' => 'Status berhasil diubah.', 'count' => count($ids)]);
+    }
+
+    // POST /superadmin/users/bulk-delete
+    public function bulkDelete(Request $request)
+    {
+        $request->validate([
+            'ids'   => 'required|array|min:1',
+            'ids.*' => 'integer',
+        ]);
+
+        $ids = $request->ids;
+
+        DB::transaction(function () use ($ids) {
+            LoginLog::whereIn('user_id', $ids)->delete();
+            Pengguna::whereIn('id_pengguna', $ids)
+                ->whereIn('id_role', [2, 3, 4])
+                ->delete();
+        });
+
+        try { ActivityLog::create([
+            'user_id'      => $request->user()?->id_pengguna,
+            'action'       => 'bulk_delete_user',
+            'target_type'  => 'user',
+            'target_id'    => null,
+            'target_label' => implode(',', $ids),
+            'changes'      => ['count' => count($ids)],
+            'ip_address'   => $request->ip(),
+        ]); } catch (\Throwable) {}
+
+        return response()->json(['message' => 'User berhasil dihapus.', 'count' => count($ids)]);
     }
 
     // GET /superadmin/branches (dropdown)
