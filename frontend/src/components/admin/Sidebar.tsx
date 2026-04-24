@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, Users, BookOpen,
   UserSquare2, ClipboardList,
-  BarChart3, X, LogOut, Sun, Moon,
+  BarChart3, X, LogOut, Sun, Moon, Bell,
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -27,7 +27,8 @@ const ADMIN_MENU_ITEMS = [
   { id: 'courses',      label: 'Course',        icon: BookOpen,        roleIds: [2, 3] },
   { id: 'exams',        label: 'Tugas & Kuis',  icon: ClipboardList,   roleIds: [2, 3] },
   { id: 'trainers',     label: 'Trainer',       icon: UserSquare2,     roleIds: [2] },
-  { id: 'reports',      label: 'Laporan',       icon: BarChart3,       roleIds: [2] },
+  { id: 'reports',        label: 'Laporan',       icon: BarChart3,       roleIds: [2] },
+  { id: 'notifications',  label: 'Notifikasi',    icon: Bell,            roleIds: [2] },
 ];
 
 const SUPERADMIN_MENU_ITEMS = [

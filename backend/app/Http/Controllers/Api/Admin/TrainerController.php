@@ -26,10 +26,11 @@ class TrainerController extends Controller
         return response()->json(['data' => $trainers]);
     }
 
-    public function show($id)
+    public function show(Request $request, $id)
     {
         $trainer = Pengguna::with(['kursus', 'jadwal.kursus'])
             ->where('id_role', 3)
+            ->where('id_cabang', $request->user()->id_cabang)
             ->findOrFail($id);
 
         return response()->json(array_merge(
@@ -74,7 +75,9 @@ class TrainerController extends Controller
 
     public function update(Request $request, $id)
     {
-        $trainer = Pengguna::where('id_role', 3)->findOrFail($id);
+        $trainer = Pengguna::where('id_role', 3)
+            ->where('id_cabang', $request->user()->id_cabang)
+            ->findOrFail($id);
 
         $request->validate([
             'nama'     => 'sometimes|string|max:100',
@@ -90,9 +93,12 @@ class TrainerController extends Controller
         ]);
     }
 
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
-        Pengguna::where('id_role', 3)->findOrFail($id)->delete();
+        Pengguna::where('id_role', 3)
+            ->where('id_cabang', $request->user()->id_cabang)
+            ->findOrFail($id)
+            ->delete();
 
         return response()->json(['message' => 'Trainer berhasil dihapus.']);
     }
@@ -100,7 +106,9 @@ class TrainerController extends Controller
     public function updateStatus(Request $request, $id)
     {
         $request->validate(['status' => 'required|in:aktif,pending,ditolak']);
-        $trainer = Pengguna::where('id_role', 3)->findOrFail($id);
+        $trainer = Pengguna::where('id_role', 3)
+            ->where('id_cabang', $request->user()->id_cabang)
+            ->findOrFail($id);
         $trainer->update(['status' => $request->status]);
 
         return response()->json(['message' => 'Status trainer diperbarui.', 'status' => $trainer->status]);
@@ -110,7 +118,11 @@ class TrainerController extends Controller
 
     public function allJadwal(Request $request)
     {
-        $query = JadwalTrainer::with(['trainer', 'kursus']);
+        $cabangId  = $request->user()->id_cabang;
+        $kursusIds = \App\Models\Kursus::where('id_cabang', $cabangId)->pluck('id_kursus');
+
+        $query = JadwalTrainer::with(['trainer', 'kursus'])
+            ->whereHas('trainer', fn($q) => $q->where('id_cabang', $cabangId));
 
         if ($request->id_trainer) {
             $query->where('id_trainer', $request->id_trainer);
@@ -129,9 +141,25 @@ class TrainerController extends Controller
 
     public function storeJadwal(Request $request)
     {
+        $cabangId = $request->user()->id_cabang;
+
         $request->validate([
-            'id_trainer' => 'required|exists:pengguna,id_pengguna',
-            'id_kursus'  => 'required|exists:kursus,id_kursus',
+            'id_trainer' => [
+                'required',
+                'exists:pengguna,id_pengguna',
+                function ($attr, $val, $fail) use ($cabangId) {
+                    $ok = Pengguna::where('id_pengguna', $val)->where('id_role', 3)->where('id_cabang', $cabangId)->exists();
+                    if (! $ok) $fail('Trainer tidak ditemukan di cabang Anda.');
+                },
+            ],
+            'id_kursus'  => [
+                'required',
+                'exists:kursus,id_kursus',
+                function ($attr, $val, $fail) use ($cabangId) {
+                    $ok = \App\Models\Kursus::where('id_kursus', $val)->where('id_cabang', $cabangId)->exists();
+                    if (! $ok) $fail('Kursus tidak ditemukan di cabang Anda.');
+                },
+            ],
             'tanggal'    => 'required|date',
             'jam_mulai'  => 'required|date_format:H:i',
             'jam_selesai'=> 'required|date_format:H:i|after:jam_mulai',
@@ -139,7 +167,23 @@ class TrainerController extends Controller
             'tipe'       => 'required|in:Online,Offline',
         ]);
 
-        $jadwal = JadwalTrainer::create($request->all());
+        // Cek overlap jadwal trainer pada tanggal yang sama
+        $overlap = JadwalTrainer::where('id_trainer', $request->id_trainer)
+            ->where('tanggal', $request->tanggal)
+            ->where(function ($q) use ($request) {
+                $q->whereBetween('jam_mulai', [$request->jam_mulai, $request->jam_selesai])
+                  ->orWhereBetween('jam_selesai', [$request->jam_mulai, $request->jam_selesai])
+                  ->orWhere(function ($q2) use ($request) {
+                      $q2->where('jam_mulai', '<=', $request->jam_mulai)
+                         ->where('jam_selesai', '>=', $request->jam_selesai);
+                  });
+            })->exists();
+
+        if ($overlap) {
+            return response()->json(['message' => 'Trainer sudah memiliki jadwal pada waktu tersebut.'], 422);
+        }
+
+        $jadwal = JadwalTrainer::create($request->only(['id_trainer', 'id_kursus', 'tanggal', 'jam_mulai', 'jam_selesai', 'ruangan', 'tipe']));
 
         return response()->json([
             'message' => 'Jadwal berhasil ditambahkan.',

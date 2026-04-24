@@ -13,17 +13,19 @@ import { Materials } from '../../pages/admin/Materials';
 import { Exams } from '../../pages/admin/Exams';
 import { Trainers } from '../../pages/admin/Trainers';
 import { Reports } from '../../pages/admin/Reports';
+import { Notifications } from '../../pages/admin/Notifications';
 
 function renderContent(activeTab: string) {
   switch (activeTab) {
-    case 'dashboard':    return <Dashboard />;
-    case 'participants': return <Participants />;
-    case 'courses':      return <Courses />;
-    case 'materials':    return <Materials />;
-    case 'exams':        return <Exams />;
-    case 'trainers':     return <Trainers />;
-    case 'reports':      return <Reports />;
-    default:             return <Dashboard />;
+    case 'dashboard':      return <Dashboard />;
+    case 'participants':   return <Participants />;
+    case 'courses':        return <Courses />;
+    case 'materials':      return <Materials />;
+    case 'exams':          return <Exams />;
+    case 'trainers':       return <Trainers />;
+    case 'reports':        return <Reports />;
+    case 'notifications':  return <Notifications />;
+    default:               return <Dashboard />;
   }
 }
 

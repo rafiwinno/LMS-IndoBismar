@@ -7,14 +7,15 @@ use App\Models\Kuis;
 use App\Models\AttemptKuis;
 use App\Models\JawabanKuis;
 use App\Models\Pertanyaan;
-use App\Models\Notifikasi;
 use Illuminate\Http\Request;
 
 class KuisController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Kuis::with(['kursus', 'attemptKuis']);
+        $kursusIds = \App\Models\Kursus::where('id_cabang', $request->user()->id_cabang)->pluck('id_kursus');
+
+        $query = Kuis::with(['kursus', 'attemptKuis'])->whereIn('id_kursus', $kursusIds);
 
         if ($request->id_kursus) $query->where('id_kursus', $request->id_kursus);
         if ($request->search)    $query->where('judul_kuis', 'like', "%{$request->search}%");
@@ -33,8 +34,17 @@ class KuisController extends Controller
 
     public function store(Request $request)
     {
+        $cabangId = $request->user()->id_cabang;
+
         $request->validate([
-            'id_kursus'     => 'required|exists:kursus,id_kursus',
+            'id_kursus'     => [
+                'required',
+                'exists:kursus,id_kursus',
+                function ($attr, $val, $fail) use ($cabangId) {
+                    $ok = \App\Models\Kursus::where('id_kursus', $val)->where('id_cabang', $cabangId)->exists();
+                    if (! $ok) $fail('Kursus tidak ditemukan di cabang Anda.');
+                },
+            ],
             'judul_kuis'    => 'required|string|max:200',
             'waktu_mulai'   => 'required|date',
             'waktu_selesai' => 'required|date|after:waktu_mulai',
@@ -62,15 +72,19 @@ class KuisController extends Controller
         ], 201);
     }
 
-    public function show($id)
+    public function show(Request $request, $id)
     {
-        $kuis = Kuis::with(['kursus', 'pertanyaan.pilihanJawaban', 'attemptKuis'])->findOrFail($id);
+        $kursusIds = \App\Models\Kursus::where('id_cabang', $request->user()->id_cabang)->pluck('id_kursus');
+        $kuis = Kuis::with(['kursus', 'pertanyaan.pilihanJawaban', 'attemptKuis'])
+            ->whereIn('id_kursus', $kursusIds)
+            ->findOrFail($id);
         return response()->json($this->formatKuisDetail($kuis));
     }
 
     public function update(Request $request, $id)
     {
-        $kuis = Kuis::findOrFail($id);
+        $kursusIds = \App\Models\Kursus::where('id_cabang', $request->user()->id_cabang)->pluck('id_kursus');
+        $kuis = Kuis::whereIn('id_kursus', $kursusIds)->findOrFail($id);
 
         $request->validate([
             'judul_kuis'    => 'sometimes|string|max:200',
@@ -111,10 +125,6 @@ class KuisController extends Controller
                             'bobot_nilai' => $pData['bobot_nilai'],
                         ]);
                         if ($pData['tipe'] === 'pilihan_ganda' && isset($pData['pilihan'])) {
-                            $correctCount = collect($pData['pilihan'])->where('benar', true)->count();
-                            if ($correctCount !== 1) {
-                                abort(422, "Soal pilihan ganda harus memiliki tepat 1 jawaban benar.");
-                            }
                             $pertanyaan->pilihanJawaban()->delete();
                             foreach ($pData['pilihan'] as $pilihan) {
                                 $pertanyaan->pilihanJawaban()->create([
@@ -137,17 +147,17 @@ class KuisController extends Controller
         ]);
     }
 
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
-        $kuis = Kuis::findOrFail($id);
+        $kursusIds = \App\Models\Kursus::where('id_cabang', $request->user()->id_cabang)->pluck('id_kursus');
+        $kuis = Kuis::whereIn('id_kursus', $kursusIds)->findOrFail($id);
 
-        foreach ($kuis->pertanyaan as $p) {
-            JawabanKuis::where('id_pertanyaan', $p->id_pertanyaan)->delete();
-            $p->pilihanJawaban()->delete();
-            $p->delete();
+        foreach ($kuis->attemptKuis as $attempt) {
+            $attempt->jawabanKuis()->delete();
         }
-
-        AttemptKuis::where('id_kuis', $id)->delete();
+        $kuis->attemptKuis()->delete();
+        $kuis->pertanyaan()->each(fn($p) => $p->pilihanJawaban()->delete());
+        $kuis->pertanyaan()->delete();
         $kuis->delete();
 
         return response()->json(['message' => 'Kuis berhasil dihapus.']);
@@ -233,10 +243,10 @@ class KuisController extends Controller
     {
         $request->validate([
             'scores'   => 'required|array',
-            'scores.*' => 'required|integer|min:0',
+            'scores.*' => 'required|integer|min:0|max:100',
         ]);
 
-        $attempt = AttemptKuis::with('kuis')->findOrFail($attemptId);
+        $attempt = AttemptKuis::findOrFail($attemptId);
 
         $totalSkor = 0;
 
@@ -257,21 +267,13 @@ class KuisController extends Controller
         $totalSkor = JawabanKuis::where('id_attempt', $attemptId)->sum('skor');
         $attempt->update(['skor' => $totalSkor]);
 
-        Notifikasi::create([
-            'id_penerima'  => $attempt->id_pengguna,
-            'judul'        => 'Essay Kuis Anda Telah Dinilai',
-            'pesan'        => "Essay pada kuis \"{$attempt->kuis->judul_kuis}\" telah dinilai. Total skor: {$totalSkor}.",
-            'tipe'         => 'penilaian',
-            'id_referensi' => $attempt->id_attempt,
-            'dibaca'       => false,
-        ]);
-
         return response()->json(['message' => 'Penilaian essay berhasil.', 'skor_total' => $totalSkor]);
     }
 
-    public function results($id)
+    public function results(Request $request, $id)
     {
-        Kuis::findOrFail($id);
+        $kursusIds = \App\Models\Kursus::where('id_cabang', $request->user()->id_cabang)->pluck('id_kursus');
+        Kuis::whereIn('id_kursus', $kursusIds)->findOrFail($id);
 
         $attempts = AttemptKuis::with(['pengguna', 'jawabanKuis.pertanyaan.pilihanJawaban', 'jawabanKuis.pilihan'])
             ->where('id_kuis', $id)
@@ -316,14 +318,7 @@ class KuisController extends Controller
 
     private function savePertanyaan(Kuis $kuis, array $pertanyaanList): void
     {
-        foreach ($pertanyaanList as $index => $pData) {
-            if ($pData['tipe'] === 'pilihan_ganda') {
-                $correctCount = collect($pData['pilihan'] ?? [])->where('benar', true)->count();
-                if ($correctCount !== 1) {
-                    abort(422, "Pertanyaan ke-" . ($index + 1) . " harus memiliki tepat 1 jawaban benar.");
-                }
-            }
-
+        foreach ($pertanyaanList as $pData) {
             $pertanyaan = $kuis->pertanyaan()->create([
                 'pertanyaan'  => $pData['pertanyaan'],
                 'tipe'        => $pData['tipe'],

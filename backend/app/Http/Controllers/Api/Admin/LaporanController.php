@@ -15,28 +15,25 @@ class LaporanController extends Controller
 {
     /**
      * GET /api/laporan/dashboard
+     * Data chart untuk halaman Reports
      */
     public function dashboard(Request $request)
     {
-        $idCabang  = $request->user()?->id_cabang;
+        $cabangId  = $request->user()->id_cabang;
+        $kursusIds = Kursus::where('id_cabang', $cabangId)->pluck('id_kursus');
         $startDate = now()->subMonths(11)->startOfMonth();
 
         $pesertaByMonth = Pengguna::where('id_role', 4)
+            ->where('id_cabang', $cabangId)
             ->where('dibuat_pada', '>=', $startDate)
-            ->when($idCabang, fn($q) => $q->where('id_cabang', $idCabang))
             ->selectRaw('YEAR(dibuat_pada) as yr, MONTH(dibuat_pada) as mo, COUNT(*) as total')
             ->groupBy('yr', 'mo')
             ->get()
             ->keyBy(fn($r) => $r->yr . '-' . $r->mo);
 
-        $completionsQuery = PesertaKursus::where('status', 'selesai')
-            ->where('tanggal_daftar', '>=', $startDate);
-
-        if ($idCabang) {
-            $completionsQuery->whereHas('kursus', fn($q) => $q->where('id_cabang', $idCabang));
-        }
-
-        $completionsByMonth = $completionsQuery
+        $completionsByMonth = PesertaKursus::whereIn('id_kursus', $kursusIds)
+            ->where('status', 'selesai')
+            ->where('tanggal_daftar', '>=', $startDate)
             ->selectRaw('YEAR(tanggal_daftar) as yr, MONTH(tanggal_daftar) as mo, COUNT(*) as total')
             ->groupBy('yr', 'mo')
             ->get()
@@ -60,11 +57,11 @@ class LaporanController extends Controller
      */
     public function peserta(Request $request)
     {
-        $idCabang = $request->user()?->id_cabang;
+        $cabangId = $request->user()->id_cabang;
 
         $data = Pengguna::with(['cabang', 'dataPkl', 'pesertaKursus'])
             ->where('id_role', 4)
-            ->when($idCabang, fn($q) => $q->where('id_cabang', $idCabang))
+            ->where('id_cabang', $cabangId)
             ->limit(500)
             ->get()
             ->map(function ($p) {
@@ -90,10 +87,10 @@ class LaporanController extends Controller
      */
     public function kursus(Request $request)
     {
-        $idCabang = $request->user()?->id_cabang;
+        $cabangId = $request->user()->id_cabang;
 
         $data = Kursus::with(['trainer', 'pesertaKursus'])
-            ->when($idCabang, fn($q) => $q->where('id_cabang', $idCabang))
+            ->where('id_cabang', $cabangId)
             ->limit(500)
             ->get()
             ->map(function ($k) {
@@ -117,17 +114,13 @@ class LaporanController extends Controller
      */
     public function kuis(Request $request)
     {
-        $idCabang = $request->user()?->id_cabang;
+        $cabangId  = $request->user()->id_cabang;
+        $kursusIds = Kursus::where('id_cabang', $cabangId)->pluck('id_kursus');
 
-        $query = DB::table('kuis as k')
+        $data = DB::table('kuis as k')
             ->leftJoin('kursus as kr', 'kr.id_kursus', '=', 'k.id_kursus')
-            ->leftJoin('attempt_kuis as ak', 'ak.id_kuis', '=', 'k.id_kuis');
-
-        if ($idCabang) {
-            $query->where('kr.id_cabang', $idCabang);
-        }
-
-        $data = $query
+            ->leftJoin('attempt_kuis as ak', 'ak.id_kuis', '=', 'k.id_kuis')
+            ->whereIn('k.id_kursus', $kursusIds)
             ->select(
                 'k.id_kuis',
                 'k.judul_kuis',
@@ -154,11 +147,11 @@ class LaporanController extends Controller
      */
     public function trainer(Request $request)
     {
-        $idCabang = $request->user()?->id_cabang;
+        $cabangId = $request->user()->id_cabang;
 
         $data = Pengguna::with(['kursus.pesertaKursus'])
-            ->whereHas('role', fn($q) => $q->where('nama_role', 'trainer'))
-            ->when($idCabang, fn($q) => $q->where('id_cabang', $idCabang))
+            ->where('id_role', 3)
+            ->where('id_cabang', $cabangId)
             ->get()
             ->map(function ($t) {
                 $kursus = $t->kursus;

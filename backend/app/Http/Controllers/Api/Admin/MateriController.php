@@ -13,7 +13,9 @@ class MateriController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Materi::query();
+        $kursusIds = \App\Models\Kursus::where('id_cabang', $request->user()->id_cabang)->pluck('id_kursus');
+
+        $query = Materi::whereIn('id_kursus', $kursusIds);
 
         if ($request->has('id_kursus')) {
             $query->where('id_kursus', $request->id_kursus);
@@ -23,18 +25,32 @@ class MateriController extends Controller
             $query->where('judul_materi', 'like', '%' . $request->search . '%');
         }
 
-        $materi = $query->with('kursus')->orderBy('urutan')->get();
+        $materi = $query->with('kursus')->orderBy('urutan')->paginate($request->per_page ?? 50);
 
         return response()->json([
             'success' => true,
             'data'    => $materi->map(fn($m) => $this->formatMateri($m)),
+            'meta'    => [
+                'total'        => $materi->total(),
+                'current_page' => $materi->currentPage(),
+                'last_page'    => $materi->lastPage(),
+            ],
         ]);
     }
 
     public function store(Request $request)
     {
+        $cabangId = $request->user()->id_cabang;
+
         $validator = Validator::make($request->all(), [
-            'id_kursus'    => 'required|exists:kursus,id_kursus',
+            'id_kursus'    => [
+                'required',
+                'exists:kursus,id_kursus',
+                function ($attr, $val, $fail) use ($cabangId) {
+                    $ok = \App\Models\Kursus::where('id_kursus', $val)->where('id_cabang', $cabangId)->exists();
+                    if (! $ok) $fail('Kursus tidak ditemukan di cabang Anda.');
+                },
+            ],
             'judul_materi' => 'required|string|max:255',
             'tipe_materi'  => 'required|in:pdf,video,ppt,link_drive,dokumen',
             'file_materi'  => 'nullable|file|max:5120|mimes:pdf,ppt,pptx,doc,docx,xls,xlsx,zip',
@@ -82,9 +98,10 @@ class MateriController extends Controller
         ], 201);
     }
 
-    public function show($id)
+    public function show(Request $request, $id)
     {
-        $materi = Materi::find($id);
+        $kursusIds = \App\Models\Kursus::where('id_cabang', $request->user()->id_cabang)->pluck('id_kursus');
+        $materi = Materi::whereIn('id_kursus', $kursusIds)->find($id);
 
         if (!$materi) {
             return response()->json([
@@ -101,7 +118,9 @@ class MateriController extends Controller
 
     public function update(Request $request, $id)
     {
-        $materi = Materi::find($id);
+        $cabangId  = $request->user()->id_cabang;
+        $kursusIds = \App\Models\Kursus::where('id_cabang', $cabangId)->pluck('id_kursus');
+        $materi = Materi::whereIn('id_kursus', $kursusIds)->find($id);
 
         if (!$materi) {
             return response()->json([
@@ -167,9 +186,10 @@ class MateriController extends Controller
         ]);
     }
 
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
-        $materi = Materi::find($id);
+        $kursusIds = \App\Models\Kursus::where('id_cabang', $request->user()->id_cabang)->pluck('id_kursus');
+        $materi = Materi::whereIn('id_kursus', $kursusIds)->find($id);
 
         if (!$materi) {
             return response()->json([

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Pengguna;
 use App\Models\Cabang;
 use App\Models\LoginLog;
+use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
@@ -48,16 +49,22 @@ class UserController extends Controller
 
         $userIds = $users->pluck('id_pengguna');
 
-        // Ambil log terakhir per user (login terbaru apapun statusnya)
-        $latestLogs = LoginLog::whereIn('user_id', $userIds)
-            ->selectRaw('user_id, MAX(logged_in_at) as last_login_at, logged_out_at')
-            ->groupBy('user_id', 'logged_out_at')
+        // Ambil log terakhir per user — subquery untuk pastikan logged_out_at
+        // berasal dari baris yang sama dengan MAX(logged_in_at)
+        $latestLogs = LoginLog::whereIn('ll.user_id', $userIds)
+            ->from('login_logs as ll')
+            ->joinSub(
+                LoginLog::whereIn('user_id', $userIds)
+                    ->selectRaw('user_id, MAX(logged_in_at) as max_logged_in_at')
+                    ->groupBy('user_id'),
+                'latest',
+                fn($join) => $join
+                    ->on('ll.user_id', '=', 'latest.user_id')
+                    ->on('ll.logged_in_at', '=', 'latest.max_logged_in_at')
+            )
+            ->select('ll.user_id', 'll.logged_in_at as last_login_at', 'll.logged_out_at')
             ->get()
-            ->groupBy('user_id')
-            ->map(function ($logs) {
-                // Ambil log dengan logged_in_at terbaru
-                return $logs->sortByDesc('last_login_at')->first();
-            });
+            ->keyBy('user_id');
 
         $onlineThreshold = now()->subMinutes(self::ONLINE_THRESHOLD_MINUTES);
         $roleNames = [1 => 'superadmin', 2 => 'admin', 3 => 'trainer', 4 => 'user'];
@@ -127,6 +134,15 @@ class UserController extends Controller
             'updated_at' => now(),
         ]);
 
+        try { ActivityLog::create([
+            'user_id'      => $request->user()?->id_pengguna,
+            'action'       => 'create_user',
+            'target_type'  => 'user',
+            'target_id'    => $user->id_pengguna,
+            'target_label' => $user->nama,
+            'ip_address'   => $request->ip(),
+        ]); } catch (\Throwable) {}
+
         return response()->json(['message' => 'User berhasil dibuat.', 'user' => $user], 201);
     }
 
@@ -145,6 +161,8 @@ class UserController extends Controller
             'status'    => 'in:aktif,nonaktif',
         ]);
 
+        $before = $user->only(['nama','username','email','id_role','id_cabang','status']);
+
         $data = [
             'nama'       => $request->nama,
             'username'   => $request->username,
@@ -161,15 +179,56 @@ class UserController extends Controller
 
         $user->update($data);
 
+        try { ActivityLog::create([
+            'user_id'      => $request->user()?->id_pengguna,
+            'action'       => 'update_user',
+            'target_type'  => 'user',
+            'target_id'    => $user->id_pengguna,
+            'target_label' => $user->nama,
+            'changes'      => ['before' => $before, 'after' => $user->only(array_keys($before))],
+            'ip_address'   => $request->ip(),
+        ]); } catch (\Throwable) {}
+
         return response()->json(['message' => 'User berhasil diupdate.', 'user' => $user]);
     }
 
     // DELETE /superadmin/users/{id}
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
         $user = Pengguna::findOrFail($id);
+
+        try { ActivityLog::create([
+            'user_id'      => $request->user()?->id_pengguna,
+            'action'       => 'delete_user',
+            'target_type'  => 'user',
+            'target_id'    => $user->id_pengguna,
+            'target_label' => $user->nama,
+            'changes'      => ['deleted' => $user->only(['nama','username','email','id_role','id_cabang','status'])],
+            'ip_address'   => $request->ip(),
+        ]); } catch (\Throwable) {}
+
         $user->delete();
         return response()->json(['message' => 'User berhasil dihapus.']);
+    }
+
+    // PATCH /superadmin/users/{id}/status
+    public function updateStatus(Request $request, $id)
+    {
+        $request->validate(['status' => 'required|in:aktif,nonaktif']);
+        $user = Pengguna::findOrFail($id);
+        $user->update(['status' => $request->status]);
+
+        try { ActivityLog::create([
+            'user_id'      => $request->user()?->id_pengguna,
+            'action'       => 'update_user_status',
+            'target_type'  => 'user',
+            'target_id'    => $user->id_pengguna,
+            'target_label' => $user->nama,
+            'changes'      => ['status' => $request->status],
+            'ip_address'   => $request->ip(),
+        ]); } catch (\Throwable) {}
+
+        return response()->json(['message' => 'Status user berhasil diubah.']);
     }
 
     // GET /superadmin/branches (dropdown)

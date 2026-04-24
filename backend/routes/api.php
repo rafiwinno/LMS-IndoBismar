@@ -66,9 +66,10 @@ Route::middleware('throttle:5,1')->group(function () {
 Route::middleware('auth:sanctum')->group(function () {
 
     // ── Shared auth ──────────────────────────────────────────────────────────
-    Route::post('/logout',      [UserAuthController::class, 'logout']);
-    Route::post('/auth/logout', [AdminAuthController::class, 'logout']);
-    Route::get('/auth/me',      [AdminAuthController::class, 'me']);
+    Route::post('/logout',        [UserAuthController::class, 'logout']);
+    Route::post('/auth/logout',   [AdminAuthController::class, 'logout']);
+    Route::post('/auth/refresh',  [AdminAuthController::class, 'refresh']);
+    Route::get('/auth/me',        [AdminAuthController::class, 'me']);
 
     // =========================================================================
     // SUPERADMIN PORTAL
@@ -89,6 +90,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/users',                [SuperUserController::class, 'index']);
         Route::post('/users',               [SuperUserController::class, 'store']);
         Route::put('/users/{id}',           [SuperUserController::class, 'update']);
+        Route::patch('/users/{id}/status',  [SuperUserController::class, 'updateStatus']);
         Route::delete('/users/{id}',        [SuperUserController::class, 'destroy']);
     });
 
@@ -131,49 +133,84 @@ Route::middleware('auth:sanctum')->group(function () {
     // =========================================================================
     Route::middleware('ensure.admin')->group(function () {
 
-    // Dashboard
-    Route::get('/dashboard', [AdminDashboardController::class, 'index']);
+    // ── Route khusus admin & superadmin (role 1 & 2) ─────────────────────────
+    Route::middleware('admin:1,2')->group(function () {
 
-    // Peserta
-    Route::get('/peserta',               [AdminPesertaController::class, 'index']);
-    Route::post('/peserta',              [AdminPesertaController::class, 'store']);
-    Route::get('/peserta/{id}',          [AdminPesertaController::class, 'show']);
-    Route::put('/peserta/{id}',          [AdminPesertaController::class, 'update']);
-    Route::delete('/peserta/{id}',       [AdminPesertaController::class, 'destroy']);
-    Route::patch('/peserta/{id}/status', [AdminPesertaController::class, 'updateStatus']);
-    Route::patch('/peserta/{id}/verifikasi-dokumen', [AdminPesertaController::class, 'verifikasiDokumen']);
+        // Dashboard
+        Route::get('/dashboard', [AdminDashboardController::class, 'index']);
 
-    // Kursus (admin)
-    Route::get('/kursus',                                     [AdminKursusController::class, 'index']);
-    Route::post('/kursus',                                    [AdminKursusController::class, 'store']);
-    Route::put('/kursus/{id}',                                [AdminKursusController::class, 'update']);
-    Route::delete('/kursus/{id}',                             [AdminKursusController::class, 'destroy']);
-    Route::patch('/kursus/{id}/status',                       [AdminKursusController::class, 'updateStatus']);
-    Route::get('/kursus/{id}/peserta',                        [AdminKursusController::class, 'peserta']);
-    Route::post('/kursus/{id}/enroll',                        [AdminKursusController::class, 'enroll']);
-    Route::delete('/kursus/{id}/peserta/{id_pengguna}',       [AdminKursusController::class, 'unenroll']);
+        // Peserta
+        Route::get('/peserta',               [AdminPesertaController::class, 'index']);
+        Route::post('/peserta',              [AdminPesertaController::class, 'store']);
+        Route::get('/peserta/{id}',          [AdminPesertaController::class, 'show']);
+        Route::put('/peserta/{id}',          [AdminPesertaController::class, 'update']);
+        Route::delete('/peserta/{id}',       [AdminPesertaController::class, 'destroy']);
+        Route::patch('/peserta/{id}/status', [AdminPesertaController::class, 'updateStatus']);
+        Route::patch('/peserta/{id}/verifikasi-dokumen', [AdminPesertaController::class, 'verifikasiDokumen']);
+        Route::post('/peserta/saya/dokumen', [AdminPesertaController::class, 'uploadDokumen']);
 
-    // Materi
-    Route::get('/materi',        [AdminMateriController::class, 'index']);
-    Route::post('/materi',       [AdminMateriController::class, 'store']);
-    Route::delete('/materi/{id}',[AdminMateriController::class, 'destroy']);
+        // Kursus (admin)
+        Route::get('/kursus',                                     [AdminKursusController::class, 'index']);
+        Route::post('/kursus',                                    [AdminKursusController::class, 'store']);
+        Route::put('/kursus/{id}',                                [AdminKursusController::class, 'update']);
+        Route::delete('/kursus/{id}',                             [AdminKursusController::class, 'destroy']);
+        Route::patch('/kursus/{id}/status',                       [AdminKursusController::class, 'updateStatus']);
+        Route::get('/kursus/{id}/peserta',                        [AdminKursusController::class, 'peserta']);
+        Route::post('/kursus/{id}/enroll',                        [AdminKursusController::class, 'enroll']);
+        Route::delete('/kursus/{id}/peserta/{id_pengguna}',       [AdminKursusController::class, 'unenroll']);
+        Route::get('/kursus/{id}',                                [AdminKursusController::class, 'show']);
 
-    // Tugas
-    Route::get('/tugas',                              [AdminTugasController::class, 'index']);
-    Route::post('/tugas',                             [AdminTugasController::class, 'store']);
-    Route::put('/tugas/{id}',                         [AdminTugasController::class, 'update']);
-    Route::delete('/tugas/{id}',                      [AdminTugasController::class, 'destroy']);
-    Route::get('/tugas/{id}/submissions',             [AdminTugasController::class, 'submissions']);
-    Route::patch('/tugas/submissions/{subId}/grade',  [AdminTugasController::class, 'grade']);
+        // Materi
+        Route::get('/materi',         [AdminMateriController::class, 'index']);
+        Route::post('/materi',        [AdminMateriController::class, 'store']);
+        Route::get('/materi/{id}',    [AdminMateriController::class, 'show']);
+        Route::put('/materi/{id}',    [AdminMateriController::class, 'update']);
+        Route::delete('/materi/{id}', [AdminMateriController::class, 'destroy']);
 
-    // Kuis (admin)
-    Route::get('/kuis',                                     [AdminKuisController::class, 'index']);
-    Route::post('/kuis',                                    [AdminKuisController::class, 'store']);
-    Route::get('/kuis/{id}',                                [AdminKuisController::class, 'show']);
-    Route::put('/kuis/{id}',                                [AdminKuisController::class, 'update']);
-    Route::delete('/kuis/{id}',                             [AdminKuisController::class, 'destroy']);
-    Route::get('/kuis/{id}/results',                        [AdminKuisController::class, 'results']);
-    Route::patch('/kuis/attempts/{attemptId}/grade-essay',  [AdminKuisController::class, 'gradeEssay']);
+        // Tugas
+        Route::get('/tugas',                              [AdminTugasController::class, 'index']);
+        Route::post('/tugas',                             [AdminTugasController::class, 'store']);
+        Route::put('/tugas/{id}',                         [AdminTugasController::class, 'update']);
+        Route::delete('/tugas/{id}',                      [AdminTugasController::class, 'destroy']);
+        Route::get('/tugas/{id}/submissions',             [AdminTugasController::class, 'submissions']);
+        Route::patch('/tugas/submissions/{subId}/grade',  [AdminTugasController::class, 'grade']);
+
+        // Kuis (admin)
+        Route::get('/kuis',                                     [AdminKuisController::class, 'index']);
+        Route::post('/kuis',                                    [AdminKuisController::class, 'store']);
+        Route::get('/kuis/{id}',                                [AdminKuisController::class, 'show']);
+        Route::put('/kuis/{id}',                                [AdminKuisController::class, 'update']);
+        Route::delete('/kuis/{id}',                             [AdminKuisController::class, 'destroy']);
+        Route::get('/kuis/{id}/results',                        [AdminKuisController::class, 'results']);
+        Route::patch('/kuis/attempts/{attemptId}/grade-essay',  [AdminKuisController::class, 'gradeEssay']);
+
+        // Laporan
+        Route::get('/laporan/dashboard', [AdminLaporanController::class, 'dashboard']);
+        Route::get('/laporan/peserta',   [AdminLaporanController::class, 'peserta']);
+        Route::get('/laporan/kursus',    [AdminLaporanController::class, 'kursus']);
+        Route::get('/laporan/kuis',      [AdminLaporanController::class, 'kuis']);
+        Route::get('/laporan/trainer',   [AdminLaporanController::class, 'trainer']);
+
+        // Notifikasi
+        Route::get('/notifikasi',                      [AdminNotifikasiController::class, 'index']);
+        Route::patch('/notifikasi/baca-semua',         [AdminNotifikasiController::class, 'markAllRead']);
+        Route::patch('/notifikasi/{id}/baca',          [AdminNotifikasiController::class, 'markRead']);
+
+        // Trainer management (admin CRUD)
+        Route::get('/trainer',               [AdminTrainerController::class, 'index']);
+        Route::post('/trainer',              [AdminTrainerController::class, 'store']);
+        Route::get('/trainer/{id}',          [AdminTrainerController::class, 'show']);
+        Route::put('/trainer/{id}',          [AdminTrainerController::class, 'update']);
+        Route::delete('/trainer/{id}',       [AdminTrainerController::class, 'destroy']);
+        Route::patch('/trainer/{id}/status', [AdminTrainerController::class, 'updateStatus']);
+
+        // Jadwal trainer
+        Route::get('/trainer/jadwal/all',     [AdminTrainerController::class, 'allJadwal']);
+        Route::post('/trainer/jadwal',        [AdminTrainerController::class, 'storeJadwal']);
+        Route::put('/trainer/jadwal/{id}',    [AdminTrainerController::class, 'updateJadwal']);
+        Route::delete('/trainer/jadwal/{id}', [AdminTrainerController::class, 'deleteJadwal']);
+
+    }); // end admin:1,2
 
     // ── Trainer Portal (trainer's own portal) ─────────────────────────────────
     // All specific paths BEFORE /trainer/{id} wildcard
@@ -233,32 +270,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/trainer/feedback',              [TrainerFeedbackController::class, 'store']);
 
     }); // end ensure.trainer
-
-    // ── Jadwal (must also be before /trainer/{id}) ────────────────────────────
-    Route::get('/trainer/jadwal/all',     [AdminTrainerController::class, 'allJadwal']);
-    Route::post('/trainer/jadwal',        [AdminTrainerController::class, 'storeJadwal']);
-    Route::put('/trainer/jadwal/{id}',    [AdminTrainerController::class, 'updateJadwal']);
-    Route::delete('/trainer/jadwal/{id}', [AdminTrainerController::class, 'deleteJadwal']);
-
-    // ── Trainer management (admin) ────────────────────────────────────────────
-    Route::get('/trainer',               [AdminTrainerController::class, 'index']);
-    Route::post('/trainer',              [AdminTrainerController::class, 'store']);
-    Route::get('/trainer/{id}',          [AdminTrainerController::class, 'show']);
-    Route::put('/trainer/{id}',          [AdminTrainerController::class, 'update']);
-    Route::delete('/trainer/{id}',       [AdminTrainerController::class, 'destroy']);
-    Route::patch('/trainer/{id}/status', [AdminTrainerController::class, 'updateStatus']);
-
-    // Laporan
-    Route::get('/laporan/dashboard', [AdminLaporanController::class, 'dashboard']);
-    Route::get('/laporan/peserta',   [AdminLaporanController::class, 'peserta']);
-    Route::get('/laporan/kursus',    [AdminLaporanController::class, 'kursus']);
-    Route::get('/laporan/kuis',      [AdminLaporanController::class, 'kuis']);
-    Route::get('/laporan/trainer',   [AdminLaporanController::class, 'trainer']);
-
-    // Notifikasi
-    Route::get('/notifikasi',                      [AdminNotifikasiController::class, 'index']);
-    Route::patch('/notifikasi/baca-semua',         [AdminNotifikasiController::class, 'markAllRead']);
-    Route::patch('/notifikasi/{id}/baca',          [AdminNotifikasiController::class, 'markRead']);
 
     }); // end ensure.admin
 

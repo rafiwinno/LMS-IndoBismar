@@ -11,7 +11,9 @@ class KursusController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Kursus::with(['trainer', 'cabang'])->withCount('pesertaKursus');
+        $cabangId = $request->user()->id_cabang;
+        $query = Kursus::with(['trainer', 'cabang'])->withCount('pesertaKursus')
+            ->where('id_cabang', $cabangId);
 
         if ($request->search) {
             $search = $request->search;
@@ -24,8 +26,7 @@ class KursusController extends Controller
             });
         }
 
-        if ($request->status)    $query->where('status', $request->status);
-        if ($request->id_cabang) $query->where('id_cabang', $request->id_cabang);
+        if ($request->status) $query->where('status', $request->status);
 
         $kursus = $query->orderBy('dibuat_pada', 'desc')
             ->paginate($request->per_page ?? 15);
@@ -43,11 +44,23 @@ class KursusController extends Controller
 
     public function store(Request $request)
     {
+        $cabangId = $request->user()->id_cabang;
+
         $request->validate([
             'judul_kursus' => 'required|string|max:200',
             'deskripsi'    => 'nullable|string',
-            'id_trainer'   => 'required|exists:pengguna,id_pengguna',
-            'id_cabang'    => 'required|exists:cabang,id_cabang',
+            // Trainer harus dari cabang yang sama
+            'id_trainer'   => [
+                'required',
+                'exists:pengguna,id_pengguna',
+                function ($attr, $val, $fail) use ($cabangId) {
+                    $ok = \App\Models\Pengguna::where('id_pengguna', $val)
+                        ->where('id_role', 3)
+                        ->where('id_cabang', $cabangId)
+                        ->exists();
+                    if (! $ok) $fail('Trainer tidak ditemukan di cabang Anda.');
+                },
+            ],
             'status'       => 'nullable|in:draft,publish',
         ]);
 
@@ -55,7 +68,7 @@ class KursusController extends Controller
             'judul_kursus' => $request->judul_kursus,
             'deskripsi'    => $request->deskripsi,
             'id_trainer'   => $request->id_trainer,
-            'id_cabang'    => $request->id_cabang,
+            'id_cabang'    => $cabangId,
             'status'       => $request->status ?? 'draft',
         ]);
 
@@ -65,9 +78,10 @@ class KursusController extends Controller
         ], 201);
     }
 
-    public function show($id)
+    public function show(Request $request, $id)
     {
         $kursus = Kursus::with(['trainer', 'cabang', 'pesertaKursus.pengguna', 'materi', 'tugas', 'kuis'])
+            ->where('id_cabang', $request->user()->id_cabang)
             ->findOrFail($id);
 
         return response()->json($this->formatKursusDetail($kursus));
@@ -75,17 +89,25 @@ class KursusController extends Controller
 
     public function update(Request $request, $id)
     {
-        $kursus = Kursus::findOrFail($id);
+        $cabangId = $request->user()->id_cabang;
+        $kursus   = Kursus::where('id_cabang', $cabangId)->findOrFail($id);
 
         $request->validate([
             'judul_kursus' => 'sometimes|string|max:200',
             'deskripsi'    => 'nullable|string',
-            'id_trainer'   => 'sometimes|exists:pengguna,id_pengguna',
-            'id_cabang'    => 'sometimes|exists:cabang,id_cabang',
+            'id_trainer'   => [
+                'sometimes',
+                'exists:pengguna,id_pengguna',
+                function ($attr, $val, $fail) use ($cabangId) {
+                    $ok = \App\Models\Pengguna::where('id_pengguna', $val)
+                        ->where('id_role', 3)->where('id_cabang', $cabangId)->exists();
+                    if (! $ok) $fail('Trainer tidak ditemukan di cabang Anda.');
+                },
+            ],
             'status'       => 'sometimes|in:draft,publish',
         ]);
 
-        $kursus->update($request->only(['judul_kursus', 'deskripsi', 'id_trainer', 'id_cabang', 'status']));
+        $kursus->update($request->only(['judul_kursus', 'deskripsi', 'id_trainer', 'status']));
 
         return response()->json([
             'message' => 'Kursus berhasil diperbarui.',
@@ -93,9 +115,31 @@ class KursusController extends Controller
         ]);
     }
 
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
-        $kursus = Kursus::findOrFail($id);
+        $kursus = Kursus::with(['materi', 'tugas.pengumpulan', 'kuis.pertanyaan.pilihanJawaban', 'kuis.attemptKuis.jawabanKuis', 'pesertaKursus'])
+            ->where('id_cabang', $request->user()->id_cabang)
+            ->findOrFail($id);
+
+        foreach ($kursus->kuis as $kuis) {
+            foreach ($kuis->attemptKuis as $attempt) {
+                $attempt->jawabanKuis()->delete();
+            }
+            $kuis->attemptKuis()->delete();
+            foreach ($kuis->pertanyaan as $pertanyaan) {
+                $pertanyaan->pilihanJawaban()->delete();
+            }
+            $kuis->pertanyaan()->delete();
+        }
+        $kursus->kuis()->delete();
+
+        foreach ($kursus->tugas as $tugas) {
+            $tugas->pengumpulan()->delete();
+        }
+        $kursus->tugas()->delete();
+
+        $kursus->materi()->delete();
+        $kursus->pesertaKursus()->delete();
         $kursus->delete();
 
         return response()->json(['message' => 'Kursus berhasil dihapus.']);
@@ -105,7 +149,7 @@ class KursusController extends Controller
     {
         $request->validate(['status' => 'required|in:draft,publish']);
 
-        $kursus = Kursus::findOrFail($id);
+        $kursus = Kursus::where('id_cabang', $request->user()->id_cabang)->findOrFail($id);
         $kursus->update(['status' => $request->status]);
 
         return response()->json([
@@ -114,9 +158,9 @@ class KursusController extends Controller
         ]);
     }
 
-    public function peserta($id)
+    public function peserta(Request $request, $id)
     {
-        Kursus::findOrFail($id);
+        Kursus::where('id_cabang', $request->user()->id_cabang)->findOrFail($id);
 
         $peserta = PesertaKursus::with('pengguna.dataPkl')
             ->where('id_kursus', $id)
@@ -135,11 +179,26 @@ class KursusController extends Controller
 
     public function enroll(Request $request, $id)
     {
-        $request->validate([
-            'id_pengguna' => 'required|exists:pengguna,id_pengguna',
-        ]);
+        $cabangId = $request->user()->id_cabang;
 
-        Kursus::findOrFail($id);
+        // Pastikan kursus milik cabang ini
+        $kursus = Kursus::where('id_cabang', $cabangId)->findOrFail($id);
+
+        $request->validate([
+            // Peserta harus role 4, aktif, dan di cabang yang sama
+            'id_pengguna' => [
+                'required',
+                'exists:pengguna,id_pengguna',
+                function ($attr, $val, $fail) use ($cabangId) {
+                    $ok = \App\Models\Pengguna::where('id_pengguna', $val)
+                        ->where('id_role', 4)
+                        ->where('id_cabang', $cabangId)
+                        ->where('status', 'aktif')
+                        ->exists();
+                    if (! $ok) $fail('Peserta tidak ditemukan atau tidak aktif di cabang Anda.');
+                },
+            ],
+        ]);
 
         $existing = PesertaKursus::where('id_kursus', $id)
             ->where('id_pengguna', $request->id_pengguna)
@@ -150,10 +209,9 @@ class KursusController extends Controller
         }
 
         PesertaKursus::create([
-            'id_kursus'      => $id,
-            'id_pengguna'    => $request->id_pengguna,
-            'status'         => 'belum_mulai',
-            'tanggal_daftar' => now(),
+            'id_kursus'   => $id,
+            'id_pengguna' => $request->id_pengguna,
+            'status'      => 'belum_mulai',
         ]);
 
         return response()->json(['message' => 'Peserta berhasil didaftarkan ke kursus.'], 201);
@@ -161,7 +219,7 @@ class KursusController extends Controller
 
     public function unenroll(Request $request, $id, $id_pengguna)
     {
-        Kursus::findOrFail($id);
+        Kursus::where('id_cabang', $request->user()->id_cabang)->findOrFail($id);
 
         $deleted = PesertaKursus::where('id_kursus', $id)
             ->where('id_pengguna', $id_pengguna)
