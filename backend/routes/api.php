@@ -65,10 +65,11 @@ Route::middleware('throttle:5,1')->group(function () {
 Route::middleware('auth:sanctum')->group(function () {
 
     // ── Shared auth ──────────────────────────────────────────────────────────
-    Route::post('/logout',        [UserAuthController::class, 'logout']);
-    Route::post('/auth/logout',   [AdminAuthController::class, 'logout']);
-    Route::post('/auth/refresh',  [AdminAuthController::class, 'refresh']);
-    Route::get('/auth/me',        [AdminAuthController::class, 'me']);
+    Route::post('/logout',            [UserAuthController::class, 'logout']);
+    Route::post('/auth/logout',       [AdminAuthController::class, 'logout']);
+    Route::post('/auth/logout-all',   [AdminAuthController::class, 'logoutAll']);
+    Route::post('/auth/refresh',      [AdminAuthController::class, 'refresh']);
+    Route::get('/auth/me',            [AdminAuthController::class, 'me']);
 
     // =========================================================================
     // SUPERADMIN PORTAL

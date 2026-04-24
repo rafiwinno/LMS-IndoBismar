@@ -18,6 +18,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => \App\Http\Middleware\EnsureIsAdmin::class,
         ]);
+        // Baca auth_token cookie sebelum Sanctum, agar httpOnly cookie bisa dipakai sebagai Bearer token
+        $middleware->api(prepend: [
+            \App\Http\Middleware\ReadBearerFromCookie::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->render(function (AuthenticationException $e, $request) {

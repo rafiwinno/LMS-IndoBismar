@@ -7,6 +7,7 @@ use App\Models\Pengguna;
 use App\Models\Notifikasi;
 use App\Models\LoginLog;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
@@ -42,7 +43,7 @@ class AuthController extends Controller
             'message' => 'Login berhasil.',
             'token'   => $token,
             'user'    => $this->formatUser($pengguna),
-        ]);
+        ])->withCookie($this->makeAuthCookie($token));
     }
 
     public function loginAdmin(Request $request)
@@ -88,7 +89,7 @@ class AuthController extends Controller
             'message' => 'Login admin berhasil.',
             'token'   => $token,
             'user'    => $this->formatUser($pengguna),
-        ]);
+        ])->withCookie($this->makeAuthCookie($token));
     }
 
     public function register(Request $request)
@@ -153,7 +154,8 @@ class AuthController extends Controller
         $user = $request->user();
         $user->currentAccessToken()->delete();
         $token = $user->createToken('lms-admin-token')->plainTextToken;
-        return response()->json(['token' => $token]);
+        return response()->json(['token' => $token])
+            ->withCookie($this->makeAuthCookie($token));
     }
 
     public function logout(Request $request)
@@ -166,13 +168,45 @@ class AuthController extends Controller
             ->first()?->update(['logged_out_at' => now()]);
 
         $user->currentAccessToken()->delete();
-        return response()->json(['message' => 'Logout berhasil.']);
+
+        return response()->json(['message' => 'Logout berhasil.'])
+            ->withCookie(Cookie::forget('auth_token'));
+    }
+
+    // Hapus SEMUA token aktif milik user ini (paksa logout semua sesi/perangkat)
+    public function logoutAll(Request $request)
+    {
+        $user = $request->user();
+
+        LoginLog::where('user_id', $user->id_pengguna)
+            ->whereNull('logged_out_at')
+            ->update(['logged_out_at' => now()]);
+
+        $user->tokens()->delete();
+
+        return response()->json(['message' => 'Semua sesi berhasil diakhiri.'])
+            ->withCookie(Cookie::forget('auth_token'));
     }
 
     public function me(Request $request)
     {
         $user = $request->user()->load('role', 'cabang', 'dataPkl');
         return response()->json($this->formatUser($user));
+    }
+
+    private function makeAuthCookie(string $token): \Symfony\Component\HttpFoundation\Cookie
+    {
+        return cookie(
+            name    : 'auth_token',
+            value   : $token,
+            minutes : 480,
+            path    : '/',
+            domain  : null,
+            secure  : app()->isProduction(),
+            httpOnly: true,
+            raw     : false,
+            sameSite: 'Lax',
+        );
     }
 
     private function formatUser($user): array
