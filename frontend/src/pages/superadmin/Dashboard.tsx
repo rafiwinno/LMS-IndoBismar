@@ -13,7 +13,7 @@ import api, { dashboardService } from "../../services/api";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface DashboardData {
-  stats: { total_users: number; total_branches: number };
+  stats: { total_users: number; total_branches: number; new_users_month: number; active_cities: number };
   weekly_chart: { day: string; date: string; active_users: number }[];
 }
 interface BranchBreakdown { id: number; nama_cabang: string; kota: string; total_logins: number; unique_users: number; }
@@ -264,7 +264,7 @@ export default function Dashboard() {
             icon: Users,
             iconBg: 'bg-blue-50 dark:bg-blue-500/10 border-blue-100 dark:border-blue-500/20',
             iconColor: 'text-blue-600 dark:text-blue-400',
-            trend: '+12% bulan ini', trendUp: true,
+            trend: data ? `+${data.stats.new_users_month} bulan ini` : '—', trendUp: true,
           },
           {
             label: 'Cabang Aktif', sub: 'lokasi operasional',
@@ -272,7 +272,7 @@ export default function Dashboard() {
             icon: Building2,
             iconBg: 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-100 dark:border-emerald-500/20',
             iconColor: 'text-emerald-600 dark:text-emerald-400',
-            trend: 'Tersebar di 8 kota', trendUp: true,
+            trend: data ? `Tersebar di ${data.stats.active_cities} kota` : '—', trendUp: true,
           },
         ].map(s => (
           <div key={s.label}
