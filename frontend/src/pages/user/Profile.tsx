@@ -1,8 +1,9 @@
 ﻿import { useEffect, useState, useCallback } from 'react';
-import { User, Mail, Phone, Lock, Save } from 'lucide-react';
+import { User, Mail, Phone, Lock, Save, LogOut } from 'lucide-react';
 import API from '../../api/api';
 import { ProfileSkeleton } from '../../components/ui/Skeleton';
 import Spinner from '../../components/ui/Spinner';
+import { saveUser, getUser } from '../types';
 
 interface Profil {
   nama: string;
@@ -16,6 +17,7 @@ export default function Profile() {
   const [profil, setProfil] = useState<Profil | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [logoutingAll, setLogoutingAll] = useState(false);
   const [form, setForm] = useState({ nama: '', nomor_hp: '' });
   const [passwordForm, setPasswordForm] = useState({ password_lama: '', password_baru: '', konfirmasi: '' });
   const [successMsg, setSuccessMsg] = useState('');
@@ -37,8 +39,8 @@ export default function Profile() {
     try {
       await API.put('/user/profil', { nama: form.nama, nomor_hp: form.nomor_hp });
       await fetchProfil();
-      const currentUser = JSON.parse(localStorage.getItem('lms_user') || '{}');
-      localStorage.setItem('lms_user', JSON.stringify({ ...currentUser, nama: form.nama }));
+      const currentUser = getUser();
+      if (currentUser) saveUser({ ...currentUser, nama: form.nama });
       window.dispatchEvent(new Event('lms_user_updated'));
       setSuccessMsg('Profil berhasil diperbarui!');
     } catch (err: any) {
@@ -65,6 +67,19 @@ export default function Profile() {
     } catch (err: any) {
       setErrorMsg(err.response?.data?.message || 'Gagal mengubah password.');
     } finally { setSaving(false); }
+  };
+
+  const handleLogoutSemua = async () => {
+    if (!confirm('Keluar dari semua perangkat? Anda harus login ulang.')) return;
+    setLogoutingAll(true);
+    try {
+      await API.post('/logout-semua');
+      sessionStorage.removeItem('lms_user');
+      window.location.href = '/login';
+    } catch {
+      setErrorMsg('Gagal keluar dari semua perangkat.');
+      setLogoutingAll(false);
+    }
   };
 
   const initials = profil?.nama?.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase() ?? '??';
@@ -105,6 +120,16 @@ export default function Profile() {
             }`}>
               {profil?.status ?? 'pending'}
             </span>
+            <div className="mt-6 pt-6 border-t border-gray-100 dark:border-white/8">
+              <button
+                onClick={handleLogoutSemua}
+                disabled={logoutingAll}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-500/30 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors disabled:opacity-50"
+              >
+                <LogOut size={15} />
+                {logoutingAll ? 'Memproses...' : 'Keluar semua perangkat'}
+              </button>
+            </div>
           </div>
         </div>
 

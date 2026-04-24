@@ -42,13 +42,9 @@ export default function Header({ onMenuClick }: HeaderProps) {
     ?.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase() ?? '??';
 
   useEffect(() => {
-    const handleStorage = () => setUser(getUser());
-    window.addEventListener('storage', handleStorage);
-    window.addEventListener('lms_user_updated', handleStorage);
-    return () => {
-      window.removeEventListener('storage', handleStorage);
-      window.removeEventListener('lms_user_updated', handleStorage);
-    };
+    const handleUpdate = () => setUser(getUser());
+    window.addEventListener('lms_user_updated', handleUpdate);
+    return () => window.removeEventListener('lms_user_updated', handleUpdate);
   }, []);
 
   const fetchNotif = () => {

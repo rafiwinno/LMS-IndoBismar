@@ -63,8 +63,22 @@ class AuthController extends Controller
             ], 401);
         }
 
-        $token = $user->createToken('auth_token')->plainTextToken;
-        $menit = $request->boolean('remember') ? 60 * 24 * 30 : 60 * 24 * 7;
+        if ($user->status === 'pending') {
+            return response()->json([
+                'message' => 'Akun Anda belum diverifikasi oleh admin. Silakan upload dokumen persyaratan.'
+            ], 403);
+        }
+
+        if ($user->status === 'nonaktif') {
+            return response()->json([
+                'message' => 'Akun Anda telah dinonaktifkan. Hubungi admin untuk informasi lebih lanjut.'
+            ], 403);
+        }
+
+        $ingat = $request->boolean('remember');
+        $expiredAt = now()->addDays($ingat ? 30 : 7);
+        $token = $user->createToken('auth_token', ['*'], $expiredAt)->plainTextToken;
+        $menit = $ingat ? 60 * 24 * 30 : 60 * 24 * 7;
 
         return response()->json([
             'message' => 'Login berhasil',
@@ -90,7 +104,7 @@ class AuthController extends Controller
             ], 401);
         }
 
-        $token = $user->createToken('auth_token')->plainTextToken;
+        $token = $user->createToken('auth_token', ['*'], now()->addDays(7))->plainTextToken;
 
         return response()->json([
             'message' => 'Login berhasil',
@@ -104,13 +118,23 @@ class AuthController extends Controller
         return response()->json(['user' => $request->user()]);
     }
 
-    // LOGOUT
+    // LOGOUT (perangkat saat ini)
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();
 
         return response()->json([
             'message' => 'Logout berhasil'
+        ])->withoutCookie('lms_token');
+    }
+
+    // LOGOUT SEMUA PERANGKAT
+    public function logoutSemua(Request $request)
+    {
+        $request->user()->tokens()->delete();
+
+        return response()->json([
+            'message' => 'Berhasil keluar dari semua perangkat'
         ])->withoutCookie('lms_token');
     }
 }

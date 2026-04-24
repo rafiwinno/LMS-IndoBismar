@@ -17,8 +17,9 @@ use App\Http\Controllers\Api\User\NotifikasiController;
 Route::post('/register',       [AuthController::class, 'register']);
 Route::post('/login/peserta',  [AuthController::class, 'loginPeserta'])->middleware('throttle:5,1');
 Route::post('/login/staff',    [AuthController::class, 'loginStaff'])->middleware('throttle:5,1');
-Route::get('/me',              [AuthController::class, 'me'])->middleware('auth:sanctum');
-Route::post('/logout',         [AuthController::class, 'logout'])->middleware('auth:sanctum');
+Route::get('/me',                  [AuthController::class, 'me'])->middleware('auth:sanctum');
+Route::post('/logout',             [AuthController::class, 'logout'])->middleware('auth:sanctum');
+Route::post('/logout-semua',       [AuthController::class, 'logoutSemua'])->middleware('auth:sanctum');
 
 // ===== USER / PESERTA =====
 Route::middleware(['auth:sanctum', 'role:4'])->prefix('user')->group(function () {
