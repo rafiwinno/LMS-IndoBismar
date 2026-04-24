@@ -1,5 +1,5 @@
 ﻿import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Shield, UserPlus, Eye, EyeOff, ArrowLeft, CheckCircle2, BookOpen, Award, Users, GraduationCap } from 'lucide-react';
 import API from '../api/api';
 import { saveUser } from './types';
@@ -10,6 +10,8 @@ type Mode = 'main' | 'admin' | 'trainer' | 'register';
 export default function Login() {
   const [mode, setMode] = useState<Mode>('main');
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const isExpired = searchParams.get('expired') === '1';
 
   useEffect(() => {
     const stored = localStorage.getItem('lms_dark') === 'true';
@@ -99,6 +101,12 @@ export default function Login() {
         {/* Form area */}
         <div className="flex-1 flex items-center justify-center px-6 py-10">
           <div className="w-full max-w-sm">
+            {isExpired && (
+              <div className="mb-5 px-4 py-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-2.5">
+                <span className="text-amber-500 text-base leading-none mt-0.5">!</span>
+                <p className="text-amber-700 text-sm">Sesi Anda telah berakhir. Silakan login kembali.</p>
+              </div>
+            )}
             {mode === 'main'     && <UserLoginForm    onLogin={handleLogin} onSwitchAdmin={() => setMode('admin')} onSwitchTrainer={() => setMode('trainer')} onSwitchRegister={() => setMode('register')} />}
             {mode === 'admin'    && <AdminLoginForm   onLogin={handleLogin} onBack={() => setMode('main')} />}
             {mode === 'trainer'  && <TrainerLoginForm onLogin={handleLogin} onBack={() => setMode('main')} />}
@@ -117,6 +125,7 @@ const inputCls = 'w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-l
 function UserLoginForm({ onLogin, onSwitchAdmin, onSwitchTrainer, onSwitchRegister }: any) {
   const [email, setEmail]         = useState('');
   const [password, setPassword]   = useState('');
+  const [remember, setRemember]   = useState(false);
   const [showPass, setShowPass]   = useState(false);
   const [loading, setLoading]     = useState(false);
   const [error, setError]         = useState('');
@@ -141,7 +150,7 @@ function UserLoginForm({ onLogin, onSwitchAdmin, onSwitchTrainer, onSwitchRegist
     e.preventDefault();
     setLoading(true); setError('');
     try {
-      const res = await API.post('/login/peserta', { email, password });
+      const res = await API.post('/login/peserta', { email, password, remember });
       onLogin(res.data.user);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Email atau password salah');
@@ -193,6 +202,18 @@ function UserLoginForm({ onLogin, onSwitchAdmin, onSwitchTrainer, onSwitchRegist
               {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
           </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <input
+            id="remember"
+            type="checkbox"
+            checked={remember}
+            onChange={e => setRemember(e.target.checked)}
+            disabled={isLocked}
+            className="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500"
+          />
+          <label htmlFor="remember" className="text-sm text-gray-600 select-none cursor-pointer">Ingat saya selama 30 hari</label>
         </div>
 
         <button
@@ -328,6 +349,18 @@ function AdminLoginForm({ onLogin, onBack }: any) {
           </div>
         </div>
 
+        <div className="flex items-center gap-2">
+          <input
+            id="remember"
+            type="checkbox"
+            checked={remember}
+            onChange={e => setRemember(e.target.checked)}
+            disabled={isLocked}
+            className="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500"
+          />
+          <label htmlFor="remember" className="text-sm text-gray-600 select-none cursor-pointer">Ingat saya selama 30 hari</label>
+        </div>
+
         <button
           type="submit" disabled={loading || isLocked}
           className="w-full py-2.5 bg-red-600 hover:bg-red-700 active:bg-red-800 disabled:opacity-60 text-white text-sm font-semibold rounded-lg transition-colors mt-1"
@@ -429,6 +462,18 @@ function TrainerLoginForm({ onLogin, onBack }: any) {
               {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
           </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <input
+            id="remember"
+            type="checkbox"
+            checked={remember}
+            onChange={e => setRemember(e.target.checked)}
+            disabled={isLocked}
+            className="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500"
+          />
+          <label htmlFor="remember" className="text-sm text-gray-600 select-none cursor-pointer">Ingat saya selama 30 hari</label>
         </div>
 
         <button

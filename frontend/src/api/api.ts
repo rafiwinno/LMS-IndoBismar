@@ -5,4 +5,18 @@ const API = axios.create({
   withCredentials: true,
 });
 
+API.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const isLoginPage = window.location.pathname === '/login';
+    const isAuthEndpoint = error.config?.url?.includes('/login') || error.config?.url?.includes('/me');
+
+    if (error.response?.status === 401 && !isLoginPage && !isAuthEndpoint) {
+      sessionStorage.removeItem('lms_user');
+      window.location.href = '/login?expired=1';
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default API;

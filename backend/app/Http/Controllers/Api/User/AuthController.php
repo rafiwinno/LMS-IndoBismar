@@ -64,11 +64,12 @@ class AuthController extends Controller
         }
 
         $token = $user->createToken('auth_token')->plainTextToken;
+        $menit = $request->boolean('remember') ? 60 * 24 * 30 : 60 * 24 * 7;
 
         return response()->json([
             'message' => 'Login berhasil',
             'user'    => $user
-        ])->cookie('lms_token', $token, 60 * 24 * 7, '/', null, false, true);
+        ])->cookie('lms_token', $token, $menit, '/', null, false, true);
     }
 
     // LOGIN ADMIN / TRAINER (USERNAME)
@@ -95,6 +96,12 @@ class AuthController extends Controller
             'message' => 'Login berhasil',
             'user'    => $user
         ])->cookie('lms_token', $token, 60 * 24 * 7, '/', null, false, true);
+    }
+
+    // CEK SESSION AKTIF (untuk restore session di tab baru)
+    public function me(Request $request)
+    {
+        return response()->json(['user' => $request->user()]);
     }
 
     // LOGOUT
