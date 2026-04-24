@@ -26,6 +26,7 @@ class NotificationController extends Controller
                 JOIN tugas t     ON t.id_tugas    = pt.id_tugas
                 JOIN kursus k    ON k.id_kursus   = t.id_kursus
                 WHERE k.id_trainer = ?
+                AND pt.nilai IS NULL
                 ORDER BY pt.tanggal_kumpul DESC
                 LIMIT 15
             ", [$trainerId]);

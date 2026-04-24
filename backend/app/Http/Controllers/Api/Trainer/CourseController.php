@@ -217,9 +217,10 @@ class CourseController extends Controller
         }
 
         PesertaKursus::create([
-            'id_kursus'   => $id,
-            'id_pengguna' => $request->id_pengguna,
-            'status'      => 'belum_mulai',
+            'id_kursus'      => $id,
+            'id_pengguna'    => $request->id_pengguna,
+            'status'         => 'belum_mulai',
+            'tanggal_daftar' => now(),
         ]);
 
         return response()->json(['message' => 'Peserta berhasil didaftarkan ke kursus.'], 201);
