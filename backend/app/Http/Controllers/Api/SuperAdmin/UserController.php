@@ -117,7 +117,7 @@ class UserController extends Controller
             'nama'      => 'required|string|max:255',
             'username'  => 'required|string|unique:pengguna,username',
             'email'     => 'nullable|email|unique:pengguna,email',
-            'password'  => 'required|string|min:6',
+            'password'  => 'required|string|min:8',
             'id_role'   => 'required|in:2,3,4',
             'id_cabang' => 'required|exists:cabang,id_cabang',
             'status'    => 'in:aktif,nonaktif',
@@ -152,11 +152,15 @@ class UserController extends Controller
     {
         $user = Pengguna::findOrFail($id);
 
+        if ($user->id_role === 1) {
+            return response()->json(['message' => 'Akun superadmin tidak dapat diubah melalui panel ini.'], 403);
+        }
+
         $request->validate([
             'nama'      => 'required|string|max:255',
             'username'  => 'required|string|unique:pengguna,username,' . $id . ',id_pengguna',
             'email'     => 'nullable|email|unique:pengguna,email,' . $id . ',id_pengguna',
-            'password'  => 'nullable|string|min:6',
+            'password'  => 'nullable|string|min:8',
             'id_role'   => 'required|in:2,3,4',
             'id_cabang' => 'required|exists:cabang,id_cabang',
             'status'    => 'in:aktif,nonaktif',
@@ -198,6 +202,10 @@ class UserController extends Controller
     {
         $user = Pengguna::findOrFail($id);
 
+        if ($user->id_role === 1) {
+            return response()->json(['message' => 'Akun superadmin tidak dapat dihapus melalui panel ini.'], 403);
+        }
+
         try { ActivityLog::create([
             'user_id'      => $request->user()?->id_pengguna,
             'action'       => 'delete_user',
@@ -217,6 +225,11 @@ class UserController extends Controller
     {
         $request->validate(['status' => 'required|in:aktif,nonaktif']);
         $user = Pengguna::findOrFail($id);
+
+        if ($user->id_role === 1) {
+            return response()->json(['message' => 'Status akun superadmin tidak dapat diubah melalui panel ini.'], 403);
+        }
+
         $user->update(['status' => $request->status]);
 
         try { ActivityLog::create([

@@ -15,25 +15,42 @@ class DashboardController extends Controller
     // GET /superadmin/dashboard
     public function index()
     {
+        $now = Carbon::now('Asia/Jakarta');
+
         $totalUsers    = Pengguna::whereIn('id_role', [2, 3, 4])->count();
         $totalBranches = Cabang::where('status', 'aktif')->count();
+        $activeCities  = Cabang::where('status', 'aktif')->distinct()->count('kota');
 
-        // Weekly chart 7 hari terakhir (default)
+        $newUsersMonth = Pengguna::whereIn('id_role', [2, 3, 4])
+            ->whereYear('created_at',  $now->year)
+            ->whereMonth('created_at', $now->month)
+            ->count();
+
+        // Weekly chart — batch query dengan timezone conversion agar hitungan per hari tepat WIB
+        $start7 = $now->copy()->subDays(6)->startOfDay()->utc();
+        $end7   = $now->copy()->endOfDay()->utc();
+
+        $dailyCounts = LoginLog::whereBetween('logged_in_at', [$start7, $end7])
+            ->selectRaw("DATE(CONVERT_TZ(logged_in_at, '+00:00', '+07:00')) as login_date, COUNT(*) as total")
+            ->groupBy('login_date')
+            ->pluck('total', 'login_date');
+
         $weeklyChart = [];
         for ($i = 6; $i >= 0; $i--) {
-            $date  = now('Asia/Jakarta')->subDays($i);
-            $count = LoginLog::whereDate('logged_in_at', $date->toDateString())->count();
+            $date = $now->copy()->subDays($i);
             $weeklyChart[] = [
                 'day'          => $date->format('D'),
                 'date'         => $date->format('d/m'),
-                'active_users' => $count,
+                'active_users' => (int) ($dailyCounts[$date->format('Y-m-d')] ?? 0),
             ];
         }
 
         return response()->json([
             'stats' => [
-                'total_users' => $totalUsers,
-                'total_branches'     => $totalBranches,
+                'total_users'      => $totalUsers,
+                'total_branches'   => $totalBranches,
+                'new_users_month'  => $newUsersMonth,
+                'active_cities'    => $activeCities,
             ],
             'weekly_chart' => $weeklyChart,
         ]);
@@ -49,8 +66,12 @@ class DashboardController extends Controller
             'cabang_id' => 'nullable|integer|exists:cabang,id_cabang',
         ]);
 
-        $start    = Carbon::parse($request->start, 'Asia/Jakarta')->startOfDay();
-        $end      = Carbon::parse($request->end, 'Asia/Jakarta')->endOfDay();
+        $start = Carbon::parse($request->start, 'Asia/Jakarta')->startOfDay();
+        $end   = Carbon::parse($request->end,   'Asia/Jakarta')->endOfDay();
+
+        if ($start->diffInDays($end) > 366) {
+            return response()->json(['message' => 'Rentang tanggal maksimal 1 tahun (366 hari).'], 422);
+        }
         $cabangId = $request->cabang_id;
 
         // ── Per hari dalam periode — 1 query batch, bukan N query ──────────
