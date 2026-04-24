@@ -8,6 +8,7 @@ use App\Models\Pengguna;
 use App\Models\LoginLog;
 use App\Models\ActivityLog;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class BranchController extends Controller
 {
@@ -43,7 +44,8 @@ class BranchController extends Controller
 
         $branches = $query->orderBy('id_cabang')->get();
 
-        $userCounts = Pengguna::selectRaw('id_cabang, COUNT(*) as total')
+        $userCounts = Pengguna::whereIn('id_role', [2, 3, 4])
+            ->selectRaw('id_cabang, COUNT(*) as total')
             ->groupBy('id_cabang')
             ->pluck('total', 'id_cabang');
 
@@ -229,11 +231,14 @@ class BranchController extends Controller
             ], 422);
         }
 
-        if ($userCount > 0) {
-            $userIds = Pengguna::where('id_cabang', $id)->pluck('id_pengguna');
-            LoginLog::whereIn('user_id', $userIds)->delete();
-            Pengguna::where('id_cabang', $id)->delete();
-        }
+        DB::transaction(function () use ($id, $cabang, $userCount) {
+            if ($userCount > 0) {
+                $userIds = Pengguna::where('id_cabang', $id)->pluck('id_pengguna');
+                LoginLog::whereIn('user_id', $userIds)->delete();
+                Pengguna::where('id_cabang', $id)->delete();
+            }
+            $cabang->delete();
+        });
 
         try { ActivityLog::create([
             'user_id'      => $request->user()?->id_pengguna,
@@ -244,8 +249,6 @@ class BranchController extends Controller
             'changes'      => $userCount > 0 ? ['cascade_deleted_users' => $userCount] : null,
             'ip_address'   => $request->ip(),
         ]); } catch (\Throwable) {}
-
-        $cabang->delete();
 
         return response()->json([
             'message' => 'Cabang berhasil dihapus.' . ($userCount > 0 ? " ({$userCount} user ikut dihapus)" : ''),

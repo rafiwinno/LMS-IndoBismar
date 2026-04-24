@@ -386,7 +386,13 @@ export default function Users() {
       const p: Record<string,any> = { page };
       if (debouncedSearch) p.search=debouncedSearch; if (filterRole) p.role=filterRole; if (filterCabang) p.id_cabang=filterCabang;
       const res = await api.get('/superadmin/users',{params:p});
-      setUsers(res.data.data); setLastPage(res.data.last_page); setTotal(res.data.total);
+      const fresh: UserItem[] = res.data.data;
+      setUsers(fresh); setLastPage(res.data.last_page); setTotal(res.data.total);
+      const freshIds = new Set(fresh.map(u => u.id));
+      setSelected(prev => {
+        const next = new Set([...prev].filter(id => freshIds.has(id)));
+        return next.size === prev.size ? prev : next;
+      });
     } catch { showToast('Gagal memuat data user.','error'); }
     finally { setLoading(false); }
   },[page,debouncedSearch,filterRole,filterCabang]);

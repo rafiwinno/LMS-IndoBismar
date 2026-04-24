@@ -46,14 +46,18 @@ Route::get('/test', fn() => response()->json(['message' => 'API working']));
 // =============================================================================
 
 // Peserta login/register (used by student portal)
-Route::post('/register',      [UserAuthController::class, 'register']);
-Route::post('/login/peserta', [UserAuthController::class, 'loginPeserta']);
-Route::post('/login/staff',   [UserAuthController::class, 'loginStaff']);
+Route::middleware('throttle:10,1')->group(function () {
+    Route::post('/register',      [UserAuthController::class, 'register']);
+    Route::post('/login/peserta', [UserAuthController::class, 'loginPeserta']);
+    Route::post('/login/staff',   [UserAuthController::class, 'loginStaff']);
+});
 
 // Admin/Trainer/Superadmin login (used by admin portal via api.ts)
-Route::post('/auth/login',       [AdminAuthController::class, 'login']);
-Route::post('/auth/login-admin', [AdminAuthController::class, 'loginAdmin']);
-Route::post('/auth/register',    [AdminAuthController::class, 'register']);
+Route::middleware('throttle:5,1')->group(function () {
+    Route::post('/auth/login',       [AdminAuthController::class, 'login']);
+    Route::post('/auth/login-admin', [AdminAuthController::class, 'loginAdmin']);
+    Route::post('/auth/register',    [AdminAuthController::class, 'register']);
+});
 
 // =============================================================================
 // AUTHENTICATED ROUTES
@@ -69,7 +73,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // =========================================================================
     // SUPERADMIN PORTAL
     // =========================================================================
-    Route::prefix('superadmin')->group(function () {
+    Route::prefix('superadmin')->middleware('role:1')->group(function () {
         Route::get('/dashboard',            [SuperDashboardController::class, 'index']);
         Route::get('/dashboard/login-recap',[SuperDashboardController::class, 'loginRecap']);
 

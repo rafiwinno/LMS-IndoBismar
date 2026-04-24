@@ -15,7 +15,7 @@ class DashboardController extends Controller
     // GET /superadmin/dashboard
     public function index()
     {
-        $totalUsers    = Pengguna::count();
+        $totalUsers    = Pengguna::whereIn('id_role', [2, 3, 4])->count();
         $totalBranches = Cabang::where('status', 'aktif')->count();
 
         // Weekly chart 7 hari terakhir (default)
@@ -32,7 +32,7 @@ class DashboardController extends Controller
 
         return response()->json([
             'stats' => [
-                'total_active_users' => $totalUsers,
+                'total_users' => $totalUsers,
                 'total_branches'     => $totalBranches,
             ],
             'weekly_chart' => $weeklyChart,

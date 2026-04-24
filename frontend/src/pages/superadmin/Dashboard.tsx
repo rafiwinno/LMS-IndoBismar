@@ -13,7 +13,7 @@ import api, { dashboardService } from "../../services/api";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface DashboardData {
-  stats: { total_active_users: number; total_branches: number };
+  stats: { total_users: number; total_branches: number };
   weekly_chart: { day: string; date: string; active_users: number }[];
 }
 interface BranchBreakdown { id: number; nama_cabang: string; kota: string; total_logins: number; unique_users: number; }
@@ -260,7 +260,7 @@ export default function Dashboard() {
         {[
           {
             label: 'Total Pengguna', sub: 'akun terdaftar',
-            val: data?.stats.total_active_users ?? 0,
+            val: data?.stats.total_users ?? 0,
             icon: Users,
             iconBg: 'bg-blue-50 dark:bg-blue-500/10 border-blue-100 dark:border-blue-500/20',
             iconColor: 'text-blue-600 dark:text-blue-400',
