@@ -349,17 +349,6 @@ function AdminLoginForm({ onLogin, onBack }: any) {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <input
-            id="remember"
-            type="checkbox"
-            checked={remember}
-            onChange={e => setRemember(e.target.checked)}
-            disabled={isLocked}
-            className="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500"
-          />
-          <label htmlFor="remember" className="text-sm text-gray-600 select-none cursor-pointer">Ingat saya selama 30 hari</label>
-        </div>
 
         <button
           type="submit" disabled={loading || isLocked}
@@ -464,17 +453,6 @@ function TrainerLoginForm({ onLogin, onBack }: any) {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <input
-            id="remember"
-            type="checkbox"
-            checked={remember}
-            onChange={e => setRemember(e.target.checked)}
-            disabled={isLocked}
-            className="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500"
-          />
-          <label htmlFor="remember" className="text-sm text-gray-600 select-none cursor-pointer">Ingat saya selama 30 hari</label>
-        </div>
 
         <button
           type="submit" disabled={loading || isLocked}
