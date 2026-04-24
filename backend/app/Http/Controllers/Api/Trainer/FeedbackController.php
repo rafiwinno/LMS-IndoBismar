@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Trainer;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Feedback;
+use App\Models\Notifikasi;
 use App\Models\PesertaKursus;
 use App\Models\Trainer\Course;
 
@@ -55,6 +56,15 @@ class FeedbackController extends Controller
             'id_kursus'  => $request->id_kursus,
             'pesan'      => $request->pesan,
             'tipe'       => $request->tipe,
+        ]);
+
+        Notifikasi::create([
+            'id_penerima'  => $idPeserta,
+            'judul'        => 'Anda Mendapat Feedback Baru',
+            'pesan'        => "Trainer memberikan feedback pada kursus \"{$kursus->judul_kursus}\".",
+            'tipe'         => 'feedback',
+            'id_referensi' => $feedback->id_feedback,
+            'dibaca'       => false,
         ]);
 
         return response()->json([

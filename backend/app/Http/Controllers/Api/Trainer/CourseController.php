@@ -7,6 +7,13 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Trainer\Course;
+use App\Models\Trainer\Material;
+use App\Models\Trainer\Assignment;
+use App\Models\Trainer\Submission;
+use App\Models\Trainer\Quiz;
+use App\Models\Trainer\Question;
+use App\Models\AttemptKuis;
+use App\Models\JawabanKuis;
 use App\Models\PesertaKursus;
 use App\Models\Pengguna;
 
@@ -104,7 +111,7 @@ class CourseController extends Controller
         ]);
     }
 
-    // 5. Delete course (dengan cek kepemilikan)
+    // 5. Delete course (dengan cek kepemilikan + cascade)
     public function destroy(Request $request, $id)
     {
         $course = Course::findOrFail($id);
@@ -112,6 +119,42 @@ class CourseController extends Controller
         if ($course->id_trainer !== $request->user()->id_pengguna) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
+
+        // Hapus materi beserta file-nya
+        Material::where('id_kursus', $id)->each(function ($material) {
+            if ($material->file_materi && !filter_var($material->file_materi, FILTER_VALIDATE_URL)) {
+                Storage::disk('public')->delete($material->file_materi);
+            }
+            $material->delete();
+        });
+
+        // Hapus submission beserta file-nya, lalu hapus tugas
+        Assignment::where('id_kursus', $id)->each(function ($assignment) {
+            Submission::where('id_tugas', $assignment->id_tugas)->each(function ($sub) {
+                if ($sub->file_tugas) {
+                    Storage::disk('public')->delete($sub->file_tugas);
+                }
+                $sub->delete();
+            });
+            if ($assignment->file_tugas) {
+                Storage::disk('public')->delete($assignment->file_tugas);
+            }
+            $assignment->delete();
+        });
+
+        // Hapus jawaban, pilihan, attempt, lalu kuis
+        Quiz::where('id_kursus', $id)->each(function ($quiz) {
+            Question::where('id_kuis', $quiz->id_kuis)->each(function ($question) {
+                JawabanKuis::where('id_pertanyaan', $question->id_pertanyaan)->delete();
+                $question->pilihan()->delete();
+                $question->delete();
+            });
+            AttemptKuis::where('id_kuis', $quiz->id_kuis)->delete();
+            $quiz->delete();
+        });
+
+        // Hapus enrollment peserta
+        PesertaKursus::where('id_kursus', $id)->delete();
 
         Cache::forget("trainer_courses_{$request->user()->id_pengguna}");
         $course->delete();

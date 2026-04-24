@@ -11,6 +11,7 @@ use App\Models\Trainer\Course;
 use App\Models\AttemptKuis;
 use App\Models\JawabanKuis;
 use App\Models\Pertanyaan;
+use App\Models\Notifikasi;
 
 class QuizController extends Controller
 {
@@ -111,11 +112,14 @@ class QuizController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        // Hapus semua pertanyaan + pilihan terkait
+        // Hapus jawaban & pilihan per pertanyaan, lalu pertanyaannya
         foreach ($quiz->pertanyaan as $q) {
+            JawabanKuis::where('id_pertanyaan', $q->id_pertanyaan)->delete();
             $q->pilihan()->delete();
             $q->delete();
         }
+        // Hapus semua attempt peserta untuk kuis ini
+        AttemptKuis::where('id_kuis', $quiz->id_kuis)->delete();
         $quiz->delete();
 
         return response()->json(['message' => 'Kuis berhasil dihapus']);
@@ -139,6 +143,15 @@ class QuizController extends Controller
             'pilihan.*.teks_jawaban' => 'required_if:tipe,pilihan_ganda|string',
             'pilihan.*.benar'        => 'required_if:tipe,pilihan_ganda|boolean',
         ]);
+
+        if ($request->tipe === 'pilihan_ganda') {
+            $correctCount = collect($request->pilihan)->where('benar', true)->count();
+            if ($correctCount !== 1) {
+                return response()->json([
+                    'message' => 'Soal pilihan ganda harus memiliki tepat 1 jawaban benar.',
+                ], 422);
+            }
+        }
 
         $question = Question::create([
             'id_kuis'     => $quizId,
@@ -183,6 +196,15 @@ class QuizController extends Controller
             'pilihan.*.teks_jawaban' => 'required_if:tipe,pilihan_ganda|string',
             'pilihan.*.benar'        => 'required_if:tipe,pilihan_ganda|boolean',
         ]);
+
+        if ($request->tipe === 'pilihan_ganda') {
+            $correctCount = collect($request->pilihan)->where('benar', true)->count();
+            if ($correctCount !== 1) {
+                return response()->json([
+                    'message' => 'Soal pilihan ganda harus memiliki tepat 1 jawaban benar.',
+                ], 422);
+            }
+        }
 
         $question->update([
             'pertanyaan'  => $request->pertanyaan,
@@ -303,6 +325,15 @@ class QuizController extends Controller
 
         $totalSkor = JawabanKuis::where('id_attempt', $attemptId)->sum('skor');
         $attempt->update(['skor' => $totalSkor]);
+
+        Notifikasi::create([
+            'id_penerima'  => $attempt->id_pengguna,
+            'judul'        => 'Jawaban Essay Anda Telah Dinilai',
+            'pesan'        => "Kuis \"{$quiz->judul_kuis}\" telah selesai dinilai. Total skor Anda: {$totalSkor}.",
+            'tipe'         => 'penilaian',
+            'id_referensi' => $attempt->id_attempt,
+            'dibaca'       => false,
+        ]);
 
         return response()->json(['message' => 'Penilaian essay berhasil.', 'skor_total' => $totalSkor]);
     }

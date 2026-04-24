@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Trainer\Assignment;
 use App\Models\Trainer\Course;
+use App\Models\Trainer\Submission;
 use Illuminate\Support\Facades\Storage;
 class AssignmentController extends Controller
 {
@@ -77,9 +78,9 @@ public function update(Request $request, $id)
     $request->validate([
         'judul_tugas'    => 'sometimes|required|string|max:200',
         'deskripsi'      => 'nullable|string',
-        'deadline'       => 'nullable|date|after:now',
+        'deadline'       => 'sometimes|nullable|date|after:now',
         'nilai_maksimal' => 'nullable|integer|min:1|max:1000',
-        'file_tugas'     => 'nullable|file|mimes:pdf|max:10240', // tambah ini
+        'file_tugas'     => 'nullable|file|mimes:pdf|max:10240',
     ]);
 
     // Handle upload file baru
@@ -113,6 +114,14 @@ public function update(Request $request, $id)
         if ($course->id_trainer !== $request->user()->id_pengguna) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
+
+        // Hapus semua submission peserta untuk tugas ini
+        Submission::where('id_tugas', $assignment->id_tugas)->each(function ($sub) {
+            if ($sub->file_tugas) {
+                Storage::disk('public')->delete($sub->file_tugas);
+            }
+            $sub->delete();
+        });
 
         if ($assignment->file_tugas) {
             Storage::disk('public')->delete($assignment->file_tugas);

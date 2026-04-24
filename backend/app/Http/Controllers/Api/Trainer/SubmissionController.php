@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Trainer\Submission;
 use App\Models\Trainer\Assignment;
 use App\Models\Trainer\Course;
+use App\Models\Notifikasi;
 
 class SubmissionController extends Controller
 {
@@ -55,10 +56,23 @@ class SubmissionController extends Controller
             'feedback' => 'nullable|string',
         ]);
 
+        $sudahDinilai = $submission->nilai !== null;
+
         $submission->update([
             'nilai'    => $request->nilai,
             'feedback' => $request->feedback,
         ]);
+
+        if (!$sudahDinilai) {
+            Notifikasi::create([
+                'id_penerima'  => $submission->id_pengguna,
+                'judul'        => 'Tugas Anda Telah Dinilai',
+                'pesan'        => "Tugas \"{$assignment->judul_tugas}\" mendapat nilai {$request->nilai}/{$assignment->nilai_maksimal}.",
+                'tipe'         => 'penilaian',
+                'id_referensi' => $submission->id_pengumpulan,
+                'dibaca'       => false,
+            ]);
+        }
 
         return response()->json([
             'message' => 'Nilai berhasil disimpan',
