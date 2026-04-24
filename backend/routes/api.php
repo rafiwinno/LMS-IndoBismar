@@ -15,8 +15,8 @@ use App\Http\Controllers\Api\User\NotifikasiController;
 
 // ===== AUTH =====
 Route::post('/register',       [AuthController::class, 'register']);
-Route::post('/login/peserta',  [AuthController::class, 'loginPeserta']);
-Route::post('/login/staff',    [AuthController::class, 'loginStaff']);
+Route::post('/login/peserta',  [AuthController::class, 'loginPeserta'])->middleware('throttle:5,1');
+Route::post('/login/staff',    [AuthController::class, 'loginStaff'])->middleware('throttle:5,1');
 Route::post('/logout',         [AuthController::class, 'logout'])->middleware('auth:sanctum');
 
 // ===== USER / PESERTA =====
@@ -37,6 +37,7 @@ Route::middleware(['auth:sanctum', 'role:4'])->prefix('user')->group(function ()
     // Kuis
     Route::get('/kuis',                            [KuisController::class, 'index']);
     Route::get('/kuis/{id_kuis}',                  [KuisController::class, 'show']);
+    Route::post('/kuis/{id_kuis}/mulai',           [KuisController::class, 'mulai']);
     Route::post('/kuis/{id_kuis}/kerjakan',        [KuisController::class, 'kerjakan']);
 
     // Tugas

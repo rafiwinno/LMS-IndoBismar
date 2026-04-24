@@ -16,7 +16,7 @@ class AuthController extends Controller
             'nama'     => 'required',
             'username' => 'required|unique:pengguna',
             'email'    => 'required|email|unique:pengguna',
-            'password' => 'required|min:6',
+            'password' => 'required|min:8',
             'nomor_hp' => 'required',
             'asal_sekolah' => 'nullable|string',
             'jurusan'=> 'nullable|string'
@@ -67,14 +67,18 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Login berhasil',
-            'token'   => $token,
             'user'    => $user
-        ]);
+        ])->cookie('lms_token', $token, 60 * 24 * 7, '/', null, false, true);
     }
 
     // LOGIN ADMIN / TRAINER (USERNAME)
     public function loginStaff(Request $request)
     {
+        $request->validate([
+            'username' => 'required|string',
+            'password' => 'required|string',
+        ]);
+
         $user = User::where('username', $request->username)
                     ->whereIn('id_role', [1, 2, 3])
                     ->first();
@@ -89,9 +93,8 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Login berhasil',
-            'token'   => $token,
             'user'    => $user
-        ]);
+        ])->cookie('lms_token', $token, 60 * 24 * 7, '/', null, false, true);
     }
 
     // LOGOUT
@@ -101,6 +104,6 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Logout berhasil'
-        ]);
+        ])->withoutCookie('lms_token');
     }
 }

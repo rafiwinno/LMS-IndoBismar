@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Shield, UserPlus, Eye, EyeOff, ArrowLeft, CheckCircle2, BookOpen, Award, Users, GraduationCap } from 'lucide-react';
 import API from '../api/api';
-import { saveToken, saveUser } from './types';
+import { saveUser } from './types';
 import logoBismar from '../assets/logo-bismar.png';
 
 type Mode = 'main' | 'admin' | 'trainer' | 'register';
@@ -19,8 +19,7 @@ export default function Login() {
     };
   }, []);
 
-  const handleLogin = (user: any, token: string) => {
-    saveToken(token);
+  const handleLogin = (user: any) => {
     const idRole = user.id_role;
     saveUser({
       id:    user.id_pengguna,
@@ -143,7 +142,7 @@ function UserLoginForm({ onLogin, onSwitchAdmin, onSwitchTrainer, onSwitchRegist
     setLoading(true); setError('');
     try {
       const res = await API.post('/login/peserta', { email, password });
-      onLogin(res.data.user, res.data.token);
+      onLogin(res.data.user);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Email atau password salah');
       setPassword('');
@@ -266,7 +265,7 @@ function AdminLoginForm({ onLogin, onBack }: any) {
     setLoading(true); setError('');
     try {
       const res = await API.post('/login/staff', { username, password });
-      onLogin(res.data.user, res.data.token);
+      onLogin(res.data.user);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Username atau password salah');
       setUsername(''); setPassword('');
@@ -369,7 +368,7 @@ function TrainerLoginForm({ onLogin, onBack }: any) {
     setLoading(true); setError('');
     try {
       const res = await API.post('/login/staff', { username, password });
-      onLogin(res.data.user, res.data.token);
+      onLogin(res.data.user);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Username atau password salah');
       setUsername(''); setPassword('');

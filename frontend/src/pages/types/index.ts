@@ -7,40 +7,27 @@ export interface User {
   role: Role;
 }
 
-// User 
+// User — pakai sessionStorage agar bersih saat tab ditutup
 export const saveUser = (user: User) => {
-  localStorage.setItem("lms_user", JSON.stringify(user));
+  sessionStorage.setItem("lms_user", JSON.stringify(user));
 }
 
 export const getUser = (): User | null => {
-  const data = localStorage.getItem("lms_user");
+  const data = sessionStorage.getItem("lms_user");
   return data ? JSON.parse(data) : null;
 }
 
 export const removeUser = () => {
-  localStorage.removeItem("lms_user");
+  sessionStorage.removeItem("lms_user");
 }
 
-// Token 
-export const saveToken = (token: string) => {
-  localStorage.setItem("lms_token", token);
-}
-
-export const getToken = (): string | null => {
-  return localStorage.getItem("lms_token");
-}
-
-export const removeToken = () => {
-  localStorage.removeItem("lms_token");
-}
-
-// Redirect 
+// Redirect
 export const getDashboardPath = (role: Role): string => {
   switch (role) {
     case "superadmin":  return "/admin/dashboard";
     case "admin":       return "/admin/dashboard";
     case "trainer":     return "/trainer/dashboard";
-    case "user":      
+    case "user":
     default:            return "/dashboard";
   }
 };

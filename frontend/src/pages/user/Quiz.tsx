@@ -38,22 +38,34 @@ export default function Quiz() {
   const [showConfirm, setShowConfirm] = useState(false);
 
   useEffect(() => {
-    API.get(`/user/kuis/${id}`)
-      .then(res => {
-        setKuis(res.data.kuis);
-        setPertanyaan(res.data.pertanyaan);
-      })
-      .catch(err => console.error(err))
-      .finally(() => setLoading(false));
+    const init = async () => {
+      try {
+        const [detailRes, mulaiRes] = await Promise.all([
+          API.get(`/user/kuis/${id}`),
+          API.post(`/user/kuis/${id}/mulai`),
+        ]);
 
-    API.get('/user/kuis')
-      .then(res => {
-        const kuisList = res.data.data;
-        const thisKuis = kuisList.find((k: any) => k.id_kuis === Number(id));
-        if (thisKuis?.status_attempt === 'sudah') {
+        setKuis(detailRes.data.kuis);
+        setPertanyaan(detailRes.data.pertanyaan);
+
+        // Hitung sisa waktu dari server
+        const waktuMulai = new Date(mulaiRes.data.waktu_mulai).getTime();
+        const durasiDetik = (mulaiRes.data.durasi_menit ?? 30) * 60;
+        const elapsed = Math.floor((Date.now() - waktuMulai) / 1000);
+        const sisa = Math.max(0, durasiDetik - elapsed);
+        setTimeLeft(sisa);
+      } catch (err: any) {
+        const msg = err.response?.data?.message || '';
+        if (msg === 'Kamu sudah mengerjakan kuis ini') {
           navigate(fromCourse ? `/courses/${fromCourse}` : '/tasks');
+        } else {
+          console.error(err);
         }
-      });
+      } finally {
+        setLoading(false);
+      }
+    };
+    init();
   }, [id]);
 
   useEffect(() => {
