@@ -20,6 +20,10 @@ class KuisController extends Controller
 
         $kuis = DB::table('kuis')
             ->join('kursus', 'kuis.id_kursus', '=', 'kursus.id_kursus')
+            ->join('peserta_kursus', function ($join) use ($id_pengguna) {
+                $join->on('peserta_kursus.id_kursus', '=', 'kursus.id_kursus')
+                     ->where('peserta_kursus.id_pengguna', '=', $id_pengguna);
+            })
             ->leftJoinSub($attemptSubQuery, 'ak', 'ak.id_kuis', '=', 'kuis.id_kuis')
             ->select(
                 'kuis.id_kuis',
@@ -53,6 +57,16 @@ class KuisController extends Controller
 
         if ($kuis->waktu_selesai && now()->gt($kuis->waktu_selesai)) {
             return response()->json(['message' => 'Waktu kuis sudah berakhir'], 403);
+        }
+
+        // Cek apakah user terdaftar di kursus yang memiliki kuis ini
+        $terdaftar = DB::table('peserta_kursus')
+            ->where('id_pengguna', $id_pengguna)
+            ->where('id_kursus', $kuis->id_kursus)
+            ->exists();
+
+        if (!$terdaftar) {
+            return response()->json(['message' => 'Kamu tidak terdaftar di kursus ini'], 403);
         }
 
         // Cek apakah sudah pernah mengerjakan
@@ -139,14 +153,26 @@ class KuisController extends Controller
     }
 
     // Detail kuis beserta pertanyaan dan pilihan jawaban
-    public function show($id_kuis)
+    public function show(Request $request, $id_kuis)
     {
+        $id_pengguna = $request->user()->id_pengguna;
+
         $kuis = DB::table('kuis')
             ->where('id_kuis', $id_kuis)
             ->first();
 
         if (!$kuis) {
             return response()->json(['message' => 'Kuis tidak ditemukan'], 404);
+        }
+
+        // Cek apakah user terdaftar di kursus yang memiliki kuis ini
+        $terdaftar = DB::table('peserta_kursus')
+            ->where('id_pengguna', $id_pengguna)
+            ->where('id_kursus', $kuis->id_kursus)
+            ->exists();
+
+        if (!$terdaftar) {
+            return response()->json(['message' => 'Kamu tidak terdaftar di kursus ini'], 403);
         }
 
         if ($kuis->waktu_mulai && now()->lt($kuis->waktu_mulai)) {

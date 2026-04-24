@@ -98,6 +98,24 @@ class KursusController extends Controller
     {
         $id_pengguna = $request->user()->id_pengguna;
 
+        $terdaftar = DB::table('peserta_kursus')
+            ->where('id_pengguna', $id_pengguna)
+            ->where('id_kursus', $id_kursus)
+            ->exists();
+
+        if (!$terdaftar) {
+            return response()->json(['message' => 'Kamu tidak terdaftar di kursus ini'], 403);
+        }
+
+        $materiMilikKursus = DB::table('materi')
+            ->where('id_materi', $id_materi)
+            ->where('id_kursus', $id_kursus)
+            ->exists();
+
+        if (!$materiMilikKursus) {
+            return response()->json(['message' => 'Materi tidak ditemukan di kursus ini'], 404);
+        }
+
         DB::table('progress_materi')->updateOrInsert(
             ['id_pengguna' => $id_pengguna, 'id_materi' => $id_materi],
             ['status' => 'selesai', 'waktu_update' => now()]

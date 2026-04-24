@@ -7,6 +7,7 @@ use App\Models\Kuis;
 use App\Models\AttemptKuis;
 use App\Models\JawabanKuis;
 use App\Models\Pertanyaan;
+use App\Models\Notifikasi;
 use Illuminate\Http\Request;
 
 class KuisController extends Controller
@@ -110,6 +111,10 @@ class KuisController extends Controller
                             'bobot_nilai' => $pData['bobot_nilai'],
                         ]);
                         if ($pData['tipe'] === 'pilihan_ganda' && isset($pData['pilihan'])) {
+                            $correctCount = collect($pData['pilihan'])->where('benar', true)->count();
+                            if ($correctCount !== 1) {
+                                abort(422, "Soal pilihan ganda harus memiliki tepat 1 jawaban benar.");
+                            }
                             $pertanyaan->pilihanJawaban()->delete();
                             foreach ($pData['pilihan'] as $pilihan) {
                                 $pertanyaan->pilihanJawaban()->create([
@@ -135,9 +140,16 @@ class KuisController extends Controller
     public function destroy($id)
     {
         $kuis = Kuis::findOrFail($id);
-        $kuis->pertanyaan()->each(fn($p) => $p->pilihanJawaban()->delete());
-        $kuis->pertanyaan()->delete();
+
+        foreach ($kuis->pertanyaan as $p) {
+            JawabanKuis::where('id_pertanyaan', $p->id_pertanyaan)->delete();
+            $p->pilihanJawaban()->delete();
+            $p->delete();
+        }
+
+        AttemptKuis::where('id_kuis', $id)->delete();
         $kuis->delete();
+
         return response()->json(['message' => 'Kuis berhasil dihapus.']);
     }
 
@@ -224,7 +236,7 @@ class KuisController extends Controller
             'scores.*' => 'required|integer|min:0',
         ]);
 
-        $attempt = AttemptKuis::findOrFail($attemptId);
+        $attempt = AttemptKuis::with('kuis')->findOrFail($attemptId);
 
         $totalSkor = 0;
 
@@ -244,6 +256,15 @@ class KuisController extends Controller
         // Hitung ulang total skor
         $totalSkor = JawabanKuis::where('id_attempt', $attemptId)->sum('skor');
         $attempt->update(['skor' => $totalSkor]);
+
+        Notifikasi::create([
+            'id_penerima'  => $attempt->id_pengguna,
+            'judul'        => 'Essay Kuis Anda Telah Dinilai',
+            'pesan'        => "Essay pada kuis \"{$attempt->kuis->judul_kuis}\" telah dinilai. Total skor: {$totalSkor}.",
+            'tipe'         => 'penilaian',
+            'id_referensi' => $attempt->id_attempt,
+            'dibaca'       => false,
+        ]);
 
         return response()->json(['message' => 'Penilaian essay berhasil.', 'skor_total' => $totalSkor]);
     }
@@ -295,7 +316,14 @@ class KuisController extends Controller
 
     private function savePertanyaan(Kuis $kuis, array $pertanyaanList): void
     {
-        foreach ($pertanyaanList as $pData) {
+        foreach ($pertanyaanList as $index => $pData) {
+            if ($pData['tipe'] === 'pilihan_ganda') {
+                $correctCount = collect($pData['pilihan'] ?? [])->where('benar', true)->count();
+                if ($correctCount !== 1) {
+                    abort(422, "Pertanyaan ke-" . ($index + 1) . " harus memiliki tepat 1 jawaban benar.");
+                }
+            }
+
             $pertanyaan = $kuis->pertanyaan()->create([
                 'pertanyaan'  => $pData['pertanyaan'],
                 'tipe'        => $pData['tipe'],

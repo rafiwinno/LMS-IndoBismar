@@ -46,15 +46,19 @@ Route::get('/test', fn() => response()->json(['message' => 'API working']));
 // AUTH — Guest routes
 // =============================================================================
 
-// Peserta login/register (used by student portal)
-Route::post('/register',      [UserAuthController::class, 'register']);
-Route::post('/login/peserta', [UserAuthController::class, 'loginPeserta']);
-Route::post('/login/staff',   [UserAuthController::class, 'loginStaff']);
+// Peserta login/register — throttle: maks 5 percobaan per menit per IP
+Route::middleware('throttle:5,1')->group(function () {
+    Route::post('/register',      [UserAuthController::class, 'register']);
+    Route::post('/login/peserta', [UserAuthController::class, 'loginPeserta']);
+    Route::post('/login/staff',   [UserAuthController::class, 'loginStaff']);
+});
 
-// Admin/Trainer/Superadmin login (used by admin portal via api.ts)
-Route::post('/auth/login',       [AdminAuthController::class, 'login']);
-Route::post('/auth/login-admin', [AdminAuthController::class, 'loginAdmin']);
-Route::post('/auth/register',    [AdminAuthController::class, 'register']);
+// Admin/Trainer/Superadmin login — throttle: maks 5 percobaan per menit per IP
+Route::middleware('throttle:5,1')->group(function () {
+    Route::post('/auth/login',       [AdminAuthController::class, 'login']);
+    Route::post('/auth/login-admin', [AdminAuthController::class, 'loginAdmin']);
+    Route::post('/auth/register',    [AdminAuthController::class, 'register']);
+});
 
 // =============================================================================
 // AUTHENTICATED ROUTES
@@ -69,7 +73,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // =========================================================================
     // SUPERADMIN PORTAL
     // =========================================================================
-    Route::prefix('superadmin')->group(function () {
+    Route::prefix('superadmin')->middleware('ensure.admin:1')->group(function () {
         Route::get('/dashboard',            [SuperDashboardController::class, 'index']);
         Route::get('/dashboard/login-recap',[SuperDashboardController::class, 'loginRecap']);
 
@@ -117,11 +121,15 @@ Route::middleware('auth:sanctum')->group(function () {
 
         Route::get('/profil',            [UserProfileController::class, 'show']);
         Route::put('/profil',            [UserProfileController::class, 'update']);
+
+        // Upload dokumen PKL milik sendiri
+        Route::post('/dokumen-pkl', [\App\Http\Controllers\Api\Admin\PesertaController::class, 'uploadDokumen']);
     });
 
     // =========================================================================
     // ADMIN / TRAINER / SUPERADMIN PORTAL
     // =========================================================================
+    Route::middleware('ensure.admin')->group(function () {
 
     // Dashboard
     Route::get('/dashboard', [AdminDashboardController::class, 'index']);
@@ -134,7 +142,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/peserta/{id}',       [AdminPesertaController::class, 'destroy']);
     Route::patch('/peserta/{id}/status', [AdminPesertaController::class, 'updateStatus']);
     Route::patch('/peserta/{id}/verifikasi-dokumen', [AdminPesertaController::class, 'verifikasiDokumen']);
-    Route::post('/peserta/saya/dokumen', [AdminPesertaController::class, 'uploadDokumen']);
 
     // Kursus (admin)
     Route::get('/kursus',                                     [AdminKursusController::class, 'index']);
@@ -253,4 +260,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/notifikasi/baca-semua',         [AdminNotifikasiController::class, 'markAllRead']);
     Route::patch('/notifikasi/{id}/baca',          [AdminNotifikasiController::class, 'markRead']);
 
-});
+    }); // end ensure.admin
+
+}); // end auth:sanctum

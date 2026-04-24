@@ -146,7 +146,7 @@ export const api = {
 
   // Upload dokumen oleh peserta (setelah login)
   uploadDokumen: (formData: FormData) =>
-    apiFetch('/peserta/saya/dokumen', { method: 'POST', body: formData }),
+    apiFetch('/user/dokumen-pkl', { method: 'POST', body: formData }),
 
   // Notifikasi
   getNotifikasi: () => apiFetch('/notifikasi'),

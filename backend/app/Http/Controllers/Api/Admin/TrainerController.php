@@ -29,6 +29,7 @@ class TrainerController extends Controller
     public function show($id)
     {
         $trainer = Pengguna::with(['kursus', 'jadwal.kursus'])
+            ->where('id_role', 3)
             ->findOrFail($id);
 
         return response()->json(array_merge(
@@ -73,7 +74,7 @@ class TrainerController extends Controller
 
     public function update(Request $request, $id)
     {
-        $trainer = Pengguna::findOrFail($id);
+        $trainer = Pengguna::where('id_role', 3)->findOrFail($id);
 
         $request->validate([
             'nama'     => 'sometimes|string|max:100',
@@ -91,7 +92,7 @@ class TrainerController extends Controller
 
     public function destroy($id)
     {
-        Pengguna::findOrFail($id)->delete();
+        Pengguna::where('id_role', 3)->findOrFail($id)->delete();
 
         return response()->json(['message' => 'Trainer berhasil dihapus.']);
     }
@@ -99,7 +100,7 @@ class TrainerController extends Controller
     public function updateStatus(Request $request, $id)
     {
         $request->validate(['status' => 'required|in:aktif,pending,ditolak']);
-        $trainer = Pengguna::findOrFail($id);
+        $trainer = Pengguna::where('id_role', 3)->findOrFail($id);
         $trainer->update(['status' => $request->status]);
 
         return response()->json(['message' => 'Status trainer diperbarui.', 'status' => $trainer->status]);

@@ -88,8 +88,10 @@ class TugasController extends Controller
     }
 
     // Detail satu tugas
-    public function show($id_tugas)
+    public function show(Request $request, $id_tugas)
     {
+        $id_pengguna = $request->user()->id_pengguna;
+
         $tugas = DB::table('tugas')
             ->join('kursus', 'tugas.id_kursus', '=', 'kursus.id_kursus')
             ->where('tugas.id_tugas', $id_tugas)
@@ -98,6 +100,15 @@ class TugasController extends Controller
 
         if (!$tugas) {
             return response()->json(['message' => 'Tugas tidak ditemukan'], 404);
+        }
+
+        $terdaftar = DB::table('peserta_kursus')
+            ->where('id_pengguna', $id_pengguna)
+            ->where('id_kursus', $tugas->id_kursus)
+            ->exists();
+
+        if (!$terdaftar) {
+            return response()->json(['message' => 'Kamu tidak terdaftar di kursus ini'], 403);
         }
 
         return response()->json(['data' => $tugas]);

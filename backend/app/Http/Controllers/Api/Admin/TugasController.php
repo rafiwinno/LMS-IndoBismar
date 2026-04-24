@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Tugas;
 use App\Models\PengumpulanTugas;
+use App\Models\Notifikasi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -102,7 +103,22 @@ class TugasController extends Controller
      */
     public function destroy($id)
     {
-        Tugas::findOrFail($id)->delete();
+        $tugas = Tugas::findOrFail($id);
+
+        // Hapus file submission peserta, lalu recordnya
+        foreach (PengumpulanTugas::where('id_tugas', $id)->get() as $sub) {
+            if ($sub->file_tugas) {
+                Storage::disk('public')->delete($sub->file_tugas);
+            }
+            $sub->delete();
+        }
+
+        // Hapus file tugas jika ada
+        if ($tugas->file_tugas) {
+            Storage::disk('public')->delete($tugas->file_tugas);
+        }
+
+        $tugas->delete();
 
         return response()->json(['message' => 'Tugas berhasil dihapus.']);
     }
@@ -169,15 +185,28 @@ class TugasController extends Controller
             'feedback' => 'nullable|string',
         ]);
 
-        $submission = PengumpulanTugas::findOrFail($subId);
+        $submission = PengumpulanTugas::with('tugas')->findOrFail($subId);
+        $sudahDinilai = $submission->nilai !== null;
+
         $submission->update([
             'nilai'    => $request->nilai,
             'feedback' => $request->feedback,
         ]);
 
+        if (! $sudahDinilai) {
+            Notifikasi::create([
+                'id_penerima'  => $submission->id_pengguna,
+                'judul'        => 'Tugas Anda Telah Dinilai',
+                'pesan'        => "Tugas \"{$submission->tugas->judul_tugas}\" mendapat nilai {$request->nilai}/100.",
+                'tipe'         => 'penilaian',
+                'id_referensi' => $submission->id_pengumpulan,
+                'dibaca'       => false,
+            ]);
+        }
+
         return response()->json([
             'message' => 'Penilaian berhasil disimpan.',
-            'nilai'   => $submission->nilai,
+            'nilai'   => $submission->fresh()->nilai,
         ]);
     }
 
