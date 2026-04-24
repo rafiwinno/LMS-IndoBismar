@@ -13,11 +13,6 @@ use App\Http\Controllers\Api\User\TugasController;
 use App\Http\Controllers\Api\User\NotifikasiController;
 
 
-// Test API
-Route::get('/test', function () {
-    return response()->json(['message' => 'API working']);
-});
-
 // ===== AUTH =====
 Route::post('/register',       [AuthController::class, 'register']);
 Route::post('/login/peserta',  [AuthController::class, 'loginPeserta']);
@@ -25,7 +20,6 @@ Route::post('/login/staff',    [AuthController::class, 'loginStaff']);
 Route::post('/logout',         [AuthController::class, 'logout'])->middleware('auth:sanctum');
 
 // ===== USER / PESERTA =====
-// Semua route di sini butuh id_pengguna dikirim di body/query
 Route::middleware(['auth:sanctum', 'role:4'])->prefix('user')->group(function () {
 
     // Dashboard
