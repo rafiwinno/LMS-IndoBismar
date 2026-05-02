@@ -36,6 +36,7 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
 
   const handleLogout = async () => {
     try { await api.post('/logout'); } catch {}
+    localStorage.removeItem('lms_token');
     sessionStorage.removeItem('lms_user');
     navigate('/login');
   };

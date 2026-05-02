@@ -21,7 +21,8 @@ export default function Login() {
     };
   }, []);
 
-  const handleLogin = (user: any) => {
+  const handleLogin = (user: any, token: string) => {
+    localStorage.setItem('lms_token', token);
     const idRole = user.id_role;
     saveUser({
       id:    user.id_pengguna,
@@ -151,7 +152,7 @@ function UserLoginForm({ onLogin, onSwitchAdmin, onSwitchTrainer, onSwitchRegist
     setLoading(true); setError('');
     try {
       const res = await API.post('/login/peserta', { email, password, remember });
-      onLogin(res.data.user);
+      onLogin(res.data.user, res.data.token);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Email atau password salah');
       setPassword('');
@@ -286,7 +287,7 @@ function AdminLoginForm({ onLogin, onBack }: any) {
     setLoading(true); setError('');
     try {
       const res = await API.post('/login/staff', { username, password });
-      onLogin(res.data.user);
+      onLogin(res.data.user, res.data.token);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Username atau password salah');
       setUsername(''); setPassword('');
@@ -390,7 +391,7 @@ function TrainerLoginForm({ onLogin, onBack }: any) {
     setLoading(true); setError('');
     try {
       const res = await API.post('/login/staff', { username, password });
-      onLogin(res.data.user);
+      onLogin(res.data.user, res.data.token);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Username atau password salah');
       setUsername(''); setPassword('');

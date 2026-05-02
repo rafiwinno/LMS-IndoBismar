@@ -74,6 +74,7 @@ export default function Profile() {
     setLogoutingAll(true);
     try {
       await API.post('/logout-semua');
+      localStorage.removeItem('lms_token');
       sessionStorage.removeItem('lms_user');
       window.location.href = '/login';
     } catch {

@@ -82,7 +82,8 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Login berhasil',
-            'user'    => $user
+            'user'    => $user,
+            'token'   => $token,
         ])->cookie('lms_token', $token, $menit, '/', null, false, true);
     }
 
@@ -108,7 +109,8 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Login berhasil',
-            'user'    => $user
+            'user'    => $user,
+            'token'   => $token,
         ])->cookie('lms_token', $token, 60 * 24 * 7, '/', null, false, true);
     }
 
