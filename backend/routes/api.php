@@ -58,7 +58,6 @@ Route::get('/cabang', function () {
 // =============================================================================
 
 // Peserta login/register (used by student portal)
-<<<<<<< HEAD
 Route::post('/register',      [UserAuthController::class, 'register'])->middleware('throttle:10,1');
 Route::post('/login/peserta', [UserAuthController::class, 'loginPeserta'])->middleware('throttle:5,1');
 Route::post('/login/staff',   [UserAuthController::class, 'loginStaff'])->middleware('throttle:5,1');
@@ -68,20 +67,6 @@ Route::post('/auth/login',        [AdminAuthController::class, 'login'])->middle
 Route::post('/auth/login-admin',  [AdminAuthController::class, 'loginAdmin'])->middleware('throttle:5,1');
 Route::post('/auth/verify-otp',   [AdminAuthController::class, 'verifyOtp'])->middleware('throttle:5,1');
 Route::post('/auth/register',     [AdminAuthController::class, 'register'])->middleware('throttle:10,1');
-=======
-Route::middleware('throttle:10,1')->group(function () {
-    Route::post('/register',      [UserAuthController::class, 'register']);
-    Route::post('/login/peserta', [UserAuthController::class, 'loginPeserta']);
-    Route::post('/login/staff',   [UserAuthController::class, 'loginStaff']);
-});
-
-// Admin/Trainer/Superadmin login (used by admin portal via api.ts)
-Route::middleware('throttle:5,1')->group(function () {
-    Route::post('/auth/login',       [AdminAuthController::class, 'login']);
-    Route::post('/auth/login-admin', [AdminAuthController::class, 'loginAdmin']);
-    Route::post('/auth/register',    [AdminAuthController::class, 'register']);
-});
->>>>>>> super-admin
 
 // =============================================================================
 // AUTHENTICATED ROUTES
@@ -89,11 +74,11 @@ Route::middleware('throttle:5,1')->group(function () {
 Route::middleware('auth:sanctum')->group(function () {
 
     // ── Shared auth ──────────────────────────────────────────────────────────
-<<<<<<< HEAD
-    Route::post('/logout',        [UserAuthController::class, 'logout']);
-    Route::post('/auth/logout',   [AdminAuthController::class, 'logout']);
-    Route::get('/auth/me',        [AdminAuthController::class, 'me']);
-    Route::post('/auth/refresh',  [AdminAuthController::class, 'refresh'])->middleware('throttle:10,1');
+    Route::post('/logout',            [UserAuthController::class, 'logout']);
+    Route::post('/auth/logout',       [AdminAuthController::class, 'logout']);
+    Route::post('/auth/logout-all',   [AdminAuthController::class, 'logoutAll']);
+    Route::get('/auth/me',            [AdminAuthController::class, 'me']);
+    Route::post('/auth/refresh',      [AdminAuthController::class, 'refresh'])->middleware('throttle:10,1');
 
     // ── Download dokumen PKL secara aman (private storage) ───────────────────
     Route::get('/dokumen/secure/{path}', [AdminSecureDocumentController::class, 'download'])
@@ -103,21 +88,11 @@ Route::middleware('auth:sanctum')->group(function () {
     // ── Upload dokumen PKL oleh peserta (role 4) — harus di luar admin:1,2 ──
     Route::post('/peserta/saya/dokumen', [AdminPesertaController::class, 'uploadDokumen'])
         ->middleware('throttle:10,1');
-=======
-    Route::post('/logout',            [UserAuthController::class, 'logout']);
-    Route::post('/auth/logout',       [AdminAuthController::class, 'logout']);
-    Route::post('/auth/logout-all',   [AdminAuthController::class, 'logoutAll']);
-    Route::post('/auth/refresh',      [AdminAuthController::class, 'refresh']);
-    Route::get('/auth/me',            [AdminAuthController::class, 'me']);
->>>>>>> super-admin
 
     // =========================================================================
     // SUPERADMIN PORTAL
     // =========================================================================
-<<<<<<< HEAD
     Route::prefix('superadmin')->middleware('admin:1')->group(function () {
-=======
->>>>>>> super-admin
         Route::get('/dashboard',            [SuperDashboardController::class, 'index']);
         Route::get('/dashboard/login-recap',[SuperDashboardController::class, 'loginRecap']);
 
@@ -307,4 +282,3 @@ Route::middleware('auth:sanctum')->group(function () {
     }); // end admin:3
 
 });
-
