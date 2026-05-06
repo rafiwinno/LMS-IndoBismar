@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Search, FileText, File, Trash2, X, Youtube, ExternalLink, ChevronLeft } from 'lucide-react';
 import { api } from '../../lib/api';
 import { confirm } from '../../lib/confirm';
+import { sanitizeUrl } from '../../lib/sanitize';
 
 interface Materi {
   id_materi: number; judul_materi: string; tipe_materi: string;
@@ -202,7 +203,7 @@ export function Materials() {
               </div>
               <div className="flex items-center gap-2 flex-shrink-0 ml-4">
                 {viewer.file_materi && (
-                  <a href={viewer.file_materi} target="_blank" rel="noopener noreferrer"
+                  <a href={sanitizeUrl(viewer.file_materi)} target="_blank" rel="noopener noreferrer"
                     className="flex items-center gap-1.5 px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-600 transition-colors">
                     <ExternalLink className="w-4 h-4" />
                     {viewer.tipe_materi === 'video' ? 'Buka YouTube' : viewer.tipe_materi === 'link_drive' ? 'Buka Drive' : 'Download'}
@@ -235,7 +236,7 @@ export function Materials() {
                 <div className="flex flex-col items-center justify-center h-full gap-4 text-gray-500">
                   <File className="w-16 h-16 text-gray-300" />
                   <p className="text-sm text-gray-500">Preview PPT tidak tersedia.</p>
-                  <a href={viewer.file_materi} target="_blank" rel="noopener noreferrer"
+                  <a href={sanitizeUrl(viewer.file_materi)} target="_blank" rel="noopener noreferrer"
                     className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 transition-colors">
                     <ExternalLink className="w-4 h-4" /> Download PPT
                   </a>

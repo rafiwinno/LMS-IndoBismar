@@ -92,6 +92,16 @@ class KursusController extends Controller
         $cabangId = $request->user()->id_cabang;
         $kursus   = Kursus::where('id_cabang', $cabangId)->findOrFail($id);
 
+        // Concurrency control: tolak jika data sudah diubah orang lain
+        if ($request->has('current_updated_at') && $kursus->updated_at) {
+            $clientTs = $request->input('current_updated_at');
+            if ($kursus->updated_at->toIso8601String() !== $clientTs) {
+                return response()->json([
+                    'message' => 'Data telah diubah oleh pengguna lain. Silakan refresh halaman dan coba lagi.',
+                ], 409);
+            }
+        }
+
         $request->validate([
             'judul_kursus' => 'sometimes|string|max:200',
             'deskripsi'    => 'nullable|string',
@@ -117,30 +127,23 @@ class KursusController extends Controller
 
     public function destroy(Request $request, $id)
     {
-        $kursus = Kursus::with(['materi', 'tugas.pengumpulan', 'kuis.pertanyaan.pilihanJawaban', 'kuis.attemptKuis.jawabanKuis', 'pesertaKursus'])
-            ->where('id_cabang', $request->user()->id_cabang)
+        $kursus = Kursus::where('id_cabang', $request->user()->id_cabang)
             ->findOrFail($id);
 
-        foreach ($kursus->kuis as $kuis) {
-            foreach ($kuis->attemptKuis as $attempt) {
-                $attempt->jawabanKuis()->delete();
+        // Soft delete — materi, tugas, kuis tetap tersimpan untuk audit
+        // File fisik materi dihapus dari storage
+        foreach ($kursus->materi as $materi) {
+            if ($materi->file_materi && !str_starts_with($materi->file_materi, 'http')) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($materi->file_materi);
             }
-            $kuis->attemptKuis()->delete();
-            foreach ($kuis->pertanyaan as $pertanyaan) {
-                $pertanyaan->pilihanJawaban()->delete();
-            }
-            $kuis->pertanyaan()->delete();
         }
-        $kursus->kuis()->delete();
 
-        foreach ($kursus->tugas as $tugas) {
-            $tugas->pengumpulan()->delete();
-        }
-        $kursus->tugas()->delete();
-
-        $kursus->materi()->delete();
-        $kursus->pesertaKursus()->delete();
         $kursus->delete();
+
+        \App\Models\AuditLog::log(
+            $request->user()->id_pengguna, 'delete', 'kursus', $id,
+            [], ['judul' => $kursus->judul_kursus], $request->ip()
+        );
 
         return response()->json(['message' => 'Kursus berhasil dihapus.']);
     }

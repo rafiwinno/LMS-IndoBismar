@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\Admin;
 
+use App\Helpers\FileValidator;
 use App\Http\Controllers\Controller;
 use App\Models\Materi;
 use App\Models\ProgressMateri;
@@ -11,6 +12,10 @@ use Illuminate\Support\Facades\Validator;
 
 class MateriController extends Controller
 {
+    // Tipe file yang diizinkan: ZIP dihapus (potensi malicious archive)
+    private const ALLOWED_EXTENSIONS = ['pdf', 'ppt', 'pptx', 'doc', 'docx', 'xls', 'xlsx'];
+    private const ALLOWED_MIMES_RULE  = 'pdf,ppt,pptx,doc,docx,xls,xlsx';
+
     public function index(Request $request)
     {
         $kursusIds = \App\Models\Kursus::where('id_cabang', $request->user()->id_cabang)->pluck('id_kursus');
@@ -53,7 +58,7 @@ class MateriController extends Controller
             ],
             'judul_materi' => 'required|string|max:255',
             'tipe_materi'  => 'required|in:pdf,video,ppt,link_drive,dokumen',
-            'file_materi'  => 'nullable|file|max:5120|mimes:pdf,ppt,pptx,doc,docx,xls,xlsx,zip',
+            'file_materi'  => 'nullable|file|max:5120|mimes:' . self::ALLOWED_MIMES_RULE,
             'youtube_url'  => 'nullable|url',
             'drive_url'    => 'nullable|url',
             'urutan'       => 'nullable|integer',
@@ -67,6 +72,16 @@ class MateriController extends Controller
             ], 422);
         }
 
+        // Validasi MIME nyata (bukan hanya ekstensi)
+        if ($request->hasFile('file_materi')) {
+            if (! FileValidator::validate($request->file('file_materi'), self::ALLOWED_EXTENSIONS)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tipe file tidak valid. Hanya PDF, PPT, DOC, XLS yang diperbolehkan.',
+                ], 422);
+            }
+        }
+
         $data = [
             'id_kursus'    => $request->id_kursus,
             'judul_materi' => $request->judul_materi,
@@ -75,8 +90,8 @@ class MateriController extends Controller
         ];
 
         if ($request->hasFile('file_materi')) {
-            $file     = $request->file('file_materi');
-            $path     = $file->store('materi', 'public');
+            $file                = $request->file('file_materi');
+            $path                = $file->store('materi', 'public');
             $data['file_materi'] = $path;
             $data['ukuran']      = $this->formatBytes($file->getSize());
         }
@@ -120,7 +135,7 @@ class MateriController extends Controller
     {
         $cabangId  = $request->user()->id_cabang;
         $kursusIds = \App\Models\Kursus::where('id_cabang', $cabangId)->pluck('id_kursus');
-        $materi = Materi::whereIn('id_kursus', $kursusIds)->find($id);
+        $materi    = Materi::whereIn('id_kursus', $kursusIds)->find($id);
 
         if (!$materi) {
             return response()->json([
@@ -132,7 +147,7 @@ class MateriController extends Controller
         $validator = Validator::make($request->all(), [
             'judul_materi' => 'sometimes|string|max:255',
             'tipe_materi'  => 'sometimes|in:pdf,video,ppt,link_drive,dokumen',
-            'file_materi'  => 'nullable|file|max:5120|mimes:pdf,ppt,pptx,doc,docx,xls,xlsx,zip',
+            'file_materi'  => 'nullable|file|max:5120|mimes:' . self::ALLOWED_MIMES_RULE,
             'youtube_url'  => 'nullable|url',
             'drive_url'    => 'nullable|url',
             'urutan'       => 'nullable|integer',
@@ -146,25 +161,26 @@ class MateriController extends Controller
             ], 422);
         }
 
-        if ($request->has('judul_materi')) {
-            $materi->judul_materi = $request->judul_materi;
+        // Validasi MIME nyata untuk file baru
+        if ($request->hasFile('file_materi')) {
+            if (! FileValidator::validate($request->file('file_materi'), self::ALLOWED_EXTENSIONS)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tipe file tidak valid. Hanya PDF, PPT, DOC, XLS yang diperbolehkan.',
+                ], 422);
+            }
         }
 
-        if ($request->has('tipe_materi')) {
-            $materi->tipe_materi = $request->tipe_materi;
-        }
-
-        if ($request->has('urutan')) {
-            $materi->urutan = $request->urutan;
-        }
+        if ($request->has('judul_materi')) $materi->judul_materi = $request->judul_materi;
+        if ($request->has('tipe_materi'))  $materi->tipe_materi  = $request->tipe_materi;
+        if ($request->has('urutan'))       $materi->urutan       = $request->urutan;
 
         if ($request->hasFile('file_materi')) {
-            // Hapus file lama jika ada
             if ($materi->file_materi && !str_starts_with($materi->file_materi, 'http')) {
                 Storage::disk('public')->delete($materi->file_materi);
             }
-            $file = $request->file('file_materi');
-            $path = $file->store('materi', 'public');
+            $file                = $request->file('file_materi');
+            $path                = $file->store('materi', 'public');
             $materi->file_materi = $path;
             $materi->ukuran      = $this->formatBytes($file->getSize());
         }
@@ -198,7 +214,6 @@ class MateriController extends Controller
             ], 404);
         }
 
-        // Hapus file fisik jika bukan URL eksternal
         if ($materi->file_materi && !str_starts_with($materi->file_materi, 'http')) {
             Storage::disk('public')->delete($materi->file_materi);
         }

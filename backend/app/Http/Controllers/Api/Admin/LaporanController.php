@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Pengguna;
 use App\Models\Kursus;
-use App\Models\PesertaKursus;
 use App\Models\PengumpulanTugas;
+use App\Models\Pengguna;
+use App\Models\PesertaKursus;
 use App\Models\AttemptKuis;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -15,7 +15,7 @@ class LaporanController extends Controller
 {
     /**
      * GET /api/laporan/dashboard
-     * Data chart untuk halaman Reports
+     * Data chart untuk halaman Reports (12 bulan terakhir)
      */
     public function dashboard(Request $request)
     {
@@ -54,32 +54,43 @@ class LaporanController extends Controller
 
     /**
      * GET /api/laporan/peserta
+     * Laporan peserta dengan pagination (bukan limit hardcode)
      */
     public function peserta(Request $request)
     {
         $cabangId = $request->user()->id_cabang;
+        $perPage  = min((int) ($request->per_page ?? 100), 500);
 
-        $data = Pengguna::with(['cabang', 'dataPkl', 'pesertaKursus'])
+        $paginated = Pengguna::with(['cabang', 'dataPkl', 'pesertaKursus'])
             ->where('id_role', 4)
             ->where('id_cabang', $cabangId)
-            ->limit(500)
-            ->get()
-            ->map(function ($p) {
-                $kursus  = $p->pesertaKursus->count();
-                $selesai = $p->pesertaKursus->where('status', 'selesai')->count();
-                return [
-                    'nama'             => $p->nama,
-                    'email'            => $p->email,
-                    'asal_sekolah'     => $p->dataPkl->asal_sekolah ?? '-',
-                    'cabang'           => $p->cabang->nama_cabang ?? '-',
-                    'enrolled_courses' => $kursus,
-                    'completed'        => $selesai,
-                    'progress'         => $kursus > 0 ? round(($selesai / $kursus) * 100) : 0,
-                    'status'           => $p->status,
-                ];
-            });
+            ->orderBy('dibuat_pada', 'desc')
+            ->paginate($perPage);
 
-        return response()->json(['data' => $data]);
+        $data = $paginated->map(function ($p) {
+            $kursus  = $p->pesertaKursus->count();
+            $selesai = $p->pesertaKursus->where('status', 'selesai')->count();
+            return [
+                'nama'             => $p->nama,
+                'email'            => $p->email,
+                'asal_sekolah'     => $p->dataPkl->asal_sekolah ?? '-',
+                'cabang'           => $p->cabang->nama_cabang ?? '-',
+                'enrolled_courses' => $kursus,
+                'completed'        => $selesai,
+                'progress'         => $kursus > 0 ? round(($selesai / $kursus) * 100) : 0,
+                'status'           => $p->status,
+            ];
+        });
+
+        return response()->json([
+            'data' => $data,
+            'meta' => [
+                'total'        => $paginated->total(),
+                'per_page'     => $paginated->perPage(),
+                'current_page' => $paginated->currentPage(),
+                'last_page'    => $paginated->lastPage(),
+            ],
+        ]);
     }
 
     /**
@@ -88,25 +99,35 @@ class LaporanController extends Controller
     public function kursus(Request $request)
     {
         $cabangId = $request->user()->id_cabang;
+        $perPage  = min((int) ($request->per_page ?? 100), 500);
 
-        $data = Kursus::with(['trainer', 'pesertaKursus'])
+        $paginated = Kursus::with(['trainer', 'pesertaKursus'])
             ->where('id_cabang', $cabangId)
-            ->limit(500)
-            ->get()
-            ->map(function ($k) {
-                $total   = $k->pesertaKursus->count();
-                $selesai = $k->pesertaKursus->where('status', 'selesai')->count();
-                return [
-                    'judul'           => $k->judul_kursus,
-                    'trainer'         => $k->trainer->nama ?? '-',
-                    'status'          => $k->status,
-                    'total'           => $total,
-                    'completed'       => $selesai,
-                    'completion_rate' => $total > 0 ? round(($selesai / $total) * 100) : 0,
-                ];
-            });
+            ->orderBy('dibuat_pada', 'desc')
+            ->paginate($perPage);
 
-        return response()->json(['data' => $data]);
+        $data = $paginated->map(function ($k) {
+            $total   = $k->pesertaKursus->count();
+            $selesai = $k->pesertaKursus->where('status', 'selesai')->count();
+            return [
+                'judul'           => $k->judul_kursus,
+                'trainer'         => $k->trainer->nama ?? '-',
+                'status'          => $k->status,
+                'total'           => $total,
+                'completed'       => $selesai,
+                'completion_rate' => $total > 0 ? round(($selesai / $total) * 100) : 0,
+            ];
+        });
+
+        return response()->json([
+            'data' => $data,
+            'meta' => [
+                'total'        => $paginated->total(),
+                'per_page'     => $paginated->perPage(),
+                'current_page' => $paginated->currentPage(),
+                'last_page'    => $paginated->lastPage(),
+            ],
+        ]);
     }
 
     /**
@@ -154,7 +175,7 @@ class LaporanController extends Controller
             ->where('id_cabang', $cabangId)
             ->get()
             ->map(function ($t) {
-                $kursus = $t->kursus;
+                $kursus       = $t->kursus;
                 $totalPeserta = $kursus->sum(fn($k) => $k->pesertaKursus->count());
                 return [
                     'nama'          => $t->nama,

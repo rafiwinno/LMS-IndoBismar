@@ -55,11 +55,18 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}) {
 }
 
 export const api = {
+  // Public
+  getCabang: () => fetch(`${API_BASE}/cabang`, { headers: { Accept: 'application/json' } }).then(r => r.json()),
+
   // Auth
   login: (email: string, password: string) =>
     apiFetch('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
   loginAdmin: (username: string, password: string) =>
     apiFetch('/auth/login-admin', { method: 'POST', body: JSON.stringify({ username, password }) }),
+  verifyAdminOtp: (username: string, code: string) =>
+    apiFetch('/auth/verify-otp', { method: 'POST', body: JSON.stringify({ username, code }) }),
+  refreshToken: () =>
+    apiFetch('/auth/refresh', { method: 'POST' }),
   register: (data: any) =>
     apiFetch('/auth/register', { method: 'POST', body: JSON.stringify(data) }),
   logout: () =>

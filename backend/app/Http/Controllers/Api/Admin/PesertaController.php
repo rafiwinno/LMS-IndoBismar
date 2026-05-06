@@ -2,15 +2,17 @@
 
 namespace App\Http\Controllers\Api\Admin;
 
+use App\Helpers\FileValidator;
 use App\Http\Controllers\Controller;
-use App\Models\Pengguna;
+use App\Models\AuditLog;
 use App\Models\Notifikasi;
+use App\Models\Pengguna;
 use App\Models\ProgressMateri;
 use App\Models\AttemptKuis;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 class PesertaController extends Controller
 {
@@ -53,18 +55,25 @@ class PesertaController extends Controller
     {
         $request->validate([
             'nama'            => 'required|string|max:100',
-            'username'        => 'required|string|max:100|unique:pengguna,username',
-            'email'           => 'required|email|unique:pengguna,email',
-            'password'        => 'required|string|min:8',
+            'username'        => [
+                'required', 'string', 'max:100',
+                Rule::unique('pengguna', 'username')->whereNull('deleted_at'),
+            ],
+            'email'           => [
+                'required', 'email',
+                Rule::unique('pengguna', 'email')->whereNull('deleted_at'),
+            ],
+            'password'        => ['required', 'string', 'min:8', 'regex:/^(?=.*[A-Z])(?=.*\d).+$/'],
             'nomor_hp'        => 'nullable|string|max:20',
             'asal_sekolah'    => 'nullable|string|max:150',
             'jurusan'         => 'nullable|string|max:100',
             'periode_mulai'   => 'nullable|date',
             'periode_selesai' => 'nullable|date|after_or_equal:periode_mulai',
             'status'          => 'nullable|in:pending,aktif,ditolak',
+        ], [
+            'password.regex' => 'Password harus mengandung minimal 1 huruf besar dan 1 angka.',
         ]);
 
-        // Peserta selalu dibuat di cabang admin yang membuat
         $pengguna = Pengguna::create([
             'id_role'   => 4,
             'id_cabang' => $request->user()->id_cabang,
@@ -82,6 +91,13 @@ class PesertaController extends Controller
             'periode_mulai'   => $request->periode_mulai,
             'periode_selesai' => $request->periode_selesai,
         ]);
+
+        AuditLog::log(
+            $request->user()->id_pengguna, 'create', 'peserta',
+            $pengguna->id_pengguna,
+            ['nama' => $pengguna->nama, 'email' => $pengguna->email],
+            [], $request->ip()
+        );
 
         return response()->json([
             'message' => 'Peserta berhasil ditambahkan.',
@@ -113,23 +129,32 @@ class PesertaController extends Controller
 
     public function update(Request $request, $id)
     {
-        // Verifikasi peserta milik cabang admin ini
         $peserta = Pengguna::where('id_cabang', $request->user()->id_cabang)
             ->where('id_role', 4)
             ->findOrFail($id);
 
         $request->validate([
             'nama'            => 'sometimes|string|max:100',
-            'email'           => "sometimes|email|unique:pengguna,email,$id,id_pengguna",
-            'username'        => "sometimes|string|unique:pengguna,username,$id,id_pengguna",
+            'email'           => [
+                'sometimes', 'email',
+                Rule::unique('pengguna', 'email')->ignore($id, 'id_pengguna')->whereNull('deleted_at'),
+            ],
+            'username'        => [
+                'sometimes', 'string',
+                Rule::unique('pengguna', 'username')->ignore($id, 'id_pengguna')->whereNull('deleted_at'),
+            ],
             'nomor_hp'        => 'nullable|string|max:20',
-            'password'        => 'nullable|string|min:8',
+            'password'        => ['nullable', 'string', 'min:8', 'regex:/^(?=.*[A-Z])(?=.*\d).+$/'],
             'status'          => 'nullable|in:pending,aktif,ditolak',
             'asal_sekolah'    => 'nullable|string|max:150',
             'jurusan'         => 'nullable|string|max:100',
             'periode_mulai'   => 'nullable|date',
             'periode_selesai' => 'nullable|date',
+        ], [
+            'password.regex' => 'Password harus mengandung minimal 1 huruf besar dan 1 angka.',
         ]);
+
+        $oldValues = $peserta->only(['nama', 'email', 'status']);
 
         $payload = [];
         if ($request->has('nama'))     $payload['nama']     = $request->nama;
@@ -143,7 +168,11 @@ class PesertaController extends Controller
 
         $peserta->update($payload);
 
-        // Update data PKL
+        // Invalidate semua token aktif jika password diganti
+        if ($request->filled('password')) {
+            $peserta->tokens()->delete();
+        }
+
         $pklPayload = [];
         if ($request->has('asal_sekolah'))    $pklPayload['asal_sekolah']    = $request->asal_sekolah;
         if ($request->has('jurusan'))         $pklPayload['jurusan']         = $request->jurusan;
@@ -157,6 +186,11 @@ class PesertaController extends Controller
             );
         }
 
+        AuditLog::log(
+            $request->user()->id_pengguna, 'update', 'peserta', $id,
+            array_diff_assoc($payload, $oldValues), $oldValues, $request->ip()
+        );
+
         return response()->json([
             'message' => 'Data peserta berhasil diperbarui.',
             'data'    => $this->formatPeserta($peserta->fresh()->load('role', 'cabang', 'dataPkl', 'pesertaKursus')),
@@ -169,21 +203,25 @@ class PesertaController extends Controller
             ->where('id_role', 4)
             ->findOrFail($id);
 
-        DB::transaction(function () use ($id, $peserta) {
-            DB::table('jawaban_kuis')
-                ->whereIn('id_attempt', DB::table('attempt_kuis')->where('id_pengguna', $id)->pluck('id_attempt'))
-                ->delete();
-            DB::table('progress_materi')->where('id_pengguna', $id)->delete();
-            DB::table('pengumpulan_tugas')->where('id_pengguna', $id)->delete();
-            DB::table('attempt_kuis')->where('id_pengguna', $id)->delete();
-            DB::table('peserta_kursus')->where('id_pengguna', $id)->delete();
-            DB::table('penilaian_pkl')->where('id_pengguna', $id)->delete();
-            DB::table('nilai_non_teknis')->where('id_pengguna', $id)->delete();
-            DB::table('dokumen_verifikasi')->where('id_pengguna', $id)->delete();
-            DB::table('data_peserta_pkl')->where('id_pengguna', $id)->delete();
-            DB::table('notifikasi')->where('id_referensi', $id)->delete();
-            $peserta->delete();
-        });
+        // Hapus file fisik dokumen PKL dari private storage
+        $dataPkl = $peserta->dataPkl;
+        if ($dataPkl) {
+            if ($dataPkl->surat_siswa && !str_starts_with($dataPkl->surat_siswa, 'http')) {
+                Storage::disk('local')->delete($dataPkl->surat_siswa);
+            }
+            if ($dataPkl->surat_ortu && !str_starts_with($dataPkl->surat_ortu, 'http')) {
+                Storage::disk('local')->delete($dataPkl->surat_ortu);
+            }
+        }
+
+        // Soft delete — data terkait (nilai, progress, kuis) dipertahankan untuk audit
+        $peserta->delete();
+
+        AuditLog::log(
+            $request->user()->id_pengguna, 'delete', 'peserta', $id,
+            [], ['nama' => $peserta->nama, 'email' => $peserta->email],
+            $request->ip()
+        );
 
         return response()->json(['message' => 'Peserta berhasil dihapus.']);
     }
@@ -197,7 +235,14 @@ class PesertaController extends Controller
         $peserta = Pengguna::where('id_cabang', $request->user()->id_cabang)
             ->where('id_role', 4)
             ->findOrFail($id);
+
+        $oldStatus = $peserta->status;
         $peserta->update(['status' => $request->status]);
+
+        AuditLog::log(
+            $request->user()->id_pengguna, 'update_status', 'peserta', $id,
+            ['status' => $request->status], ['status' => $oldStatus], $request->ip()
+        );
 
         return response()->json([
             'message' => 'Status peserta berhasil diperbarui.',
@@ -207,7 +252,6 @@ class PesertaController extends Controller
 
     /**
      * PATCH /api/peserta/{id}/verifikasi-dokumen
-     * Admin cabang menyetujui atau menolak dokumen peserta
      */
     public function verifikasiDokumen(Request $request, $id)
     {
@@ -220,38 +264,24 @@ class PesertaController extends Controller
             ->where('id_cabang', $request->user()->id_cabang)
             ->findOrFail($id);
 
-        $dokumen = DB::table('dokumen_verifikasi')->where('id_pengguna', $id)->first();
-        if (! $dokumen && ! $peserta->dataPkl) {
+        if (! $peserta->dataPkl) {
             return response()->json(['message' => 'Data dokumen tidak ditemukan.'], 404);
         }
 
-        $admin      = $request->user();
-        $disetujui  = $request->aksi === 'setujui';
-        $statusDok  = $disetujui ? 'disetujui' : 'ditolak';
-        $statusUser = $disetujui ? 'aktif' : 'pending';
+        $admin     = $request->user();
+        $disetujui = $request->aksi === 'setujui';
+        $statusDok = $disetujui ? 'disetujui' : 'ditolak';
+        $statusUser= $disetujui ? 'aktif' : 'pending';
 
-        // Update status di dokumen_verifikasi
-        if ($dokumen) {
-            DB::table('dokumen_verifikasi')->where('id_pengguna', $id)->update([
-                'status'              => $statusDok,
-                'diverifikasi_oleh'   => $admin->id_pengguna,
-                'tanggal_verifikasi'  => now(),
-            ]);
-        }
-
-        // Simpan catatan di data_peserta_pkl jika ada
-        if ($peserta->dataPkl) {
-            $peserta->dataPkl->update([
-                'status_dokumen'  => $statusDok,
-                'catatan_dokumen' => $request->catatan,
-                'diperiksa_oleh'  => $admin->id_pengguna,
-                'diperiksa_pada'  => now(),
-            ]);
-        }
+        $peserta->dataPkl->update([
+            'status_dokumen'  => $statusDok,
+            'catatan_dokumen' => $request->catatan,
+            'diperiksa_oleh'  => $admin->id_pengguna,
+            'diperiksa_pada'  => now(),
+        ]);
 
         $peserta->update(['status' => $statusUser]);
 
-        // Kirim notifikasi ke peserta (opsional — jika peserta punya akun aktif)
         $judulNotif = $disetujui ? 'Dokumen Disetujui' : 'Dokumen Ditolak';
         $pesanNotif = $disetujui
             ? 'Dokumen Anda telah diverifikasi. Akun Anda sekarang aktif.'
@@ -265,6 +295,14 @@ class PesertaController extends Controller
             'id_referensi' => $peserta->id_pengguna,
         ]);
 
+        AuditLog::log(
+            $admin->id_pengguna,
+            $disetujui ? 'verify_approve' : 'verify_reject',
+            'dokumen_peserta', $id,
+            ['aksi' => $request->aksi, 'catatan' => $request->catatan],
+            [], $request->ip()
+        );
+
         return response()->json([
             'message'        => $disetujui ? 'Dokumen disetujui, akun peserta diaktifkan.' : 'Dokumen ditolak.',
             'status_user'    => $statusUser,
@@ -274,14 +312,26 @@ class PesertaController extends Controller
 
     /**
      * POST /api/peserta/saya/dokumen
-     * Peserta yang sudah login mengupload dokumen surat-surat PKL
+     * Peserta upload dokumen PKL ke private storage (tidak bisa diakses publik)
      */
     public function uploadDokumen(Request $request)
     {
+        if ($request->user()->id_role !== 4) {
+            return response()->json(['message' => 'Hanya peserta yang dapat mengupload dokumen ini.'], 403);
+        }
+
         $request->validate([
             'surat_siswa' => 'required|file|mimes:pdf|max:5120',
             'surat_ortu'  => 'required|file|mimes:pdf|max:5120',
         ]);
+
+        // Validasi MIME nyata menggunakan magic bytes (bukan hanya ekstensi)
+        if (! FileValidator::isPdf($request->file('surat_siswa'))) {
+            return response()->json(['message' => 'File surat siswa bukan PDF yang valid.'], 422);
+        }
+        if (! FileValidator::isPdf($request->file('surat_ortu'))) {
+            return response()->json(['message' => 'File surat orang tua bukan PDF yang valid.'], 422);
+        }
 
         $pengguna = $request->user();
         $dataPkl  = $pengguna->dataPkl;
@@ -290,18 +340,19 @@ class PesertaController extends Controller
             return response()->json(['message' => 'Data peserta tidak ditemukan.'], 404);
         }
 
-        // Hapus file lama jika ada
-        if ($dataPkl->surat_siswa) {
-            Storage::disk('public')->delete($dataPkl->surat_siswa);
+        // Hapus file lama dari private storage
+        if ($dataPkl->surat_siswa && !str_starts_with($dataPkl->surat_siswa, 'http')) {
+            Storage::disk('local')->delete($dataPkl->surat_siswa);
         }
-        if ($dataPkl->surat_ortu) {
-            Storage::disk('public')->delete($dataPkl->surat_ortu);
+        if ($dataPkl->surat_ortu && !str_starts_with($dataPkl->surat_ortu, 'http')) {
+            Storage::disk('local')->delete($dataPkl->surat_ortu);
         }
 
+        // Simpan ke private storage (tidak accessible via URL langsung)
         $suratSiswaPath = $request->file('surat_siswa')
-            ->store("surat/{$pengguna->id_pengguna}", 'public');
+            ->store("dokumen/{$pengguna->id_pengguna}", 'local');
         $suratOrtuPath  = $request->file('surat_ortu')
-            ->store("surat/{$pengguna->id_pengguna}", 'public');
+            ->store("dokumen/{$pengguna->id_pengguna}", 'local');
 
         $dataPkl->update([
             'surat_siswa'     => $suratSiswaPath,
@@ -310,7 +361,7 @@ class PesertaController extends Controller
             'catatan_dokumen' => null,
         ]);
 
-        // Notifikasi 2: Dokumen menunggu verifikasi → ke admin cabang
+        // Notifikasi ke admin cabang
         $adminCabang = Pengguna::where('id_cabang', $pengguna->id_cabang)
             ->whereIn('id_role', [1, 2])
             ->where('status', 'aktif')
@@ -320,7 +371,7 @@ class PesertaController extends Controller
             Notifikasi::create([
                 'id_penerima'  => $admin->id_pengguna,
                 'judul'        => 'Dokumen Menunggu Verifikasi',
-                'pesan'        => "Peserta \"{$pengguna->nama}\" telah mengupload dokumen PKL dan menunggu verifikasi.",
+                'pesan'        => 'Peserta "' . e($pengguna->nama) . '" telah mengupload dokumen PKL dan menunggu verifikasi.',
                 'tipe'         => 'dokumen_menunggu',
                 'id_referensi' => $pengguna->id_pengguna,
             ]);
@@ -340,15 +391,8 @@ class PesertaController extends Controller
         $selesai     = $p->pesertaKursus->where('status', 'selesai')->count();
         $progress    = $kursusCount > 0 ? round(($selesai / $kursusCount) * 100) : 0;
 
-        // Baca dokumen dari dokumen_verifikasi (diupload peserta via portal)
-        $dokumen = DB::table('dokumen_verifikasi')
-            ->where('id_pengguna', $p->id_pengguna)
-            ->first();
-
-        $suratSiswa = $dokumen?->surat_siswa     ?? null;
-        $suratOrtu  = $dokumen?->surat_orang_tua ?? null;
-        $statusDok  = $dokumen?->status          ?? ($p->dataPkl?->status_dokumen ?? null);
-        $catatan    = $p->dataPkl?->catatan_dokumen ?? null;
+        $siswaPath = $p->dataPkl?->surat_siswa ?? null;
+        $ortuPath  = $p->dataPkl?->surat_ortu  ?? null;
 
         return [
             'id'               => $p->id_pengguna,
@@ -362,10 +406,10 @@ class PesertaController extends Controller
             'status'           => $p->status,
             'cabang'           => $p->cabang?->nama_cabang ?? null,
             'join_date'        => $p->dibuat_pada,
-            'status_dokumen'   => $statusDok,
-            'catatan_dokumen'  => $catatan,
-            'surat_siswa_url'  => $suratSiswa ? Storage::disk('public')->url($suratSiswa) : null,
-            'surat_ortu_url'   => $suratOrtu  ? Storage::disk('public')->url($suratOrtu)  : null,
+            'status_dokumen'   => $p->dataPkl?->status_dokumen  ?? null,
+            'catatan_dokumen'  => $p->dataPkl?->catatan_dokumen ?? null,
+            'surat_siswa_url'  => $siswaPath ? url('/api/dokumen/secure/' . urlencode($siswaPath)) : null,
+            'surat_ortu_url'   => $ortuPath  ? url('/api/dokumen/secure/' . urlencode($ortuPath))  : null,
         ];
     }
 
@@ -377,17 +421,14 @@ class PesertaController extends Controller
 
             $totalMateri   = $kursus->materi->count();
             $selesaiMateri = $kursus->materi->filter(fn($m) => in_array($m->id_materi, $progressMateri))->count();
+            $totalKuis     = $kursus->kuis->count();
+            $selesaiKuis   = $kursus->kuis->filter(fn($k) => in_array($k->id_kuis, $completedKuis))->count();
 
-            $totalKuis   = $kursus->kuis->count();
-            $selesaiKuis = $kursus->kuis->filter(fn($k) => in_array($k->id_kuis, $completedKuis))->count();
-
-            // Selesai = semua materi dibuka DAN semua kuis dikerjakan (minimal ada 1 konten)
             $adaKonten = ($totalMateri + $totalKuis) > 0;
             $isSelesai = $adaKonten
                 && ($totalMateri === 0 || $selesaiMateri === $totalMateri)
                 && ($totalKuis   === 0 || $selesaiKuis   === $totalKuis);
 
-            // Auto-sync peserta_kursus.status
             $adaProgress = ($selesaiMateri + $selesaiKuis) > 0;
             $statusBaru  = $isSelesai ? 'selesai' : ($adaProgress ? 'sedang_belajar' : 'belum_mulai');
             if ($pk->status !== $statusBaru) {

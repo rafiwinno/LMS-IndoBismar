@@ -3,11 +3,14 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Pengguna;
-use App\Models\Notifikasi;
 use App\Models\LoginLog;
+use App\Models\Notifikasi;
+use App\Models\OtpCode;
+use App\Models\Pengguna;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
@@ -36,7 +39,8 @@ class AuthController extends Controller
             ], 403);
         }
 
-        $token = $pengguna->createToken('lms-token', ['*'], now()->addHours(8))->plainTextToken;
+        // Token peserta: 2 jam
+        $token = $pengguna->createToken('lms-token', ['*'], now()->addHours(2))->plainTextToken;
 
         return response()->json([
             'message' => 'Login berhasil.',
@@ -60,13 +64,11 @@ class AuthController extends Controller
             return response()->json(['message' => 'Username atau password salah.'], 401);
         }
 
-        // Cek pakai id_role langsung, bukan nama role
-        // id_role: 1=superadmin, 2=admin, 3=trainer, 4=peserta
         $allowedRoleIds = [1, 2, 3];
 
         if (! in_array($pengguna->id_role, $allowedRoleIds)) {
             return response()->json([
-                'message' => 'Akun ini tidak memiliki akses admin. Gunakan login peserta.',
+                'message' => 'Akun ini tidak memiliki akses admin.',
             ], 403);
         }
 
@@ -76,7 +78,24 @@ class AuthController extends Controller
             ], 403);
         }
 
-        $token = $pengguna->createToken('lms-admin-token', ['*'], now()->addHours(8))->plainTextToken;
+        // MFA: wajib OTP untuk admin cabang & superadmin (role 1 & 2)
+        if (in_array($pengguna->id_role, [1, 2])) {
+            if (! $pengguna->email) {
+                return response()->json([
+                    'message' => 'Akun admin ini belum dikonfigurasi dengan email. Hubungi superadmin untuk mengatur email akun Anda sebelum dapat login.',
+                ], 403);
+            }
+
+            $this->sendOtp($pengguna, $request->ip());
+
+            return response()->json([
+                'requires_otp' => true,
+                'message'      => 'Kode OTP telah dikirim ke email Anda. Masukkan kode untuk melanjutkan.',
+            ]);
+        }
+
+        // Trainer (role 3): langsung login dengan token 2 jam
+        $token = $pengguna->createToken('lms-admin-token', ['*'], now()->addHours(2))->plainTextToken;
 
         LoginLog::create([
             'user_id'      => $pengguna->id_pengguna,
@@ -91,17 +110,82 @@ class AuthController extends Controller
         ]);
     }
 
+    /**
+     * POST /api/auth/verify-otp
+     * Tahap 2 login admin: verifikasi kode OTP
+     */
+    public function verifyOtp(Request $request)
+    {
+        $request->validate([
+            'username' => 'required|string',
+            'code'     => 'required|string|size:6',
+        ]);
+
+        $pengguna = Pengguna::where('username', $request->username)->first();
+
+        // Selalu kembalikan pesan yang sama untuk mencegah user enumeration
+        $errorMsg = 'Kode OTP tidak valid atau sudah kedaluwarsa.';
+
+        if (! $pengguna) {
+            return response()->json(['message' => $errorMsg], 401);
+        }
+
+        $otp = OtpCode::where('user_id', $pengguna->id_pengguna)
+            ->where('used', false)
+            ->where('expires_at', '>', now())
+            ->latest('id')
+            ->first();
+
+        if (! $otp || ! Hash::check($request->code, $otp->code)) {
+            return response()->json(['message' => $errorMsg], 401);
+        }
+
+        $otp->update(['used' => true]);
+
+        $token = $pengguna->createToken('lms-admin-token', ['*'], now()->addHours(2))->plainTextToken;
+
+        LoginLog::create([
+            'user_id'      => $pengguna->id_pengguna,
+            'ip_address'   => $request->ip(),
+            'logged_in_at' => now(),
+        ]);
+
+        return response()->json([
+            'message' => 'Login berhasil.',
+            'token'   => $token,
+            'user'    => $this->formatUser($pengguna),
+        ]);
+    }
+
+    /**
+     * POST /api/auth/refresh
+     * Perpanjang token yang aktif selama 2 jam lagi
+     */
+    public function refresh(Request $request)
+    {
+        $user = $request->user();
+        $user->currentAccessToken()->delete();
+        $token = $user->createToken('lms-admin-token', ['*'], now()->addHours(2))->plainTextToken;
+
+        return response()->json([
+            'message' => 'Token berhasil diperbarui.',
+            'token'   => $token,
+        ]);
+    }
+
     public function register(Request $request)
     {
         $request->validate([
             'nama'         => 'required|string|max:100',
             'username'     => 'required|string|max:100|unique:pengguna,username',
             'email'        => 'required|email|unique:pengguna,email',
-            'password'     => 'required|string|min:8',
+            'password'     => ['required', 'string', 'min:8', 'regex:/^(?=.*[A-Z])(?=.*\d).+$/'],
             'nomor_hp'     => 'nullable|string|max:20',
             'id_cabang'    => 'required|exists:cabang,id_cabang',
             'asal_sekolah' => 'nullable|string|max:150',
             'jurusan'      => 'nullable|string|max:100',
+        ], [
+            'password.regex' => 'Password harus mengandung minimal 1 huruf besar dan 1 angka.',
         ]);
 
         $pengguna = Pengguna::create([
@@ -121,7 +205,6 @@ class AuthController extends Controller
             'status_dokumen' => 'belum_upload',
         ]);
 
-        // Notifikasi 1: Peserta baru mendaftar
         $adminCabang = Pengguna::where('id_cabang', $request->id_cabang)
             ->whereIn('id_role', [1, 2])
             ->where('status', 'aktif')
@@ -131,7 +214,7 @@ class AuthController extends Controller
             Notifikasi::create([
                 'id_penerima'  => $admin->id_pengguna,
                 'judul'        => 'Peserta Baru Mendaftar',
-                'pesan'        => "Peserta baru \"{$pengguna->nama}\" telah mendaftar. Menunggu upload dokumen dari peserta.",
+                'pesan'        => 'Peserta baru "' . e($pengguna->nama) . '" telah mendaftar. Menunggu upload dokumen dari peserta.',
                 'tipe'         => 'registrasi_baru',
                 'id_referensi' => $pengguna->id_pengguna,
             ]);
@@ -167,19 +250,52 @@ class AuthController extends Controller
         return response()->json($this->formatUser($user));
     }
 
+    // ─── Helpers ─────────────────────────────────────────────────────────────
+
+    private function sendOtp(Pengguna $pengguna, string $ip): void
+    {
+        $otp = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+
+        // Hapus OTP lama yang belum terpakai
+        OtpCode::where('user_id', $pengguna->id_pengguna)
+            ->where('used', false)
+            ->delete();
+
+        OtpCode::create([
+            'user_id'    => $pengguna->id_pengguna,
+            'code'       => Hash::make($otp),
+            'expires_at' => now()->addMinutes(10),
+            'ip_address' => $ip,
+        ]);
+
+        // Kirim OTP via email (MAIL_MAILER=log untuk development — cek storage/logs/laravel.log)
+        try {
+            Mail::raw(
+                "Kode OTP login Admin LMS IndoBismar Anda: {$otp}\n\nKode ini berlaku selama 10 menit.\nJangan bagikan kode ini kepada siapa pun.",
+                fn($msg) => $msg->to($pengguna->email)
+                                ->subject('Kode OTP Login Admin LMS IndoBismar')
+            );
+        } catch (\Throwable $e) {
+            // Pastikan OTP selalu terlog jika pengiriman email gagal (development)
+            Log::warning("OTP email gagal dikirim ke {$pengguna->email}: {$e->getMessage()}");
+        }
+
+        Log::info("OTP generated for admin {$pengguna->username} from IP {$ip}");
+    }
+
     private function formatUser($user): array
     {
         return [
-            'id'               => $user->id_pengguna,
-            'nama'             => $user->nama,
-            'email'            => $user->email,
-            'username'         => $user->username,
-            'role'             => $user->role->nama_role ?? null,
-            'id_role'          => $user->id_role,
-            'cabang'           => $user->id_cabang,
-            'status'           => $user->status,
-            'status_dokumen'   => $user->dataPkl->status_dokumen   ?? null,
-            'catatan_dokumen'  => $user->dataPkl->catatan_dokumen  ?? null,
+            'id'              => $user->id_pengguna,
+            'nama'            => $user->nama,
+            'email'           => $user->email,
+            'username'        => $user->username,
+            'role'            => $user->role->nama_role ?? null,
+            'id_role'         => $user->id_role,
+            'cabang'          => $user->id_cabang,
+            'status'          => $user->status,
+            'status_dokumen'  => $user->dataPkl->status_dokumen  ?? null,
+            'catatan_dokumen' => $user->dataPkl->catatan_dokumen ?? null,
         ];
     }
 }
