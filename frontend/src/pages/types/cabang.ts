@@ -23,7 +23,7 @@ export interface BranchUser {
   nomor_hp: string | null;
   role: BranchUserRole;
   id_role: number;
-  status: string;
+  status: 'aktif' | 'nonaktif' | 'pending' | 'ditolak';
   is_online: boolean;
   last_login: string | null;
 }
