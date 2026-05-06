@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Eye, Mail, MapPin, BookOpen, TrendingUp, Plus, Edit2, Trash2, X, CheckCircle, Clock, FileText, CheckCircle2, XCircle, ExternalLink, UserPlus, UserMinus } from 'lucide-react';
 import { api } from '../../lib/api';
+import { sanitizeUrl } from '../../lib/sanitize';
 import { confirm } from '../../lib/confirm';
 import { useToast } from '../../lib/toast';
 
@@ -393,7 +394,7 @@ export function Participants() {
                     </div>
                     <div className="space-y-2">
                       {detailPeserta.surat_siswa_url ? (
-                        <a href={detailPeserta.surat_siswa_url} target="_blank" rel="noopener noreferrer"
+                        <a href={sanitizeUrl(detailPeserta.surat_siswa_url)} target="_blank" rel="noopener noreferrer"
                           className="flex items-center gap-2 px-3 py-2 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-red-600 hover:bg-red-50 transition-colors">
                           <FileText className="w-4 h-4 flex-shrink-0" />
                           Surat Pernyataan Siswa PKL
@@ -401,7 +402,7 @@ export function Participants() {
                         </a>
                       ) : <p className="text-sm text-gray-400 italic">Surat siswa belum diupload</p>}
                       {detailPeserta.surat_ortu_url ? (
-                        <a href={detailPeserta.surat_ortu_url} target="_blank" rel="noopener noreferrer"
+                        <a href={sanitizeUrl(detailPeserta.surat_ortu_url)} target="_blank" rel="noopener noreferrer"
                           className="flex items-center gap-2 px-3 py-2 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-red-600 hover:bg-red-50 transition-colors">
                           <FileText className="w-4 h-4 flex-shrink-0" />
                           Surat Pernyataan Orang Tua
@@ -524,7 +525,7 @@ export function Participants() {
               <div className="space-y-2">
                 <p className="text-sm font-medium text-gray-700">Dokumen Terlampir</p>
                 {reviewPeserta.surat_siswa_url ? (
-                  <a href={reviewPeserta.surat_siswa_url} target="_blank" rel="noopener noreferrer"
+                  <a href={sanitizeUrl(reviewPeserta.surat_siswa_url)} target="_blank" rel="noopener noreferrer"
                     className="flex items-center gap-2 px-3 py-2 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-red-600 hover:bg-red-50 transition-colors">
                     <FileText className="w-4 h-4 flex-shrink-0" />
                     Surat Pernyataan Siswa PKL
@@ -534,7 +535,7 @@ export function Participants() {
                   <p className="text-sm text-gray-400 italic">Surat siswa belum diupload</p>
                 )}
                 {reviewPeserta.surat_ortu_url ? (
-                  <a href={reviewPeserta.surat_ortu_url} target="_blank" rel="noopener noreferrer"
+                  <a href={sanitizeUrl(reviewPeserta.surat_ortu_url)} target="_blank" rel="noopener noreferrer"
                     className="flex items-center gap-2 px-3 py-2 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-red-600 hover:bg-red-50 transition-colors">
                     <FileText className="w-4 h-4 flex-shrink-0" />
                     Surat Pernyataan Orang Tua

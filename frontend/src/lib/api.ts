@@ -55,11 +55,18 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}) {
 }
 
 export const api = {
+  // Public
+  getCabang: () => fetch(`${API_BASE}/cabang`, { headers: { Accept: 'application/json' } }).then(r => r.json()),
+
   // Auth
   login: (email: string, password: string) =>
     apiFetch('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
   loginAdmin: (username: string, password: string) =>
     apiFetch('/auth/login-admin', { method: 'POST', body: JSON.stringify({ username, password }) }),
+  verifyAdminOtp: (username: string, code: string) =>
+    apiFetch('/auth/verify-otp', { method: 'POST', body: JSON.stringify({ username, code }) }),
+  refreshToken: () =>
+    apiFetch('/auth/refresh', { method: 'POST' }),
   register: (data: any) =>
     apiFetch('/auth/register', { method: 'POST', body: JSON.stringify(data) }),
   logout: () =>
@@ -98,14 +105,19 @@ export const api = {
   createMateri: (data: FormData) => apiFetch('/materi', { method: 'POST', body: data }),
   deleteMateri: (id: number) => apiFetch(`/materi/${id}`, { method: 'DELETE' }),
 
-  // Tugas
+  // Tugas (admin/trainer)
   getTugas: (params?: string) => apiFetch(`/tugas${params ? '?' + params : ''}`),
-  createTugas: (data: any) => apiFetch('/tugas', { method: 'POST', body: JSON.stringify(data) }),
-  updateTugas: (id: number, data: any) => apiFetch(`/tugas/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  createTugas: (data: FormData) => apiFetch('/tugas', { method: 'POST', body: data }),
+  updateTugas: (id: number, data: FormData) => apiFetch(`/tugas/${id}`, { method: 'PUT', body: data }),
   deleteTugas: (id: number) => apiFetch(`/tugas/${id}`, { method: 'DELETE' }),
   getSubmissions: (id: number) => apiFetch(`/tugas/${id}/submissions`),
   gradeTugas: (subId: number, data: any) =>
     apiFetch(`/tugas/submissions/${subId}/grade`, { method: 'PATCH', body: JSON.stringify(data) }),
+  // Tugas (student)
+  getMyTugas: () => apiFetch('/user/tugas'),
+  getMySubmission: (tugasId: number) => apiFetch(`/user/tugas/${tugasId}`),
+  submitTugas: (tugasId: number, data: FormData) =>
+    apiFetch(`/user/tugas/${tugasId}/kumpul`, { method: 'POST', body: data }),
 
   // Kuis
   getKuis: (params?: string) => apiFetch(`/kuis${params ? '?' + params : ''}`),

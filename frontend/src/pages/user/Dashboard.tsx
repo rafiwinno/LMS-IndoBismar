@@ -16,16 +16,18 @@ interface DashboardStats {
 export default function Dashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const user = getUser();
 
   useEffect(() => {
     API.get('/user/dashboard')
       .then(res => setStats(res.data))
-      .catch(err => console.error(err))
+      .catch(err => setError(err.response?.data?.message || 'Gagal memuat dashboard.'))
       .finally(() => setLoading(false));
   }, []);
 
   if (loading) return <DashboardSkeleton />;
+  if (error) return <div className="text-center py-16 text-red-500 font-medium">{error}</div>;
 
   const statCards = [
     { label: 'Total Kursus',    value: stats?.total_kursus ?? 0,    icon: BookOpen,    color: 'text-red-500',    bg: 'bg-red-500/10' },

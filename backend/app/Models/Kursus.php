@@ -1,13 +1,17 @@
 <?php
 namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Kursus extends Model {
-    protected $table = 'kursus';
+    use SoftDeletes;
+
+    protected $table      = 'kursus';
     protected $primaryKey = 'id_kursus';
-    const CREATED_AT = 'dibuat_pada';
-    const UPDATED_AT = null;
-    protected $fillable = ['id_trainer', 'id_cabang', 'judul_kursus', 'deskripsi', 'status'];
+    const CREATED_AT      = 'dibuat_pada';
+    const UPDATED_AT      = 'updated_at';
+    protected $dates      = ['deleted_at'];
+    protected $fillable   = ['id_trainer', 'id_cabang', 'judul_kursus', 'deskripsi', 'status', 'gambar_kursus'];
     public function trainer()       { return $this->belongsTo(Pengguna::class, 'id_trainer', 'id_pengguna'); }
     public function cabang()        { return $this->belongsTo(Cabang::class, 'id_cabang', 'id_cabang'); }
     public function pesertaKursus() { return $this->hasMany(PesertaKursus::class, 'id_kursus', 'id_kursus'); }

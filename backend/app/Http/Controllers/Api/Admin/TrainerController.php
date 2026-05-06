@@ -52,8 +52,10 @@ class TrainerController extends Controller
             'nama'     => 'required|string|max:100',
             'username' => 'required|string|max:100|unique:pengguna,username',
             'email'    => 'required|email|unique:pengguna,email',
-            'password' => 'required|string|min:8',
+            'password' => ['required', 'string', 'min:8', 'regex:/^(?=.*[A-Z])(?=.*\d).+$/'],
             'nomor_hp' => 'nullable|string|max:20',
+        ], [
+            'password.regex' => 'Password harus mengandung minimal 1 huruf besar dan 1 angka.',
         ]);
 
         $trainer = Pengguna::create([
@@ -83,9 +85,22 @@ class TrainerController extends Controller
             'nama'     => 'sometimes|string|max:100',
             'email'    => "sometimes|email|unique:pengguna,email,$id,id_pengguna",
             'nomor_hp' => 'nullable|string|max:20',
+            'password' => ['nullable', 'string', 'min:8', 'regex:/^(?=.*[A-Z])(?=.*\d).+$/'],
+        ], [
+            'password.regex' => 'Password harus mengandung minimal 1 huruf besar dan 1 angka.',
         ]);
 
-        $trainer->update($request->only(['nama', 'email', 'nomor_hp']));
+        $payload = $request->only(['nama', 'email', 'nomor_hp']);
+        if ($request->filled('password')) {
+            $payload['password'] = \Illuminate\Support\Facades\Hash::make($request->password);
+        }
+
+        $trainer->update($payload);
+
+        // Invalidate semua token aktif jika password diganti
+        if ($request->filled('password')) {
+            $trainer->tokens()->delete();
+        }
 
         return response()->json([
             'message' => 'Data trainer berhasil diperbarui.',
@@ -95,10 +110,18 @@ class TrainerController extends Controller
 
     public function destroy(Request $request, $id)
     {
-        Pengguna::where('id_role', 3)
+        $trainer = Pengguna::where('id_role', 3)
             ->where('id_cabang', $request->user()->id_cabang)
-            ->findOrFail($id)
-            ->delete();
+            ->findOrFail($id);
+
+        // Soft delete — data jadwal & kursus tetap tersimpan untuk audit
+        $trainer->delete();
+
+        \App\Models\AuditLog::log(
+            $request->user()->id_pengguna, 'delete', 'trainer', $id,
+            [], ['nama' => $trainer->nama, 'email' => $trainer->email],
+            $request->ip()
+        );
 
         return response()->json(['message' => 'Trainer berhasil dihapus.']);
     }

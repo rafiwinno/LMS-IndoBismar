@@ -8,6 +8,7 @@ import { api } from '../../lib/api';
 import { confirm } from '../../lib/confirm';
 import { useToast } from '../../lib/toast';
 import { TimePickerRoll } from '../../components/admin/TimePickerRoll';
+import { sanitizeUrl } from '../../lib/sanitize';
 
 // ── Tugas interfaces ──────────────────────────────────────────────────────────
 interface Tugas {
@@ -198,6 +199,10 @@ export function Exams() {
 
   // ── Buat Kuis ──────────────────────────────────────────────────────────────
   const handleCreateKuis = async () => {
+    if (form.waktu_mulai && form.waktu_selesai && new Date(form.waktu_mulai) >= new Date(form.waktu_selesai)) {
+      setError('Waktu mulai harus lebih awal dari waktu selesai.');
+      return;
+    }
     setSaving(true); setError('');
     try {
       const res = await api.createKuis({ ...form, pertanyaan: [] });
@@ -399,7 +404,7 @@ export function Exams() {
                               <p className="text-xs text-gray-500 dark:text-gray-400">{new Date(sub.tanggal_kumpul).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
                             </div>
                             <div className="flex items-center gap-3 flex-shrink-0">
-                              {sub.file_url && <a href={sub.file_url} target="_blank" rel="noopener noreferrer" className="text-xs text-red-600 dark:text-red-400 hover:underline">Lihat File</a>}
+                              {sub.file_url && <a href={sanitizeUrl(sub.file_url)} target="_blank" rel="noopener noreferrer" className="text-xs text-red-600 dark:text-red-400 hover:underline">Lihat File</a>}
                               {sub.nilai !== null && <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">{sub.nilai}</span>}
                               <button onClick={e => openGrade(sub, e)}
                                 className="flex items-center gap-1 text-xs px-2.5 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors">
@@ -469,7 +474,7 @@ export function Exams() {
               </div>
               <div className="p-6 space-y-4">
                 <p className="text-sm text-gray-600 dark:text-gray-400">Peserta: <span className="font-medium text-gray-900 dark:text-white">{grading.peserta}</span></p>
-                {grading.file_url && <a href={grading.file_url} target="_blank" rel="noopener noreferrer" className="block text-sm text-red-600 dark:text-red-400 hover:underline">📎 Lihat File Tugas</a>}
+                {grading.file_url && <a href={sanitizeUrl(grading.file_url)} target="_blank" rel="noopener noreferrer" className="block text-sm text-red-600 dark:text-red-400 hover:underline">📎 Lihat File Tugas</a>}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nilai (0–100)</label>
                   <input type="number" min={0} max={100} className={tugasInputCls} value={gradeForm.nilai} onChange={e => setGradeForm(f => ({ ...f, nilai: e.target.value }))} placeholder="cth: 85" />

@@ -13,8 +13,13 @@ class ProgressController extends Controller
     public function index(Request $request)
     {
         $trainerId = $request->user()->id_pengguna;
+        $perPage   = min((int) ($request->query('per_page', 20)), 100);
+        $page      = max((int) ($request->query('page', 1)), 1);
+        $offset    = ($page - 1) * $perPage;
 
-        $data = Cache::remember("trainer_progress_{$trainerId}", 120, function () use ($trainerId) {
+        $cacheKey = "trainer_progress_{$trainerId}";
+
+        $all = Cache::remember($cacheKey, 120, function () use ($trainerId) {
             return DB::select("
                 SELECT
                     p.id_pengguna   AS id,
@@ -42,7 +47,16 @@ class ProgressController extends Controller
             ", [$trainerId]);
         });
 
-        return response()->json(['data' => $data]);
+        $total  = count($all);
+        $paged  = array_slice($all, $offset, $perPage);
+
+        return response()->json([
+            'data'         => $paged,
+            'total'        => $total,
+            'per_page'     => $perPage,
+            'current_page' => $page,
+            'last_page'    => (int) ceil($total / $perPage),
+        ]);
     }
 
     public function allPesertaCabang(Request $request)

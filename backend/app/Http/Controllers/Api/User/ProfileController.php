@@ -40,16 +40,24 @@ class ProfileController extends Controller
     // Update profil peserta
     public function update(Request $request)
     {
-        // ✅ FIX: gunakan user dari Sanctum token, bukan dari request body
+        $request->validate([
+            'nama'             => 'sometimes|string|max:100',
+            'nomor_hp'         => 'sometimes|nullable|string|max:20',
+            'password_lama'    => 'required_with:password|string',
+            'password'         => 'sometimes|string|min:8',
+        ]);
+
         $id_pengguna = $request->user()->id_pengguna;
+        $updateData  = [];
 
-        $updateData = [];
+        if ($request->filled('nama'))     $updateData['nama']     = $request->nama;
+        if ($request->has('nomor_hp'))    $updateData['nomor_hp'] = $request->nomor_hp;
 
-        if ($request->nama)     $updateData['nama']     = $request->nama;
-        if ($request->nomor_hp) $updateData['nomor_hp'] = $request->nomor_hp;
-
-        // Ganti password jika dikirim
-        if ($request->password) {
+        if ($request->filled('password')) {
+            $user = DB::table('pengguna')->where('id_pengguna', $id_pengguna)->first();
+            if (!Hash::check($request->password_lama, $user->password)) {
+                return response()->json(['message' => 'Password lama tidak sesuai.'], 422);
+            }
             $updateData['password'] = Hash::make($request->password);
         }
 

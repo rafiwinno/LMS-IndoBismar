@@ -131,6 +131,13 @@ class QuizController extends Controller
             'pilihan.*.benar'        => 'required_if:tipe,pilihan_ganda|boolean',
         ]);
 
+        $duplicate = Question::where('id_kuis', $quizId)
+            ->whereRaw('LOWER(pertanyaan) = ?', [strtolower(trim($request->pertanyaan))])
+            ->exists();
+        if ($duplicate) {
+            return response()->json(['message' => 'Pertanyaan ini sudah ada dalam kuis.'], 422);
+        }
+
         $question = Question::create([
             'id_kuis'     => $quizId,
             'pertanyaan'  => $request->pertanyaan,
