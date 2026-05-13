@@ -153,6 +153,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/dashboard', [AdminDashboardController::class, 'index']);
 
         // Peserta
+        Route::post('/peserta/import',       [AdminPesertaController::class, 'importCsv']);
         Route::get('/peserta',               [AdminPesertaController::class, 'index']);
         Route::post('/peserta',              [AdminPesertaController::class, 'store']);
         Route::get('/peserta/{id}',          [AdminPesertaController::class, 'show']);

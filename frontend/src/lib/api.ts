@@ -149,6 +149,10 @@ export const api = {
   getLaporanKuis: () => apiFetch('/laporan/kuis'),
   getLaporanTrainer: () => apiFetch('/laporan/trainer'),
 
+  // Import CSV peserta PKL
+  importPesertaCsv: (formData: FormData) =>
+    apiFetch('/peserta/import', { method: 'POST', body: formData }),
+
   // Verifikasi Dokumen (admin)
   verifikasiDokumen: (id: number, aksi: 'setujui' | 'tolak', catatan?: string) =>
     apiFetch(`/peserta/${id}/verifikasi-dokumen`, {

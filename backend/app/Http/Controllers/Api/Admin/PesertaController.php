@@ -383,7 +383,147 @@ class PesertaController extends Controller
         ]);
     }
 
+    /**
+     * POST /api/peserta/import
+     * Import data siswa PKL dari file CSV.
+     * Setiap baris otomatis membuat akun Pengguna (role 4):
+     *   - username = nama depan (huruf kecil, alphanumerik saja, unik dengan suffix angka)
+     *   - password = tanggal lahir format ddmmYYYY  (contoh: 01012005)
+     */
+    public function importCsv(Request $request)
+    {
+        $request->validate([
+            'file'      => 'required|file|mimes:csv,txt|max:5120',
+            'id_cabang' => 'nullable|integer|exists:cabang,id_cabang',
+        ]);
+
+        $user     = $request->user();
+        $isSuper  = $user->id_role === 1;
+        $cabangId = $isSuper
+            ? ($request->input('id_cabang') ?? $user->id_cabang)
+            : $user->id_cabang;
+
+        if (!$cabangId) {
+            return response()->json(['message' => 'Cabang harus dipilih untuk proses import.'], 422);
+        }
+
+        $handle = fopen($request->file('file')->getRealPath(), 'r');
+        $rawHeader = fgetcsv($handle);
+
+        if (!$rawHeader) {
+            fclose($handle);
+            return response()->json(['message' => 'File CSV kosong atau format tidak valid.'], 422);
+        }
+
+        $header   = array_map(fn($h) => strtolower(trim($h)), $rawHeader);
+        $berhasil = [];
+        $gagal    = [];
+        $row      = 1;
+
+        while (($cols = fgetcsv($handle)) !== false) {
+            $row++;
+
+            if (count($cols) < 2) {
+                $gagal[] = ['baris' => $row, 'nama' => '-', 'alasan' => 'Baris tidak lengkap.'];
+                continue;
+            }
+
+            $mapped = [];
+            foreach ($header as $i => $key) {
+                $mapped[$key] = isset($cols[$i]) ? trim($cols[$i]) : '';
+            }
+
+            $nama         = $mapped['nama'] ?? '';
+            $tanggalLahir = $mapped['tanggal_lahir'] ?? '';
+
+            if (!$nama || !$tanggalLahir) {
+                $gagal[] = ['baris' => $row, 'nama' => $nama ?: '-', 'alasan' => 'Kolom nama dan tanggal_lahir wajib diisi.'];
+                continue;
+            }
+
+            try {
+                $tgl      = \Carbon\Carbon::parse($tanggalLahir);
+                $password = $tgl->format('dmY');
+            } catch (\Throwable) {
+                $gagal[] = ['baris' => $row, 'nama' => $nama, 'alasan' => "Format tanggal_lahir tidak valid: '{$tanggalLahir}'"];
+                continue;
+            }
+
+            // Generate username dari nama depan (hanya huruf & angka, lowercase)
+            $baseName = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', explode(' ', $nama)[0]));
+            if (!$baseName) {
+                $gagal[] = ['baris' => $row, 'nama' => $nama, 'alasan' => 'Nama depan tidak mengandung karakter valid untuk username.'];
+                continue;
+            }
+            $username = $baseName;
+            $suffix   = 1;
+            while (Pengguna::where('username', $username)->whereNull('deleted_at')->exists()) {
+                $username = $baseName . $suffix++;
+            }
+
+            // Validasi email jika ada
+            $email = ($mapped['email'] ?? '') ?: null;
+            if ($email && Pengguna::where('email', $email)->whereNull('deleted_at')->exists()) {
+                $gagal[] = ['baris' => $row, 'nama' => $nama, 'alasan' => "Email '{$email}' sudah terdaftar."];
+                continue;
+            }
+
+            try {
+                $pengguna = Pengguna::create([
+                    'id_role'   => 4,
+                    'id_cabang' => $cabangId,
+                    'nama'      => $nama,
+                    'username'  => $username,
+                    'email'     => $email,
+                    'password'  => Hash::make($password),
+                    'nomor_hp'  => ($mapped['nomor_hp'] ?? '') ?: null,
+                    'status'    => 'aktif',
+                ]);
+
+                $pengguna->dataPkl()->create([
+                    'asal_sekolah'    => ($mapped['asal_sekolah'] ?? '') ?: null,
+                    'jurusan'         => ($mapped['jurusan'] ?? '') ?: null,
+                    'periode_mulai'   => $this->parseDate($mapped['periode_mulai'] ?? null),
+                    'periode_selesai' => $this->parseDate($mapped['periode_selesai'] ?? null),
+                ]);
+
+                $berhasil[] = [
+                    'nama'          => $nama,
+                    'username'      => $username,
+                    'password'      => $password,
+                    'tanggal_lahir' => $tgl->format('d/m/Y'),
+                ];
+            } catch (\Throwable $e) {
+                $gagal[] = ['baris' => $row, 'nama' => $nama, 'alasan' => 'Gagal membuat akun: ' . $e->getMessage()];
+            }
+        }
+
+        fclose($handle);
+
+        AuditLog::log(
+            $user->id_pengguna, 'import_csv', 'peserta', 0,
+            ['berhasil' => count($berhasil), 'gagal' => count($gagal), 'id_cabang' => $cabangId],
+            [], $request->ip()
+        );
+
+        return response()->json([
+            'message'  => 'Import selesai. ' . count($berhasil) . ' berhasil, ' . count($gagal) . ' gagal.',
+            'berhasil' => $berhasil,
+            'gagal'    => $gagal,
+        ]);
+    }
+
     // ─── Helpers ─────────────────────────────────────────────────────────────
+
+    private function parseDate(?string $date): ?string
+    {
+        if (!$date || trim($date) === '') return null;
+        try {
+            return \Carbon\Carbon::parse($date)->format('Y-m-d');
+        } catch (\Throwable) {
+            return null;
+        }
+    }
 
     private function formatPeserta($p)
     {
