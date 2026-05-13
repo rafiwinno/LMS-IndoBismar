@@ -74,10 +74,11 @@ Route::post('/auth/register',     [AdminAuthController::class, 'register'])->mid
 Route::middleware('auth:sanctum')->group(function () {
 
     // ── Shared auth ──────────────────────────────────────────────────────────
-    Route::post('/logout',        [UserAuthController::class, 'logout']);
-    Route::post('/auth/logout',   [AdminAuthController::class, 'logout']);
-    Route::get('/auth/me',        [AdminAuthController::class, 'me']);
-    Route::post('/auth/refresh',  [AdminAuthController::class, 'refresh'])->middleware('throttle:10,1');
+    Route::post('/logout',            [UserAuthController::class, 'logout']);
+    Route::post('/auth/logout',       [AdminAuthController::class, 'logout']);
+    Route::post('/auth/logout-all',   [AdminAuthController::class, 'logoutAll']);
+    Route::get('/auth/me',            [AdminAuthController::class, 'me']);
+    Route::post('/auth/refresh',      [AdminAuthController::class, 'refresh'])->middleware('throttle:10,1');
 
     // ── Download dokumen PKL secara aman (private storage) ───────────────────
     Route::get('/dokumen/secure/{path}', [AdminSecureDocumentController::class, 'download'])
@@ -104,11 +105,13 @@ Route::middleware('auth:sanctum')->group(function () {
         // alias /branches untuk frontend yang pakai endpoint ini
         Route::get('/branches',             [SuperBranchController::class, 'index']);
 
-        Route::get('/users',                [SuperUserController::class, 'index']);
-        Route::post('/users',               [SuperUserController::class, 'store']);
-        Route::put('/users/{id}',           [SuperUserController::class, 'update']);
-        Route::patch('/users/{id}/status',  [SuperUserController::class, 'updateStatus']);
-        Route::delete('/users/{id}',        [SuperUserController::class, 'destroy']);
+        Route::get('/users',                    [SuperUserController::class, 'index']);
+        Route::post('/users',                   [SuperUserController::class, 'store']);
+        Route::post('/users/bulk-status',       [SuperUserController::class, 'bulkStatus']);
+        Route::post('/users/bulk-delete',       [SuperUserController::class, 'bulkDelete']);
+        Route::put('/users/{id}',               [SuperUserController::class, 'update']);
+        Route::patch('/users/{id}/status',      [SuperUserController::class, 'updateStatus']);
+        Route::delete('/users/{id}',            [SuperUserController::class, 'destroy']);
     });
 
     // =========================================================================
@@ -280,4 +283,3 @@ Route::middleware('auth:sanctum')->group(function () {
     }); // end admin:3
 
 });
-

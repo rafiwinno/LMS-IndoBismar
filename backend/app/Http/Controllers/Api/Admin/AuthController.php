@@ -7,7 +7,9 @@ use App\Models\LoginLog;
 use App\Models\Notifikasi;
 use App\Models\OtpCode;
 use App\Models\Pengguna;
+use App\Models\ActivityLog;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -46,7 +48,7 @@ class AuthController extends Controller
             'message' => 'Login berhasil.',
             'token'   => $token,
             'user'    => $this->formatUser($pengguna),
-        ]);
+        ])->withCookie($this->makeAuthCookie($token));
     }
 
     public function loginAdmin(Request $request)
@@ -61,6 +63,15 @@ class AuthController extends Controller
             ->first();
 
         if (! $pengguna || ! Hash::check($request->password, $pengguna->password)) {
+            try { ActivityLog::create([
+                'user_id'      => null,
+                'action'       => 'failed_login',
+                'target_type'  => 'auth',
+                'target_id'    => null,
+                'target_label' => $request->username,
+                'changes'      => ['reason' => 'invalid_credentials'],
+                'ip_address'   => $request->ip(),
+            ]); } catch (\Throwable) {}
             return response()->json(['message' => 'Username atau password salah.'], 401);
         }
 
@@ -107,7 +118,7 @@ class AuthController extends Controller
             'message' => 'Login admin berhasil.',
             'token'   => $token,
             'user'    => $this->formatUser($pengguna),
-        ]);
+        ])->withCookie($this->makeAuthCookie($token));
     }
 
     /**
@@ -231,6 +242,15 @@ class AuthController extends Controller
         ], 201);
     }
 
+    public function refresh(Request $request)
+    {
+        $user = $request->user();
+        $user->currentAccessToken()->delete();
+        $token = $user->createToken('lms-admin-token')->plainTextToken;
+        return response()->json(['token' => $token])
+            ->withCookie($this->makeAuthCookie($token));
+    }
+
     public function logout(Request $request)
     {
         $user = $request->user();
@@ -241,7 +261,24 @@ class AuthController extends Controller
             ->first()?->update(['logged_out_at' => now()]);
 
         $user->currentAccessToken()->delete();
-        return response()->json(['message' => 'Logout berhasil.']);
+
+        return response()->json(['message' => 'Logout berhasil.'])
+            ->withCookie(Cookie::forget('auth_token'));
+    }
+
+    // Hapus SEMUA token aktif milik user ini (paksa logout semua sesi/perangkat)
+    public function logoutAll(Request $request)
+    {
+        $user = $request->user();
+
+        LoginLog::where('user_id', $user->id_pengguna)
+            ->whereNull('logged_out_at')
+            ->update(['logged_out_at' => now()]);
+
+        $user->tokens()->delete();
+
+        return response()->json(['message' => 'Semua sesi berhasil diakhiri.'])
+            ->withCookie(Cookie::forget('auth_token'));
     }
 
     public function me(Request $request)
@@ -281,6 +318,19 @@ class AuthController extends Controller
         }
 
         Log::info("OTP generated for admin {$pengguna->username} from IP {$ip}");
+    private function makeAuthCookie(string $token): \Symfony\Component\HttpFoundation\Cookie
+    {
+        return cookie(
+            name    : 'auth_token',
+            value   : $token,
+            minutes : 480,
+            path    : '/',
+            domain  : null,
+            secure  : app()->isProduction(),
+            httpOnly: true,
+            raw     : false,
+            sameSite: 'Lax',
+        );
     }
 
     private function formatUser($user): array

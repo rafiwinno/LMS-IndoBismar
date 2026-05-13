@@ -402,7 +402,13 @@ export default function Users() {
       const p: Record<string,any> = { page };
       if (debouncedSearch) p.search=debouncedSearch; if (filterRole) p.role=filterRole; if (filterCabang) p.id_cabang=filterCabang;
       const res = await api.get('/superadmin/users',{params:p});
-      setUsers(res.data.data); setLastPage(res.data.last_page); setTotal(res.data.total);
+      const fresh: UserItem[] = res.data.data;
+      setUsers(fresh); setLastPage(res.data.last_page); setTotal(res.data.total);
+      const freshIds = new Set(fresh.map(u => u.id));
+      setSelected(prev => {
+        const next = new Set([...prev].filter(id => freshIds.has(id)));
+        return next.size === prev.size ? prev : next;
+      });
     } catch { showToast('Gagal memuat data user.','error'); }
     finally { setLoading(false); }
   },[page,debouncedSearch,filterRole,filterCabang]);
@@ -475,11 +481,11 @@ export default function Users() {
     if (!window.confirm(`Hapus ${selected.size} user yang dipilih? Tindakan ini tidak bisa dibatalkan.`)) return;
     setBulkLoading(true);
     try {
-      await Promise.all([...selected].map(id => api.delete(`/superadmin/users/${id}`)));
+      await api.post('/superadmin/users/bulk-delete', { ids: [...selected] });
       showToast(`${selected.size} user berhasil dihapus.`);
       setSelected(new Set());
       fetchUsers();
-    } catch { showToast('Sebagian user gagal dihapus.', 'error'); }
+    } catch { showToast('Gagal menghapus user.', 'error'); }
     finally { setBulkLoading(false); }
   };
 
@@ -487,11 +493,11 @@ export default function Users() {
     if (!selected.size) return;
     setBulkLoading(true);
     try {
-      await Promise.all([...selected].map(id => api.patch(`/superadmin/users/${id}/status`, { status })));
+      await api.post('/superadmin/users/bulk-status', { ids: [...selected], status });
       showToast(`${selected.size} user diubah menjadi ${status}.`);
       setSelected(new Set());
       fetchUsers();
-    } catch { showToast('Sebagian user gagal diubah statusnya.', 'error'); }
+    } catch { showToast('Gagal mengubah status user.', 'error'); }
     finally { setBulkLoading(false); }
   };
 
