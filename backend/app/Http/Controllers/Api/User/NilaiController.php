@@ -18,7 +18,12 @@ class NilaiController extends Controller
             ->leftJoin('pengguna as penilai', 'penilaian_pkl.dinilai_oleh', '=', 'penilai.id_pengguna')
             ->where('penilaian_pkl.id_pengguna', $id_pengguna)
             ->select(
-                'penilaian_pkl.*',
+                'penilaian_pkl.nilai_teknis',
+                'penilaian_pkl.nilai_non_teknis',
+                'penilaian_pkl.nilai_akhir',
+                'penilaian_pkl.kode_sertifikat',
+                'penilaian_pkl.catatan',
+                'penilaian_pkl.tanggal_penilaian',
                 'penilai.nama as nama_penilai'
             )
             ->first();

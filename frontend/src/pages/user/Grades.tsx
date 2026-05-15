@@ -1,5 +1,5 @@
 ﻿import { useEffect, useState } from 'react';
-import { Award, TrendingUp, BookOpen, CheckCircle, Clock, ClipboardList } from 'lucide-react';
+import { Award, TrendingUp, BookOpen, CheckCircle, Clock, ClipboardList, BadgeCheck, Copy } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import API from '../../api/api';
 import { GradesSkeleton } from '../../components/ui/Skeleton';
@@ -8,6 +8,7 @@ interface NilaiPkl {
   nilai_teknis: number;
   nilai_non_teknis: number;
   nilai_akhir: number;
+  kode_sertifikat: string | null;
   catatan: string;
   nama_penilai: string;
   tanggal_penilaian: string;
@@ -36,6 +37,7 @@ export default function Grades() {
   const [riwayatTugas, setRiwayatTugas] = useState<RiwayatTugas[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     API.get('/user/nilai')
@@ -223,6 +225,53 @@ export default function Grades() {
             </table>
           </div>
         )}
+      </div>
+
+      {/* Kode Sertifikat */}
+      <div className="bg-white dark:bg-[#161b27] rounded-2xl shadow-sm border border-gray-200 dark:border-white/8 overflow-hidden">
+        <div className="p-6 border-b border-gray-100 dark:border-white/8">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+            <BadgeCheck size={20} className="text-red-500" />
+            Kode Sertifikat
+          </h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+            Gunakan kode ini untuk verifikasi sertifikat di website Indo Bismar
+          </p>
+        </div>
+        <div className="p-6">
+          {nilaiPkl?.kode_sertifikat ? (
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              <div className="flex-1 flex items-center gap-3 px-5 py-4 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl min-w-0">
+                <BadgeCheck size={20} className="text-emerald-500 shrink-0" />
+                <span className="font-mono text-lg font-bold tracking-widest text-gray-900 dark:text-white truncate">
+                  {nilaiPkl.kode_sertifikat}
+                </span>
+              </div>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(nilaiPkl.kode_sertifikat!);
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 2000);
+                }}
+                className={`flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition-colors shrink-0 ${
+                  copied
+                    ? 'bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
+                    : 'bg-gray-100 dark:bg-white/8 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/12'
+                }`}
+              >
+                <Copy size={15} />
+                {copied ? 'Tersalin!' : 'Salin Kode'}
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3 px-5 py-4 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl">
+              <BadgeCheck size={20} className="text-amber-500 shrink-0" />
+              <p className="text-sm text-amber-700 dark:text-amber-400">
+                Kode sertifikat belum tersedia. Admin akan mengisinya setelah PKL selesai.
+              </p>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Chart */}
