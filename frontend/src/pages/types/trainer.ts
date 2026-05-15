@@ -23,6 +23,7 @@ export interface Material {
   judul_materi: string;
   tipe_materi:  'video' | 'pdf' | 'dokumen';
   file_materi:  string | null;
+  file_url:     string | null;
   urutan:       number;
   dibuat_pada:  string;
 }

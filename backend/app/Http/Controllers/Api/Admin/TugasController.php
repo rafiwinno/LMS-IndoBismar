@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Tugas;
 use App\Models\PengumpulanTugas;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
 
 class TugasController extends Controller
 {
@@ -144,7 +144,7 @@ class TugasController extends Controller
                 'id'             => $s->id_pengumpulan,
                 'peserta'        => $s->pengguna->nama ?? null,
                 'email'          => $s->pengguna->email ?? null,
-                'file_url'       => $s->file_tugas ? asset("storage/{$s->file_tugas}") : null,
+                'file_url'       => $s->file_tugas ? URL::temporarySignedRoute('files.serve', now()->addHours(2), ['path' => $s->file_tugas]) : null,
                 'tanggal_kumpul' => $s->tanggal_kumpul,
                 'nilai'          => $s->nilai,
                 'feedback'       => $s->feedback,
@@ -171,16 +171,16 @@ class TugasController extends Controller
 
         $idPengguna = $request->user()->id_pengguna;
 
-        $path = $request->file('file_tugas')->store("tugas/{$id}", 'public');
+        $path = $request->file('file_tugas')->store("tugas/{$id}", 'local');
 
-        $submission = PengumpulanTugas::updateOrCreate(
+        PengumpulanTugas::updateOrCreate(
             ['id_tugas' => $id, 'id_pengguna' => $idPengguna],
             ['file_tugas' => $path, 'tanggal_kumpul' => now()]
         );
 
         return response()->json([
             'message'  => 'Tugas berhasil dikumpulkan.',
-            'file_url' => asset("storage/{$path}"),
+            'file_url' => URL::temporarySignedRoute('files.serve', now()->addHours(2), ['path' => $path]),
         ], 201);
     }
 

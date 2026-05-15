@@ -2,7 +2,10 @@
   "permissions": {
     "allow": [
       "Read(//c/c/Kampus Semester 6/PKL  - IndoBismar/**)",
-      "Bash(xargs grep *)"
+      "Bash(xargs grep *)",
+      "Bash(git checkout *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }

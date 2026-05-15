@@ -16,11 +16,11 @@ const STORAGE_URL = (import.meta.env.VITE_API_URL as string ?? 'http://127.0.0.1
 interface Course { id_kursus: number; judul_kursus: string; }
 interface Assignment {
   id_tugas: number; id_kursus: number; judul_tugas: string;
-  deskripsi: string | null; file_tugas: string | null;
+  deskripsi: string | null; file_tugas: string | null; file_url: string | null;
   deadline: string | null; nilai_maksimal: number;
 }
 interface Submission {
-  id_pengumpulan: number; id_pengguna: number; file_tugas: string;
+  id_pengumpulan: number; id_pengguna: number; file_tugas: string; file_url: string | null;
   tanggal_kumpul: string; nilai: number | null; feedback: string | null;
   peserta: { id_pengguna: number; nama: string; email: string };
 }
@@ -318,7 +318,7 @@ function TugasTab({ courses, coursesError, initialCourseId }: { courses: Course[
     if (!selectedCourse || !courses.find((c) => c.id_kursus === selectedCourse)) {
       setSelectedCourse(courses[0].id_kursus);
     }
-  }, [courses]);
+  }, [courses, selectedCourse]);
 
   useEffect(() => {
     if (!selectedCourse) return;
@@ -355,7 +355,7 @@ function TugasTab({ courses, coursesError, initialCourseId }: { courses: Course[
       const fd = new FormData();
       fd.append('judul_tugas', form.judul_tugas);
       fd.append('deskripsi', form.deskripsi);
-      fd.append('deadline', form.deadline);
+      if (form.deadline) fd.append('deadline', form.deadline);
       fd.append('nilai_maksimal', String(form.nilai_maksimal));
       if (fileTugas) fd.append('file_tugas', fileTugas);
       if (editTarget) {
@@ -483,7 +483,7 @@ function TugasTab({ courses, coursesError, initialCourseId }: { courses: Course[
                       )}
                       <span className="flex items-center gap-1"><Award size={11} />Maks {a.nilai_maksimal}</span>
                       {a.file_tugas && (
-                        <a href={`${STORAGE_URL}/${a.file_tugas}`} target="_blank" rel="noreferrer"
+                        <a href={a.file_url ?? undefined} target="_blank" rel="noreferrer"
                           className="flex items-center gap-1 text-red-600 dark:text-red-400 hover:underline">
                           Lihat file tugas
                         </a>
@@ -527,7 +527,7 @@ function TugasTab({ courses, coursesError, initialCourseId }: { courses: Course[
                               <p className="text-xs text-gray-400 dark:text-gray-500">{new Date(s.tanggal_kumpul).toLocaleDateString('id-ID')}</p>
                             </div>
                             {s.file_tugas && (
-                              <a href={`${STORAGE_URL}/${s.file_tugas}`} target="_blank" rel="noreferrer"
+                              <a href={s.file_url ?? undefined} target="_blank" rel="noreferrer"
                                 className="text-xs text-red-600 dark:text-red-400 hover:underline font-medium shrink-0">Lihat file</a>
                             )}
                             <div className="flex items-center gap-2 shrink-0">
@@ -569,7 +569,7 @@ function TugasTab({ courses, coursesError, initialCourseId }: { courses: Course[
               />
               {editTarget?.file_tugas && !fileTugas && (
                 <a
-                  href={`${STORAGE_URL}/${editTarget.file_tugas}`}
+                  href={editTarget.file_url ?? undefined}
                   target="_blank"
                   rel="noreferrer"
                   className="text-xs text-red-600 dark:text-red-400 hover:underline mt-1 block"
@@ -647,7 +647,7 @@ function KuisTab({ courses, coursesError, initialCourseId }: { courses: Course[]
     if (!selectedCourse || !courses.find((c) => c.id_kursus === selectedCourse)) {
       setSelectedCourse(courses[0].id_kursus);
     }
-  }, [courses]);
+  }, [courses, selectedCourse]);
 
   useEffect(() => {
     if (!selectedCourse) return;

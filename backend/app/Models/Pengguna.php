@@ -31,6 +31,11 @@ class Pengguna extends Authenticatable
         'password',
     ];
 
+    protected $casts = [
+        'id_role'   => 'integer',
+        'id_cabang' => 'integer',
+    ];
+
     public function role()
     {
         return $this->belongsTo(Role::class, 'id_role', 'id_role');

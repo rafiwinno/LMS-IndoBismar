@@ -30,6 +30,11 @@ class User extends Authenticatable
         'password'
     ];
 
+    protected $casts = [
+        'id_role'   => 'integer',
+        'id_cabang' => 'integer',
+    ];
+
     public function setPasswordAttribute($value)
     {
         // Hanya hash jika belum di-hash

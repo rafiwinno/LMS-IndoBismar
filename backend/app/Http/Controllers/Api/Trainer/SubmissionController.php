@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Trainer;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\URL;
 use App\Models\Trainer\Submission;
 use App\Models\Trainer\Assignment;
 use App\Models\Trainer\Course;
@@ -23,7 +24,14 @@ class SubmissionController extends Controller
 
         $submissions = Submission::where('id_tugas', $assignmentId)
             ->with('peserta:id_pengguna,nama,email')
-            ->get();
+            ->get()
+            ->map(function ($s) {
+                $data = $s->toArray();
+                $data['file_url'] = $s->file_tugas
+                    ? URL::temporarySignedRoute('files.serve', now()->addHours(2), ['path' => $s->file_tugas])
+                    : null;
+                return $data;
+            });
 
         return response()->json(['data' => $submissions]);
     }

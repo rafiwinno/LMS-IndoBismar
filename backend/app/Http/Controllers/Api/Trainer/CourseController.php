@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Trainer;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Trainer\Course;
 use App\Models\Trainer\Material;
@@ -12,6 +13,7 @@ use App\Models\Trainer\Assignment;
 use App\Models\Trainer\Submission;
 use App\Models\Trainer\Quiz;
 use App\Models\Trainer\Question;
+use App\Models\Trainer\Choice;
 use App\Models\AttemptKuis;
 use App\Models\JawabanKuis;
 use App\Models\PesertaKursus;
@@ -120,44 +122,50 @@ class CourseController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        // Hapus materi beserta file-nya
-        Material::where('id_kursus', $id)->each(function ($material) {
-            if ($material->file_materi && !filter_var($material->file_materi, FILTER_VALIDATE_URL)) {
-                Storage::disk('public')->delete($material->file_materi);
-            }
-            $material->delete();
-        });
+        DB::transaction(function () use ($id, $course, $request) {
+            // Hapus materi beserta file-nya
+            Material::where('id_kursus', $id)
+                ->whereNotNull('file_materi')
+                ->get()
+                ->each(function ($material) {
+                    if (!filter_var($material->file_materi, FILTER_VALIDATE_URL)) {
+                        Storage::disk('local')->delete($material->file_materi);
+                    }
+                });
+            Material::where('id_kursus', $id)->delete();
 
-        // Hapus submission beserta file-nya, lalu hapus tugas
-        Assignment::where('id_kursus', $id)->each(function ($assignment) {
-            Submission::where('id_tugas', $assignment->id_tugas)->each(function ($sub) {
-                if ($sub->file_tugas) {
-                    Storage::disk('public')->delete($sub->file_tugas);
-                }
-                $sub->delete();
-            });
-            if ($assignment->file_tugas) {
-                Storage::disk('public')->delete($assignment->file_tugas);
-            }
-            $assignment->delete();
-        });
+            // Hapus submission beserta file-nya, lalu hapus tugas (bulk)
+            $assignmentIds = Assignment::where('id_kursus', $id)->pluck('id_tugas');
 
-        // Hapus jawaban, pilihan, attempt, lalu kuis
-        Quiz::where('id_kursus', $id)->each(function ($quiz) {
-            Question::where('id_kuis', $quiz->id_kuis)->each(function ($question) {
-                JawabanKuis::where('id_pertanyaan', $question->id_pertanyaan)->delete();
-                $question->pilihan()->delete();
-                $question->delete();
-            });
-            AttemptKuis::where('id_kuis', $quiz->id_kuis)->delete();
-            $quiz->delete();
-        });
+            Submission::whereIn('id_tugas', $assignmentIds)
+                ->whereNotNull('file_tugas')
+                ->get()
+                ->each(fn($sub) => Storage::disk('local')->delete($sub->file_tugas));
+            Submission::whereIn('id_tugas', $assignmentIds)->delete();
 
-        // Hapus enrollment peserta
-        PesertaKursus::where('id_kursus', $id)->delete();
+            Assignment::whereIn('id_tugas', $assignmentIds)
+                ->whereNotNull('file_tugas')
+                ->get()
+                ->each(fn($a) => Storage::disk('local')->delete($a->file_tugas));
+            Assignment::whereIn('id_tugas', $assignmentIds)->delete();
+
+            // Hapus jawaban, pilihan, attempt, lalu kuis (bulk)
+            $quizIds      = Quiz::where('id_kursus', $id)->pluck('id_kuis');
+            $questionIds  = Question::whereIn('id_kuis', $quizIds)->pluck('id_pertanyaan');
+
+            JawabanKuis::whereIn('id_pertanyaan', $questionIds)->delete();
+            Choice::whereIn('id_pertanyaan', $questionIds)->delete();
+            Question::whereIn('id_kuis', $quizIds)->delete();
+            AttemptKuis::whereIn('id_kuis', $quizIds)->delete();
+            Quiz::whereIn('id_kuis', $quizIds)->delete();
+
+            // Hapus enrollment peserta
+            PesertaKursus::where('id_kursus', $id)->delete();
+
+            $course->delete();
+        });
 
         Cache::forget("trainer_courses_{$request->user()->id_pengguna}");
-        $course->delete();
 
         return response()->json(['message' => 'Course berhasil dihapus']);
     }

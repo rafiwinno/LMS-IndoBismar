@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api\User;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 
 class TugasController extends Controller
 {
@@ -74,7 +73,7 @@ class TugasController extends Controller
             'file_tugas' => 'required|file|max:51200|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,zip,txt',
         ]);
 
-        $path = $request->file('file_tugas')->store("tugas/{$id_tugas}", 'public');
+        $path = $request->file('file_tugas')->store("tugas/{$id_tugas}", 'local');
 
         // Simpan pengumpulan tugas
         DB::table('pengumpulan_tugas')->insert([

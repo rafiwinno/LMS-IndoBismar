@@ -13,9 +13,25 @@ class ProgressController extends Controller
     public function index(Request $request)
     {
         $trainerId = $request->user()->id_pengguna;
+        $courseId  = $request->query('course_id') ? (int) $request->query('course_id') : null;
+        $perPage   = min(max((int) $request->query('per_page', 50), 1), 200);
+        $page      = max((int) $request->query('page', 1), 1);
+        $offset    = ($page - 1) * $perPage;
 
-        $data = Cache::remember("trainer_progress_v4_{$trainerId}", 120, function () use ($trainerId) {
-            return DB::select("
+        $cacheKey = "trainer_progress_v6_{$trainerId}_c{$courseId}_p{$page}_pp{$perPage}";
+
+        $result = Cache::remember($cacheKey, 120, function () use ($trainerId, $courseId, $perPage, $offset) {
+            if ($courseId) {
+                $courseClause  = 'AND k.id_kursus = ?';
+                $rowBindings   = [$trainerId, $courseId, $perPage, $offset];
+                $countBindings = [$trainerId, $courseId];
+            } else {
+                $courseClause  = '';
+                $rowBindings   = [$trainerId, $perPage, $offset];
+                $countBindings = [$trainerId];
+            }
+
+            $rows = DB::select("
                 SELECT
                     p.id_pengguna   AS id,
                     p.nama,
@@ -23,7 +39,7 @@ class ProgressController extends Controller
                     k.judul_kursus  AS course,
                     COUNT(DISTINCT pm.id_progress)  AS materi_selesai,
                     COUNT(DISTINCT m.id_materi)      AS total_materi,
-                    COUNT(DISTINCT pt.id_tugas)      AS tugas_dikumpul,
+                    COUNT(DISTINCT pt.id_tugas)      AS tugas_selesai,
                     COUNT(DISTINCT t.id_tugas)       AS total_tugas,
                     COUNT(DISTINCT ak.id_kuis)       AS kuis_selesai,
                     COUNT(DISTINCT kuis.id_kuis)     AS total_kuis,
@@ -51,12 +67,33 @@ class ProgressController extends Controller
                     ON ak.id_kuis     = kuis.id_kuis
                     AND ak.id_pengguna = pk.id_pengguna
                     AND ak.status      = 'selesai'
-                WHERE k.id_trainer = ?
+                WHERE k.id_trainer = ? {$courseClause}
                 GROUP BY p.id_pengguna, p.nama, k.id_kursus, k.judul_kursus
-            ", [$trainerId]);
+                LIMIT ? OFFSET ?
+            ", $rowBindings);
+
+            $total = DB::selectOne("
+                SELECT COUNT(*) AS total FROM (
+                    SELECT 1
+                    FROM peserta_kursus pk
+                    JOIN kursus k ON k.id_kursus = pk.id_kursus
+                    WHERE k.id_trainer = ? {$courseClause}
+                    GROUP BY pk.id_pengguna, pk.id_kursus
+                ) AS sub
+            ", $countBindings)->total;
+
+            return ['rows' => $rows, 'total' => (int) $total];
         });
 
-        return response()->json(['data' => $data]);
+        return response()->json([
+            'data' => $result['rows'],
+            'meta' => [
+                'total'        => $result['total'],
+                'per_page'     => $perPage,
+                'current_page' => $page,
+                'last_page'    => (int) ceil($result['total'] / $perPage) ?: 1,
+            ],
+        ]);
     }
 
     public function allPesertaCabang(Request $request)

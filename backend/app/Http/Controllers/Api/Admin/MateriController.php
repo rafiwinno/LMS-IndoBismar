@@ -7,6 +7,7 @@ use App\Models\Materi;
 use App\Models\ProgressMateri;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Validator;
 
 class MateriController extends Controller
@@ -76,7 +77,7 @@ class MateriController extends Controller
 
         if ($request->hasFile('file_materi')) {
             $file     = $request->file('file_materi');
-            $path     = $file->store('materi', 'public');
+            $path     = $file->store('materi', 'local');
             $data['file_materi'] = $path;
             $data['ukuran']      = $this->formatBytes($file->getSize());
         }
@@ -161,10 +162,10 @@ class MateriController extends Controller
         if ($request->hasFile('file_materi')) {
             // Hapus file lama jika ada
             if ($materi->file_materi && !str_starts_with($materi->file_materi, 'http')) {
-                Storage::disk('public')->delete($materi->file_materi);
+                Storage::disk('local')->delete($materi->file_materi);
             }
             $file = $request->file('file_materi');
-            $path = $file->store('materi', 'public');
+            $path = $file->store('materi', 'local');
             $materi->file_materi = $path;
             $materi->ukuran      = $this->formatBytes($file->getSize());
         }
@@ -200,7 +201,7 @@ class MateriController extends Controller
 
         // Hapus file fisik jika bukan URL eksternal
         if ($materi->file_materi && !str_starts_with($materi->file_materi, 'http')) {
-            Storage::disk('public')->delete($materi->file_materi);
+            Storage::disk('local')->delete($materi->file_materi);
         }
 
         $materi->delete();
@@ -235,7 +236,7 @@ class MateriController extends Controller
             if (str_starts_with($materi->file_materi, 'http')) {
                 $fileUrl = $materi->file_materi;
             } else {
-                $fileUrl = Storage::disk('public')->url($materi->file_materi);
+                $fileUrl = URL::temporarySignedRoute('files.serve', now()->addHours(2), ['path' => $materi->file_materi]);
             }
         }
 

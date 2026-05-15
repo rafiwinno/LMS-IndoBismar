@@ -322,11 +322,16 @@ class QuizController extends Controller
                 ->where('id_attempt', $attemptId)
                 ->first();
 
-            if ($jawaban) {
-                $pertanyaan = Pertanyaan::find($jawaban->id_pertanyaan);
-                $maxSkor    = $pertanyaan ? $pertanyaan->bobot_nilai : 100;
-                $jawaban->update(['skor' => min($skor, $maxSkor)]);
+            if (!$jawaban) {
+                continue;
             }
+
+            $pertanyaan = Pertanyaan::find($jawaban->id_pertanyaan);
+            if (!$pertanyaan) {
+                continue;
+            }
+
+            $jawaban->update(['skor' => min((int) $skor, (int) $pertanyaan->bobot_nilai)]);
         }
 
         $totalSkor = JawabanKuis::where('id_attempt', $attemptId)->sum('skor');

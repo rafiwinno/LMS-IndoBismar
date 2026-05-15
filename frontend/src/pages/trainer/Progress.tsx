@@ -1,13 +1,15 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Users, TrendingUp, CheckSquare, AlertCircle, BookOpen } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import api from '../../api/axiosInstance';
-import type { PesertaProgress } from '../types/trainer';
+import { getCourses } from '../../api/courseApi';
+import type { Course, PesertaProgress } from '../types/trainer';
 import { cardCls, thCls, trCls } from '../../lib/styles';
 
 export default function TrainerProgress() {
   const [searchParams] = useSearchParams();
   const [peserta, setPeserta] = useState<PesertaProgress[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [apiError, setApiError] = useState(false);
   const courseParam = searchParams.get('course');
@@ -16,9 +18,17 @@ export default function TrainerProgress() {
   );
 
   useEffect(() => {
-    api.get('/trainer/peserta/progress')
+    getCourses()
+      .then((res) => setCourses(res.data ?? []))
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    setLoading(true);
+    const params = selectedCourse !== 'all' ? { course_id: selectedCourse, per_page: 200 } : { per_page: 200 };
+    api.get('/trainer/peserta/progress', { params })
       .then((res) => {
-        setPeserta(res.data.data ?? res.data);
+        setPeserta(res.data.data ?? []);
         setApiError(false);
       })
       .catch(() => {
@@ -26,19 +36,9 @@ export default function TrainerProgress() {
         setPeserta([]);
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [selectedCourse]);
 
-  // Derive unique courses from fetched data
-  const courses = useMemo(() => {
-    const map = new Map<number, string>();
-    peserta.forEach((p) => map.set(p.id_kursus, p.course));
-    return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
-  }, [peserta]);
-
-  const filtered = useMemo(
-    () => selectedCourse === 'all' ? peserta : peserta.filter((p) => p.id_kursus === selectedCourse),
-    [peserta, selectedCourse],
-  );
+  const filtered = peserta;
 
   return (
     <div className="space-y-6">
@@ -59,7 +59,7 @@ export default function TrainerProgress() {
             >
               <option value="all">Semua Course</option>
               {courses.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
+                <option key={c.id_kursus} value={c.id_kursus}>{c.judul_kursus}</option>
               ))}
             </select>
           </div>

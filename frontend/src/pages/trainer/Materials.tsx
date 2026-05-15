@@ -157,9 +157,7 @@ export default function Materials() {
     () => materials.map(m => ({
       ...m,
       ytId: m.tipe_materi === 'video' && m.file_materi ? getYouTubeId(m.file_materi) : null,
-      fileUrl: m.file_materi
-        ? (m.file_materi.startsWith('http') ? m.file_materi : `${STORAGE_URL}/${m.file_materi}`)
-        : null,
+      fileUrl: m.file_url ?? (m.file_materi?.startsWith('http') ? m.file_materi : null),
     })),
     [materials]
   );
@@ -224,7 +222,7 @@ export default function Materials() {
         await createMaterial(fd);
       }
       setShowModal(false);
-      load();
+      await load();
     } catch (e: unknown) {
       const err = e as { response?: { data?: { message?: string } } };
       setError(err.response?.data?.message || 'Gagal menyimpan');
@@ -238,7 +236,7 @@ export default function Materials() {
     setDeletingId(matId);
     try {
       await deleteMaterial(matId);
-      load();
+      await load();
     } catch {
       toast.error('Gagal menghapus materi. Coba lagi.');
     } finally {

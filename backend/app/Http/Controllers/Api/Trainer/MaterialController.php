@@ -4,16 +4,29 @@ namespace App\Http\Controllers\Api\Trainer;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
 use App\Models\Trainer\Material;
 use App\Models\Trainer\Course;
-use Illuminate\Support\Facades\Storage;
 
 class MaterialController extends Controller
 {
-    // LIST MATERI PER COURSE (dengan cek kepemilikan course)
+    private function fileUrl(string $path): string
+    {
+        return URL::temporarySignedRoute('files.serve', now()->addHours(2), ['path' => $path]);
+    }
+
+    private function formatMaterial(Material $material): array
+    {
+        $data = $material->toArray();
+        $data['file_url'] = ($material->file_materi && !str_starts_with($material->file_materi, 'http'))
+            ? $this->fileUrl($material->file_materi)
+            : $material->file_materi;
+        return $data;
+    }
+
     public function index(Request $request, $courseId)
     {
-        // FIX: pastikan course milik trainer yang login
         $course = Course::findOrFail($courseId);
         if ($course->id_trainer !== $request->user()->id_pengguna) {
             return response()->json(['message' => 'Unauthorized'], 403);
@@ -25,11 +38,10 @@ class MaterialController extends Controller
 
         return response()->json([
             'message' => 'List materi',
-            'data'    => $materials,
+            'data'    => $materials->map(fn($m) => $this->formatMaterial($m)),
         ]);
     }
 
-    // CREATE MATERI
     public function store(Request $request)
     {
         $request->validate([
@@ -39,7 +51,6 @@ class MaterialController extends Controller
             'urutan'       => 'nullable|integer|min:1',
         ]);
 
-        // FIX: cek kepemilikan course
         $course = Course::findOrFail($request->id_kursus);
         if ($course->id_trainer !== $request->user()->id_pengguna) {
             return response()->json(['message' => 'Unauthorized'], 403);
@@ -51,10 +62,11 @@ class MaterialController extends Controller
             ]);
             $fileMateri = $request->link_video;
         } else {
+            $mimes = $request->tipe_materi === 'pdf' ? 'pdf' : 'doc,docx';
             $request->validate([
-                'file_materi' => 'required|file|mimes:pdf,doc,docx|max:10240',
+                'file_materi' => "required|file|mimes:{$mimes}|max:10240",
             ]);
-            $fileMateri = $request->file('file_materi')->store('materi', 'public');
+            $fileMateri = $request->file('file_materi')->store('materi', 'local');
         }
 
         $material = Material::create([
@@ -67,36 +79,35 @@ class MaterialController extends Controller
 
         return response()->json([
             'message' => 'Materi berhasil dibuat',
-            'data'    => $material,
+            'data'    => $this->formatMaterial($material),
         ], 201);
     }
 
-    // UPDATE MATERI (dengan validasi + hapus file lama)
     public function update(Request $request, $id)
     {
         $material = Material::findOrFail($id);
 
-        // FIX: cek kepemilikan lewat course
         $course = Course::findOrFail($material->id_kursus);
         if ($course->id_trainer !== $request->user()->id_pengguna) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        // FIX: tambah validasi
+        $effectiveTipe = $request->tipe_materi ?? $material->tipe_materi;
+        $mimes = $effectiveTipe === 'pdf' ? 'pdf' : 'doc,docx';
+
         $request->validate([
             'judul_materi' => 'sometimes|required|string|max:200',
             'tipe_materi'  => 'sometimes|required|in:video,pdf,dokumen',
             'urutan'       => 'nullable|integer|min:1',
             'link_video'   => 'sometimes|nullable|url',
-            'file_materi'  => 'sometimes|file|mimes:pdf,doc,docx|max:10240',
+            'file_materi'  => "sometimes|file|mimes:{$mimes}|max:10240",
         ]);
 
-        // FIX: hapus file lama jika ada file baru yang diupload
         if ($request->hasFile('file_materi')) {
             if ($material->file_materi && !filter_var($material->file_materi, FILTER_VALIDATE_URL)) {
-                Storage::disk('public')->delete($material->file_materi);
+                Storage::disk('local')->delete($material->file_materi);
             }
-            $fileMateri = $request->file('file_materi')->store('materi', 'public');
+            $fileMateri = $request->file('file_materi')->store('materi', 'local');
             $material->file_materi = $fileMateri;
         } elseif ($request->filled('link_video')) {
             $material->file_materi = $request->link_video;
@@ -109,24 +120,21 @@ class MaterialController extends Controller
 
         return response()->json([
             'message' => 'Materi berhasil diupdate',
-            'data'    => $material,
+            'data'    => $this->formatMaterial($material),
         ]);
     }
 
-    // DELETE MATERI (dengan hapus file + cek kepemilikan)
     public function destroy(Request $request, $id)
     {
         $material = Material::findOrFail($id);
 
-        // FIX: cek kepemilikan
         $course = Course::findOrFail($material->id_kursus);
         if ($course->id_trainer !== $request->user()->id_pengguna) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        // FIX: hapus file dari storage saat delete
         if ($material->file_materi && !filter_var($material->file_materi, FILTER_VALIDATE_URL)) {
-            Storage::disk('public')->delete($material->file_materi);
+            Storage::disk('local')->delete($material->file_materi);
         }
 
         $material->delete();

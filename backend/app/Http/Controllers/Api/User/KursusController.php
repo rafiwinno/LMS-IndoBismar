@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\User;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\URL;
 
 class KursusController extends Controller
 {
@@ -64,6 +65,11 @@ class KursusController extends Controller
         $materiDenganProgress = $materi->map(function ($item) use ($progress) {
             $item->status_progress = isset($progress[$item->id_materi])
                 ? $progress[$item->id_materi]->status : 'belum';
+            if ($item->file_materi && !str_starts_with($item->file_materi, 'http')) {
+                $item->file_materi = URL::temporarySignedRoute(
+                    'files.serve', now()->addHours(2), ['path' => $item->file_materi]
+                );
+            }
             return $item;
         });
 

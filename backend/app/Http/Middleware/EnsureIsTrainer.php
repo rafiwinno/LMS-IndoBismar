@@ -15,10 +15,8 @@ class EnsureIsTrainer
             return response()->json(['message' => 'Unauthenticated.'], 401);
         }
 
-        if ($user->id_role !== 3) {
-            return response()->json([
-                'message' => 'Akses ditolak. Hanya trainer yang dapat mengakses endpoint ini.',
-            ], 403);
+        if ((int) $user->id_role !== 3 || $user->status !== 'aktif') {
+            return response()->json(['message' => 'Akses ditolak.'], 403);
         }
 
         return $next($request);
