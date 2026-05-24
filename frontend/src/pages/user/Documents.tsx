@@ -58,6 +58,19 @@ export default function Documents() {
   const handleFileChange = async (jenis: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+    if (!allowedTypes.includes(file.type)) {
+      setErrorMsg('Format tidak didukung. Gunakan PDF, JPG, atau PNG.');
+      e.target.value = '';
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setErrorMsg('Ukuran file melebihi batas 2MB.');
+      e.target.value = '';
+      return;
+    }
+
     setSuccessMsg(''); setErrorMsg(''); setUploading(jenis);
     const formData = new FormData();
     formData.append('file', file);

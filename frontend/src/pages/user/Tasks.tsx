@@ -28,6 +28,7 @@ export default function Tasks() {
   const searchRef = useRef<HTMLInputElement>(null);
 
   // Upload state
+  const [error, setError]           = useState('');
   const [uploading, setUploading]   = useState<number | null>(null);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploadError, setUploadError] = useState('');
@@ -35,6 +36,7 @@ export default function Tasks() {
 
   const fetchAll = () => {
     setLoading(true);
+    setError('');
     Promise.all([
       API.get('/user/tugas'),
       API.get('/user/kuis'),
@@ -43,7 +45,9 @@ export default function Tasks() {
         setTugasList(t.data.data ?? []);
         setKuisList(k.data.data ?? []);
       })
-      .catch(err => console.error(err))
+      .catch(err => {
+        setError(err.response?.data?.message || 'Gagal memuat data. Coba refresh halaman.');
+      })
       .finally(() => setLoading(false));
   };
 
@@ -89,6 +93,13 @@ export default function Tasks() {
       filter === 'selesai' ? k.status_attempt === 'sudah' : true;
     return matchSearch && matchFilter;
   });
+
+  if (error) return (
+    <div className="text-center py-16">
+      <p className="text-red-500 font-medium">{error}</p>
+      <button onClick={fetchAll} className="mt-3 text-sm text-gray-500 hover:text-gray-700 underline">Coba lagi</button>
+    </div>
+  );
 
   return (
     <div className="space-y-6">

@@ -19,21 +19,22 @@ class Feedback extends Model
         'dibuat_pada',
     ];
 
-    // Relasi ke trainer
+    protected $casts = [
+        'dibuat_pada' => 'datetime',
+    ];
+
     public function trainer()
     {
-        return $this->belongsTo(User::class, 'id_trainer', 'id_pengguna');
+        return $this->belongsTo(Pengguna::class, 'id_trainer', 'id_pengguna');
     }
 
-    // Relasi ke peserta
     public function peserta()
     {
-        return $this->belongsTo(User::class, 'id_peserta', 'id_pengguna');
+        return $this->belongsTo(Pengguna::class, 'id_peserta', 'id_pengguna');
     }
 
-    // Tambahkan relasi ini di Feedback.php
     public function kursus()
     {
-        return $this->belongsTo(\App\Models\Trainer\Course::class, 'id_kursus', 'id_kursus');
+        return $this->belongsTo(\App\Models\Kursus::class, 'id_kursus', 'id_kursus');
     }
 }

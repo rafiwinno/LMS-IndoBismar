@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { Search, Eye, Mail, MapPin, BookOpen, TrendingUp, Plus, Edit2, Trash2, X, CheckCircle, Clock, FileText, CheckCircle2, XCircle, ExternalLink, UserPlus, UserMinus } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Search, Eye, Mail, MapPin, BookOpen, TrendingUp, Plus, Edit2, Trash2, X, CheckCircle, Clock, FileText, CheckCircle2, XCircle, ExternalLink, UserPlus, UserMinus, Upload, Download, AlertCircle } from 'lucide-react';
 import { api } from '../../lib/api';
+import { sanitizeUrl } from '../../lib/sanitize';
 import { confirm } from '../../lib/confirm';
 import { useToast } from '../../lib/toast';
 
@@ -23,6 +24,12 @@ interface Peserta {
 }
 
 const emptyForm = { nama: '', username: '', email: '', password: '', nomor_hp: '', id_cabang: 1, asal_sekolah: '', jurusan: '', status: 'aktif' };
+
+interface ImportResult {
+  berhasil: { nama: string; username: string; password: string; tanggal_lahir: string }[];
+  gagal: { baris: number; nama: string; alasan: string }[];
+  message: string;
+}
 
 export function Participants() {
   const toast = useToast();
@@ -48,6 +55,13 @@ export function Participants() {
   const [allKursus, setAllKursus] = useState<any[]>([]);
   const [selectedKursusId, setSelectedKursusId] = useState<number | ''>('');
   const [enrolling, setEnrolling] = useState(false);
+
+  // Import CSV state
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState<ImportResult | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchPeserta = async (p = 1, search = '') => {
     setLoading(true);
@@ -186,6 +200,37 @@ export function Participants() {
     }
   };
 
+  const handleImport = async () => {
+    if (!importFile) return;
+    setImporting(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', importFile);
+      const result = await api.importPesertaCsv(fd);
+      setImportResult(result);
+      fetchPeserta(page, searchTerm);
+      if (result.berhasil.length > 0) {
+        toast.success(result.message);
+      }
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  const downloadTemplate = () => {
+    const header = 'nama,tanggal_lahir,email,nomor_hp,asal_sekolah,jurusan,periode_mulai,periode_selesai';
+    const contoh = 'Budi Santoso,2005-01-15,budi@email.com,08123456789,SMK Negeri 1,Teknik Informatika,2025-07-01,2025-12-31';
+    const blob = new Blob([header + '\n' + contoh], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'template_import_siswa_pkl.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const pendingCount = peserta.filter(p => p.status === 'pending').length;
 
   return (
@@ -215,6 +260,10 @@ export function Participants() {
             <button onClick={() => setViewMode('table')} className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${viewMode === 'table' ? 'bg-white dark:bg-[#161b22] text-gray-900 dark:text-white shadow-sm' : 'text-gray-600 dark:text-gray-400'}`}>Table</button>
             <button onClick={() => setViewMode('grid')} className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${viewMode === 'grid' ? 'bg-white dark:bg-[#161b22] text-gray-900 dark:text-white shadow-sm' : 'text-gray-600 dark:text-gray-400'}`}>Grid</button>
           </div>
+          <button onClick={() => { setShowImportModal(true); setImportFile(null); setImportResult(null); }}
+            className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors">
+            <Upload className="w-4 h-4" /><span>Import CSV</span>
+          </button>
           <button onClick={openAdd} className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors">
             <Plus className="w-4 h-4" /><span>Tambah</span>
           </button>
@@ -393,7 +442,7 @@ export function Participants() {
                     </div>
                     <div className="space-y-2">
                       {detailPeserta.surat_siswa_url ? (
-                        <a href={detailPeserta.surat_siswa_url} target="_blank" rel="noopener noreferrer"
+                        <a href={sanitizeUrl(detailPeserta.surat_siswa_url)} target="_blank" rel="noopener noreferrer"
                           className="flex items-center gap-2 px-3 py-2 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-red-600 hover:bg-red-50 transition-colors">
                           <FileText className="w-4 h-4 flex-shrink-0" />
                           Surat Pernyataan Siswa PKL
@@ -401,7 +450,7 @@ export function Participants() {
                         </a>
                       ) : <p className="text-sm text-gray-400 italic">Surat siswa belum diupload</p>}
                       {detailPeserta.surat_ortu_url ? (
-                        <a href={detailPeserta.surat_ortu_url} target="_blank" rel="noopener noreferrer"
+                        <a href={sanitizeUrl(detailPeserta.surat_ortu_url)} target="_blank" rel="noopener noreferrer"
                           className="flex items-center gap-2 px-3 py-2 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-red-600 hover:bg-red-50 transition-colors">
                           <FileText className="w-4 h-4 flex-shrink-0" />
                           Surat Pernyataan Orang Tua
@@ -524,7 +573,7 @@ export function Participants() {
               <div className="space-y-2">
                 <p className="text-sm font-medium text-gray-700">Dokumen Terlampir</p>
                 {reviewPeserta.surat_siswa_url ? (
-                  <a href={reviewPeserta.surat_siswa_url} target="_blank" rel="noopener noreferrer"
+                  <a href={sanitizeUrl(reviewPeserta.surat_siswa_url)} target="_blank" rel="noopener noreferrer"
                     className="flex items-center gap-2 px-3 py-2 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-red-600 hover:bg-red-50 transition-colors">
                     <FileText className="w-4 h-4 flex-shrink-0" />
                     Surat Pernyataan Siswa PKL
@@ -534,7 +583,7 @@ export function Participants() {
                   <p className="text-sm text-gray-400 italic">Surat siswa belum diupload</p>
                 )}
                 {reviewPeserta.surat_ortu_url ? (
-                  <a href={reviewPeserta.surat_ortu_url} target="_blank" rel="noopener noreferrer"
+                  <a href={sanitizeUrl(reviewPeserta.surat_ortu_url)} target="_blank" rel="noopener noreferrer"
                     className="flex items-center gap-2 px-3 py-2 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-red-600 hover:bg-red-50 transition-colors">
                     <FileText className="w-4 h-4 flex-shrink-0" />
                     Surat Pernyataan Orang Tua
@@ -578,6 +627,160 @@ export function Participants() {
                     className="flex-1 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2 transition-colors">
                     <CheckCircle2 className="w-4 h-4" />
                     {verifying ? 'Memproses...' : 'Setujui'}
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Import CSV Modal */}
+      {showImportModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white dark:bg-[#161b22] rounded-xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col">
+            <div className="flex items-center justify-between p-6 border-b dark:border-white/10">
+              <div>
+                <h3 className="text-lg font-semibold dark:text-white">Import Data Siswa PKL</h3>
+                <p className="text-sm text-gray-500">Upload file CSV untuk membuat akun siswa secara massal</p>
+              </div>
+              <button onClick={() => setShowImportModal(false)}><X className="w-5 h-5 text-gray-400 hover:text-gray-600" /></button>
+            </div>
+
+            <div className="overflow-y-auto flex-1 p-6 space-y-4">
+              {!importResult ? (
+                <>
+                  {/* Info format */}
+                  <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-500/30 rounded-lg p-4">
+                    <p className="text-sm font-semibold text-blue-800 dark:text-blue-300 mb-2">Format CSV yang diperlukan:</p>
+                    <div className="text-xs text-blue-700 dark:text-blue-400 space-y-1 font-mono">
+                      <p><span className="font-bold">Wajib:</span> nama, tanggal_lahir</p>
+                      <p><span className="font-bold">Opsional:</span> email, nomor_hp, asal_sekolah, jurusan, periode_mulai, periode_selesai</p>
+                    </div>
+                    <div className="mt-3 bg-blue-100 dark:bg-blue-900/30 rounded p-2 text-xs font-mono text-blue-800 dark:text-blue-300">
+                      <p>nama,tanggal_lahir,email,asal_sekolah,jurusan</p>
+                      <p>Budi Santoso,2005-01-15,budi@email.com,SMK Negeri 1,RPL</p>
+                    </div>
+                    <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
+                      Username otomatis = nama depan (huruf kecil) &bull; Password otomatis = tanggal lahir format <strong>ddmmyyyy</strong> (contoh: <strong>15012005</strong>)
+                    </p>
+                  </div>
+
+                  {/* Upload area */}
+                  <div
+                    className="border-2 border-dashed border-gray-300 dark:border-white/20 rounded-lg p-8 text-center cursor-pointer hover:border-green-500 hover:bg-green-50 dark:hover:bg-green-900/10 transition-colors"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <Upload className="w-10 h-10 text-gray-400 mx-auto mb-3" />
+                    {importFile ? (
+                      <div>
+                        <p className="font-medium text-green-700 dark:text-green-400">{importFile.name}</p>
+                        <p className="text-xs text-gray-500 mt-1">{(importFile.size / 1024).toFixed(1)} KB — klik untuk ganti file</p>
+                      </div>
+                    ) : (
+                      <div>
+                        <p className="text-gray-600 dark:text-gray-400">Klik untuk pilih file CSV</p>
+                        <p className="text-xs text-gray-400 mt-1">Format: .csv — Maks. 5 MB</p>
+                      </div>
+                    )}
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".csv,text/csv"
+                      className="hidden"
+                      onChange={e => setImportFile(e.target.files?.[0] ?? null)}
+                    />
+                  </div>
+
+                  <button onClick={downloadTemplate}
+                    className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
+                    <Download className="w-4 h-4" /> Unduh template CSV
+                  </button>
+                </>
+              ) : (
+                /* Hasil Import */
+                <div className="space-y-4">
+                  <div className="flex gap-3">
+                    <div className="flex-1 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-500/30 rounded-lg p-4 text-center">
+                      <p className="text-2xl font-bold text-green-700 dark:text-green-400">{importResult.berhasil.length}</p>
+                      <p className="text-sm text-green-600 dark:text-green-400">Berhasil dibuat</p>
+                    </div>
+                    <div className="flex-1 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-500/30 rounded-lg p-4 text-center">
+                      <p className="text-2xl font-bold text-red-700 dark:text-red-400">{importResult.gagal.length}</p>
+                      <p className="text-sm text-red-600 dark:text-red-400">Gagal</p>
+                    </div>
+                  </div>
+
+                  {importResult.berhasil.length > 0 && (
+                    <div>
+                      <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Akun berhasil dibuat:</p>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-xs border-collapse">
+                          <thead>
+                            <tr className="bg-gray-50 dark:bg-white/5 text-gray-500 uppercase">
+                              <th className="px-3 py-2 text-left">Nama</th>
+                              <th className="px-3 py-2 text-left">Username</th>
+                              <th className="px-3 py-2 text-left">Password</th>
+                              <th className="px-3 py-2 text-left">Tgl Lahir</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-100 dark:divide-white/5">
+                            {importResult.berhasil.map((b, i) => (
+                              <tr key={i} className="hover:bg-gray-50 dark:hover:bg-white/3">
+                                <td className="px-3 py-2 font-medium text-gray-800 dark:text-white">{b.nama}</td>
+                                <td className="px-3 py-2 text-gray-600 dark:text-gray-300">{b.username}</td>
+                                <td className="px-3 py-2 font-mono text-green-700 dark:text-green-400">{b.password}</td>
+                                <td className="px-3 py-2 text-gray-500">{b.tanggal_lahir}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
+                  {importResult.gagal.length > 0 && (
+                    <div>
+                      <p className="text-sm font-semibold text-red-700 dark:text-red-400 mb-2 flex items-center gap-1">
+                        <AlertCircle className="w-4 h-4" /> Data yang gagal diimpor:
+                      </p>
+                      <div className="space-y-1.5">
+                        {importResult.gagal.map((g, i) => (
+                          <div key={i} className="flex items-start gap-2 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-500/20 rounded-lg px-3 py-2">
+                            <span className="text-xs text-red-400 shrink-0">Baris {g.baris}</span>
+                            <span className="text-xs font-medium text-red-700 dark:text-red-400">{g.nama}</span>
+                            <span className="text-xs text-red-500 ml-auto">{g.alasan}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-3 p-6 border-t dark:border-white/10">
+              {importResult ? (
+                <>
+                  <button onClick={() => { setImportResult(null); setImportFile(null); }}
+                    className="flex-1 py-2 border border-gray-300 dark:border-white/10 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 text-sm">
+                    Import Lagi
+                  </button>
+                  <button onClick={() => setShowImportModal(false)}
+                    className="flex-1 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm">
+                    Selesai
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button onClick={() => setShowImportModal(false)}
+                    className="flex-1 py-2 border border-gray-300 dark:border-white/10 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 text-sm">
+                    Batal
+                  </button>
+                  <button onClick={handleImport} disabled={!importFile || importing}
+                    className="flex-1 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2">
+                    <Upload className="w-4 h-4" />
+                    {importing ? 'Mengimpor...' : 'Import Sekarang'}
                   </button>
                 </>
               )}

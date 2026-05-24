@@ -3,6 +3,7 @@ import { Plus, Trash2, X, Edit2, Clock, Users, ChevronDown, ChevronRight, FileTe
 import { api } from '../../lib/api';
 import { confirm } from '../../lib/confirm';
 import { useToast } from '../../lib/toast';
+import { sanitizeUrl } from '../../lib/sanitize';
 
 interface Tugas {
   id: number; judul: string; deskripsi: string | null;
@@ -223,7 +224,7 @@ export function Assignments() {
                           </div>
                           <div className="flex items-center gap-3 flex-shrink-0">
                             {sub.file_url && (
-                              <a href={sub.file_url} target="_blank" rel="noopener noreferrer"
+                              <a href={sanitizeUrl(sub.file_url)} target="_blank" rel="noopener noreferrer"
                                 className="text-xs text-red-600 dark:text-red-400 hover:underline">
                                 Lihat File
                               </a>
@@ -301,7 +302,7 @@ export function Assignments() {
             <div className="p-6 space-y-4">
               <p className="text-sm text-gray-600 dark:text-gray-400">Peserta: <span className="font-medium text-gray-900 dark:text-white">{grading.peserta}</span></p>
               {grading.file_url && (
-                <a href={grading.file_url} target="_blank" rel="noopener noreferrer"
+                <a href={sanitizeUrl(grading.file_url)} target="_blank" rel="noopener noreferrer"
                   className="block text-sm text-red-600 dark:text-red-400 hover:underline">📎 Lihat File Tugas</a>
               )}
               <div>

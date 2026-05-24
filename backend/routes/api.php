@@ -22,7 +22,8 @@ use App\Http\Controllers\Api\Admin\TugasController       as AdminTugasController
 use App\Http\Controllers\Api\Admin\KuisController        as AdminKuisController;
 use App\Http\Controllers\Api\Admin\TrainerController     as AdminTrainerController;
 use App\Http\Controllers\Api\Admin\LaporanController     as AdminLaporanController;
-use App\Http\Controllers\Api\Admin\NotifikasiController  as AdminNotifikasiController;
+use App\Http\Controllers\Api\Admin\NotifikasiController      as AdminNotifikasiController;
+use App\Http\Controllers\Api\Admin\SecureDocumentController  as AdminSecureDocumentController;
 
 // ── Trainer Controllers ───────────────────────────────────────────────────────
 use App\Http\Controllers\Api\Trainer\CourseController      as TrainerCourseController;
@@ -48,23 +49,30 @@ Route::get('/files/{path}', [FileController::class, 'serve'])
     ->where('path', '.*')
     ->name('files.serve');
 
+// ── Public: daftar cabang untuk form registrasi ───────────────────────────────
+Route::get('/cabang', function () {
+    return response()->json([
+        'data' => \App\Models\Cabang::select('id_cabang', 'nama_cabang')
+            ->where('status', 'aktif')
+            ->orderBy('nama_cabang')
+            ->get(),
+    ]);
+});
+
 // =============================================================================
 // AUTH — Guest routes
 // =============================================================================
 
-// Peserta login/register — throttle: maks 5 percobaan per menit per IP
-Route::middleware('throttle:5,1')->group(function () {
-    Route::post('/register',      [UserAuthController::class, 'register']);
-    Route::post('/login/peserta', [UserAuthController::class, 'loginPeserta']);
-    Route::post('/login/staff',   [UserAuthController::class, 'loginStaff']);
-});
+// Peserta login/register (used by student portal)
+Route::post('/register',      [UserAuthController::class, 'register'])->middleware('throttle:10,1');
+Route::post('/login/peserta', [UserAuthController::class, 'loginPeserta'])->middleware('throttle:5,1');
+Route::post('/login/staff',   [UserAuthController::class, 'loginStaff'])->middleware('throttle:5,1');
 
-// Admin/Trainer/Superadmin login — throttle: maks 5 percobaan per menit per IP
-Route::middleware('throttle:5,1')->group(function () {
-    Route::post('/auth/login',       [AdminAuthController::class, 'login']);
-    Route::post('/auth/login-admin', [AdminAuthController::class, 'loginAdmin']);
-    Route::post('/auth/register',    [AdminAuthController::class, 'register']);
-});
+// Admin/Trainer/Superadmin login (used by admin portal via api.ts)
+Route::post('/auth/login',        [AdminAuthController::class, 'login'])->middleware('throttle:5,1');
+Route::post('/auth/login-admin',  [AdminAuthController::class, 'loginAdmin'])->middleware('throttle:5,1');
+Route::post('/auth/verify-otp',   [AdminAuthController::class, 'verifyOtp'])->middleware('throttle:5,1');
+Route::post('/auth/register',     [AdminAuthController::class, 'register'])->middleware('throttle:10,1');
 
 // =============================================================================
 // AUTHENTICATED ROUTES
@@ -72,10 +80,20 @@ Route::middleware('throttle:5,1')->group(function () {
 Route::middleware('auth:sanctum')->group(function () {
 
     // ── Shared auth ──────────────────────────────────────────────────────────
-    Route::post('/logout',        [UserAuthController::class, 'logout']);
-    Route::post('/auth/logout',   [AdminAuthController::class, 'logout']);
-    Route::post('/auth/refresh',  [AdminAuthController::class, 'refresh']);
-    Route::get('/auth/me',        [AdminAuthController::class, 'me']);
+    Route::post('/logout',            [UserAuthController::class, 'logout']);
+    Route::post('/auth/logout',       [AdminAuthController::class, 'logout']);
+    Route::post('/auth/logout-all',   [AdminAuthController::class, 'logoutAll']);
+    Route::get('/auth/me',            [AdminAuthController::class, 'me']);
+    Route::post('/auth/refresh',      [AdminAuthController::class, 'refresh'])->middleware('throttle:10,1');
+
+    // ── Download dokumen PKL secara aman (private storage) ───────────────────
+    Route::get('/dokumen/secure/{path}', [AdminSecureDocumentController::class, 'download'])
+        ->where('path', '.*')
+        ->middleware('throttle:60,1');
+
+    // ── Upload dokumen PKL oleh peserta (role 4) — harus di luar admin:1,2 ──
+    Route::post('/peserta/saya/dokumen', [AdminPesertaController::class, 'uploadDokumen'])
+        ->middleware('throttle:10,1');
 
     // =========================================================================
     // SUPERADMIN PORTAL
@@ -93,11 +111,13 @@ Route::middleware('auth:sanctum')->group(function () {
         // alias /branches untuk frontend yang pakai endpoint ini
         Route::get('/branches',             [SuperBranchController::class, 'index']);
 
-        Route::get('/users',                [SuperUserController::class, 'index']);
-        Route::post('/users',               [SuperUserController::class, 'store']);
-        Route::put('/users/{id}',           [SuperUserController::class, 'update']);
-        Route::patch('/users/{id}/status',  [SuperUserController::class, 'updateStatus']);
-        Route::delete('/users/{id}',        [SuperUserController::class, 'destroy']);
+        Route::get('/users',                    [SuperUserController::class, 'index']);
+        Route::post('/users',                   [SuperUserController::class, 'store']);
+        Route::post('/users/bulk-status',       [SuperUserController::class, 'bulkStatus']);
+        Route::post('/users/bulk-delete',       [SuperUserController::class, 'bulkDelete']);
+        Route::put('/users/{id}',               [SuperUserController::class, 'update']);
+        Route::patch('/users/{id}/status',      [SuperUserController::class, 'updateStatus']);
+        Route::delete('/users/{id}',            [SuperUserController::class, 'destroy']);
     });
 
     // =========================================================================
@@ -207,6 +227,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/dashboard', [AdminDashboardController::class, 'index']);
 
         // Peserta
+        Route::post('/peserta/import',       [AdminPesertaController::class, 'importCsv']);
         Route::get('/peserta',               [AdminPesertaController::class, 'index']);
         Route::post('/peserta',              [AdminPesertaController::class, 'store']);
         Route::get('/peserta/{id}',          [AdminPesertaController::class, 'show']);
@@ -214,7 +235,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/peserta/{id}',       [AdminPesertaController::class, 'destroy']);
         Route::patch('/peserta/{id}/status', [AdminPesertaController::class, 'updateStatus']);
         Route::patch('/peserta/{id}/verifikasi-dokumen', [AdminPesertaController::class, 'verifikasiDokumen']);
-        Route::post('/peserta/saya/dokumen', [AdminPesertaController::class, 'uploadDokumen']);
 
         // Kursus (admin)
         Route::get('/kursus',                                     [AdminKursusController::class, 'index']);
@@ -251,12 +271,14 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/kuis/{id}/results',                        [AdminKuisController::class, 'results']);
         Route::patch('/kuis/attempts/{attemptId}/grade-essay',  [AdminKuisController::class, 'gradeEssay']);
 
-        // Laporan
-        Route::get('/laporan/dashboard', [AdminLaporanController::class, 'dashboard']);
-        Route::get('/laporan/peserta',   [AdminLaporanController::class, 'peserta']);
-        Route::get('/laporan/kursus',    [AdminLaporanController::class, 'kursus']);
-        Route::get('/laporan/kuis',      [AdminLaporanController::class, 'kuis']);
-        Route::get('/laporan/trainer',   [AdminLaporanController::class, 'trainer']);
+        // Laporan (rate-limited: 30 req/menit untuk cegah scraping data)
+        Route::middleware('throttle:30,1')->group(function () {
+            Route::get('/laporan/dashboard', [AdminLaporanController::class, 'dashboard']);
+            Route::get('/laporan/peserta',   [AdminLaporanController::class, 'peserta']);
+            Route::get('/laporan/kursus',    [AdminLaporanController::class, 'kursus']);
+            Route::get('/laporan/kuis',      [AdminLaporanController::class, 'kuis']);
+            Route::get('/laporan/trainer',   [AdminLaporanController::class, 'trainer']);
+        });
 
         // Notifikasi
         Route::get('/notifikasi',                      [AdminNotifikasiController::class, 'index']);

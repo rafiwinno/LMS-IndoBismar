@@ -1,12 +1,20 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Search, Plus, Edit2, Trash2, MoreVertical,
   Shield, X, ChevronLeft, ChevronRight,
   User, Mail, Lock, Building2, Download,
   Wifi, SlidersHorizontal, Users as UsersIcon,
   CheckSquare, Square, CheckCheck, ToggleLeft,
+  Upload, AlertCircle,
 } from 'lucide-react';
 import api from '../../services/api';
+
+// ─── Import CSV Types ─────────────────────────────────────────────────────────
+interface ImportResult {
+  berhasil: { nama: string; username: string; password: string; tanggal_lahir: string }[];
+  gagal: { baris: number; nama: string; alasan: string }[];
+  message: string;
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface UserItem {
@@ -368,6 +376,14 @@ export default function Users() {
   const [selected,     setSelected]     = useState<Set<number>>(new Set());
   const [bulkLoading,  setBulkLoading]  = useState(false);
 
+  // Import CSV state
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importFile,      setImportFile]      = useState<File | null>(null);
+  const [importCabang,    setImportCabang]    = useState('');
+  const [importing,       setImporting]       = useState(false);
+  const [importResult,    setImportResult]    = useState<ImportResult | null>(null);
+  const importFileRef = useRef<HTMLInputElement>(null);
+
   const showToast = (msg:string, type:'success'|'error'='success') => {
     setToast({msg,type}); setTimeout(()=>setToast(null),3000);
   };
@@ -386,7 +402,13 @@ export default function Users() {
       const p: Record<string,any> = { page };
       if (debouncedSearch) p.search=debouncedSearch; if (filterRole) p.role=filterRole; if (filterCabang) p.id_cabang=filterCabang;
       const res = await api.get('/superadmin/users',{params:p});
-      setUsers(res.data.data); setLastPage(res.data.last_page); setTotal(res.data.total);
+      const fresh: UserItem[] = res.data.data;
+      setUsers(fresh); setLastPage(res.data.last_page); setTotal(res.data.total);
+      const freshIds = new Set(fresh.map(u => u.id));
+      setSelected(prev => {
+        const next = new Set([...prev].filter(id => freshIds.has(id)));
+        return next.size === prev.size ? prev : next;
+      });
     } catch { showToast('Gagal memuat data user.','error'); }
     finally { setLoading(false); }
   },[page,debouncedSearch,filterRole,filterCabang]);
@@ -459,11 +481,11 @@ export default function Users() {
     if (!window.confirm(`Hapus ${selected.size} user yang dipilih? Tindakan ini tidak bisa dibatalkan.`)) return;
     setBulkLoading(true);
     try {
-      await Promise.all([...selected].map(id => api.delete(`/superadmin/users/${id}`)));
+      await api.post('/superadmin/users/bulk-delete', { ids: [...selected] });
       showToast(`${selected.size} user berhasil dihapus.`);
       setSelected(new Set());
       fetchUsers();
-    } catch { showToast('Sebagian user gagal dihapus.', 'error'); }
+    } catch { showToast('Gagal menghapus user.', 'error'); }
     finally { setBulkLoading(false); }
   };
 
@@ -471,12 +493,42 @@ export default function Users() {
     if (!selected.size) return;
     setBulkLoading(true);
     try {
-      await Promise.all([...selected].map(id => api.patch(`/superadmin/users/${id}/status`, { status })));
+      await api.post('/superadmin/users/bulk-status', { ids: [...selected], status });
       showToast(`${selected.size} user diubah menjadi ${status}.`);
       setSelected(new Set());
       fetchUsers();
-    } catch { showToast('Sebagian user gagal diubah statusnya.', 'error'); }
+    } catch { showToast('Gagal mengubah status user.', 'error'); }
     finally { setBulkLoading(false); }
+  };
+
+  const handleImportCsv = async () => {
+    if (!importFile || !importCabang) return;
+    setImporting(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', importFile);
+      fd.append('id_cabang', importCabang);
+      const res = await api.post('/peserta/import', fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      setImportResult(res.data);
+      fetchUsers();
+      if (res.data.berhasil.length > 0) showToast(res.data.message);
+    } catch (e: any) {
+      showToast(e.response?.data?.message || 'Gagal mengimpor CSV.', 'error');
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  const downloadImportTemplate = () => {
+    const header = 'nama,tanggal_lahir,email,nomor_hp,asal_sekolah,jurusan,periode_mulai,periode_selesai';
+    const contoh = 'Budi Santoso,2005-01-15,budi@email.com,08123456789,SMK Negeri 1,Teknik Informatika,2025-07-01,2025-12-31';
+    const blob = new Blob([header + '\n' + contoh], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'template_import_siswa_pkl.csv';
+    a.click(); URL.revokeObjectURL(url);
   };
 
   return (
@@ -504,10 +556,16 @@ export default function Users() {
             )}
           </div>
         </div>
-        <button type="button" onClick={()=>setShowCreate(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold transition-colors shadow-sm shrink-0">
-          <Plus size={14}/> Tambah User
-        </button>
+        <div className="flex items-center gap-2 shrink-0">
+          <button type="button" onClick={() => { setShowImportModal(true); setImportFile(null); setImportCabang(''); setImportResult(null); }}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-colors shadow-sm">
+            <Upload size={14}/> Import Siswa PKL
+          </button>
+          <button type="button" onClick={()=>setShowCreate(true)}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold transition-colors shadow-sm">
+            <Plus size={14}/> Tambah User
+          </button>
+        </div>
       </div>
 
       {/* Table card */}
@@ -712,6 +770,171 @@ export default function Users() {
           </div>
         </div>
       </div>
+
+      {/* Import CSV Siswa PKL Modal */}
+      {showImportModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="bg-card rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl border border-subtle">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-subtle bg-muted/50">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 flex items-center justify-center">
+                  <Upload size={16} className="text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <div>
+                  <h2 className="text-sm font-bold text-primary">Import Data Siswa PKL</h2>
+                  <p className="text-xs text-muted">Buat akun siswa secara massal dari file CSV</p>
+                </div>
+              </div>
+              <button onClick={() => setShowImportModal(false)} className="p-1.5 rounded-lg text-muted hover:text-secondary hover:bg-muted transition-colors"><X size={16}/></button>
+            </div>
+
+            <div className="overflow-y-auto flex-1 p-6 space-y-4">
+              {!importResult ? (
+                <>
+                  {/* Pilih Cabang */}
+                  <div>
+                    <label className="block text-xs font-semibold text-secondary mb-1.5">Cabang Tujuan <span className="text-red-500">*</span></label>
+                    <div className="relative">
+                      <Building2 size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
+                      <select
+                        value={importCabang}
+                        onChange={e => setImportCabang(e.target.value)}
+                        className="w-full pl-9 pr-3 py-2 rounded-lg border border-theme bg-card text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-colors"
+                      >
+                        <option value="">-- Pilih cabang --</option>
+                        {branches.map(b => <option key={b.id} value={b.id}>{b.nama_cabang}</option>)}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Info format */}
+                  <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-500/30 rounded-lg p-4">
+                    <p className="text-xs font-semibold text-blue-800 dark:text-blue-300 mb-2">Format kolom CSV:</p>
+                    <div className="text-xs text-blue-700 dark:text-blue-400 space-y-1 font-mono">
+                      <p><span className="font-bold">Wajib:</span> nama, tanggal_lahir</p>
+                      <p><span className="font-bold">Opsional:</span> email, nomor_hp, asal_sekolah, jurusan, periode_mulai, periode_selesai</p>
+                    </div>
+                    <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
+                      Username = nama depan (huruf kecil) &bull; Password = tanggal lahir format <strong>ddmmyyyy</strong> (contoh: <strong>15012005</strong>)
+                    </p>
+                  </div>
+
+                  {/* Upload area */}
+                  <div
+                    className="border-2 border-dashed border-gray-300 dark:border-white/20 rounded-lg p-8 text-center cursor-pointer hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/10 transition-colors"
+                    onClick={() => importFileRef.current?.click()}
+                  >
+                    <Upload size={36} className="text-gray-400 mx-auto mb-3" />
+                    {importFile ? (
+                      <div>
+                        <p className="text-sm font-medium text-emerald-700 dark:text-emerald-400">{importFile.name}</p>
+                        <p className="text-xs text-muted mt-1">{(importFile.size / 1024).toFixed(1)} KB — klik untuk ganti</p>
+                      </div>
+                    ) : (
+                      <div>
+                        <p className="text-sm text-secondary">Klik untuk pilih file CSV</p>
+                        <p className="text-xs text-muted mt-1">Format: .csv — Maks. 5 MB</p>
+                      </div>
+                    )}
+                    <input ref={importFileRef} type="file" accept=".csv,text/csv" className="hidden"
+                      onChange={e => setImportFile(e.target.files?.[0] ?? null)} />
+                  </div>
+
+                  <button onClick={downloadImportTemplate}
+                    className="flex items-center gap-2 text-xs text-muted hover:text-secondary transition-colors">
+                    <Download size={13} /> Unduh template CSV
+                  </button>
+                </>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex gap-3">
+                    <div className="flex-1 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-500/30 rounded-lg p-4 text-center">
+                      <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">{importResult.berhasil.length}</p>
+                      <p className="text-xs text-emerald-600 dark:text-emerald-400">Berhasil dibuat</p>
+                    </div>
+                    <div className="flex-1 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-500/30 rounded-lg p-4 text-center">
+                      <p className="text-2xl font-bold text-red-700 dark:text-red-400">{importResult.gagal.length}</p>
+                      <p className="text-xs text-red-600 dark:text-red-400">Gagal</p>
+                    </div>
+                  </div>
+
+                  {importResult.berhasil.length > 0 && (
+                    <div>
+                      <p className="text-xs font-semibold text-secondary mb-2">Akun berhasil dibuat:</p>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-xs border-collapse">
+                          <thead>
+                            <tr className="bg-muted text-muted uppercase">
+                              <th className="px-3 py-2 text-left">Nama</th>
+                              <th className="px-3 py-2 text-left">Username</th>
+                              <th className="px-3 py-2 text-left">Password</th>
+                              <th className="px-3 py-2 text-left">Tgl Lahir</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-theme">
+                            {importResult.berhasil.map((b, i) => (
+                              <tr key={i} className="hover:bg-muted/60">
+                                <td className="px-3 py-2 font-medium text-primary">{b.nama}</td>
+                                <td className="px-3 py-2 text-secondary">{b.username}</td>
+                                <td className="px-3 py-2 font-mono text-emerald-700 dark:text-emerald-400">{b.password}</td>
+                                <td className="px-3 py-2 text-muted">{b.tanggal_lahir}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
+                  {importResult.gagal.length > 0 && (
+                    <div>
+                      <p className="text-xs font-semibold text-red-600 dark:text-red-400 mb-2 flex items-center gap-1">
+                        <AlertCircle size={13} /> Data yang gagal:
+                      </p>
+                      <div className="space-y-1.5">
+                        {importResult.gagal.map((g, i) => (
+                          <div key={i} className="flex items-start gap-2 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-500/20 rounded-lg px-3 py-2">
+                            <span className="text-xs text-red-400 shrink-0">Baris {g.baris}</span>
+                            <span className="text-xs font-medium text-red-700 dark:text-red-400">{g.nama}</span>
+                            <span className="text-xs text-red-500 ml-auto">{g.alasan}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-2 px-6 py-4 border-t border-subtle bg-muted/50">
+              {importResult ? (
+                <>
+                  <button onClick={() => { setImportResult(null); setImportFile(null); }}
+                    className="flex-1 py-2 border border-theme rounded-lg text-xs font-semibold text-secondary hover:bg-muted transition-colors">
+                    Import Lagi
+                  </button>
+                  <button onClick={() => setShowImportModal(false)}
+                    className="flex-1 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold transition-colors">
+                    Selesai
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button onClick={() => setShowImportModal(false)}
+                    className="flex-1 py-2 border border-theme rounded-lg text-xs font-semibold text-secondary hover:bg-muted transition-colors">
+                    Batal
+                  </button>
+                  <button onClick={handleImportCsv} disabled={!importFile || !importCabang || importing}
+                    className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold disabled:opacity-50 flex items-center justify-center gap-2 transition-colors">
+                    <Upload size={13} />
+                    {importing ? 'Mengimpor...' : 'Import Sekarang'}
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modals */}
       <UserModal isOpen={showCreate} onClose={()=>setShowCreate(false)}

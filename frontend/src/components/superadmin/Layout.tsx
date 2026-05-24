@@ -306,7 +306,7 @@ export default function SuperAdminLayout() {
               {dark
                 ? <Sun  size={16} className="shrink-0 text-muted" />
                 : <Moon size={16} className="shrink-0 text-muted" />}
-              <span>{dark ? 'Light Mode' : 'Dark Mode'}</span>
+              <span>{dark ? 'Dark Mode' : 'Light Mode'}</span>
             </div>
             {/* Pill — abu seperti foto */}
             <div className={`w-10 h-[22px] rounded-full relative shrink-0 transition-colors duration-200 ${dark ? 'bg-red-500' : 'bg-slate-300'}`}>
@@ -317,7 +317,7 @@ export default function SuperAdminLayout() {
           <button
             onClick={() => setDark(d => !d)}
             className="flex items-center justify-center w-full py-2.5 text-muted hover:bg-muted transition-all"
-            title={dark ? 'Light Mode' : 'Dark Mode'}
+            title={dark ? 'Dark Mode' : 'Light Mode'}
           >
             {dark ? <Sun size={16} /> : <Moon size={16} />}
           </button>
