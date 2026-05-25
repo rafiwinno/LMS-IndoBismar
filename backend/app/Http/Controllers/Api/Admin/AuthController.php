@@ -242,15 +242,6 @@ class AuthController extends Controller
         ], 201);
     }
 
-    public function refresh(Request $request)
-    {
-        $user = $request->user();
-        $user->currentAccessToken()->delete();
-        $token = $user->createToken('lms-admin-token')->plainTextToken;
-        return response()->json(['token' => $token])
-            ->withCookie($this->makeAuthCookie($token));
-    }
-
     public function logout(Request $request)
     {
         $user = $request->user();
@@ -318,6 +309,8 @@ class AuthController extends Controller
         }
 
         Log::info("OTP generated for admin {$pengguna->username} from IP {$ip}");
+    }
+
     private function makeAuthCookie(string $token): \Symfony\Component\HttpFoundation\Cookie
     {
         return cookie(
