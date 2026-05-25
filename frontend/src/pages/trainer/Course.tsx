@@ -412,13 +412,13 @@ export default function TrainerCourses() {
                   </td>
                   <td className="px-5 py-4">
                     <div className="flex items-center justify-end gap-1">
-                      <button
-                        onClick={() => openPesertaModal(c)}
-                        title="Kelola Peserta"
-                        className="p-2 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
+                      <Link
+                        to={`/trainer/courses/${c.id_kursus}/peserta`}
+                        title="Lihat Peserta"
+                        className="p-2 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors inline-flex"
                       >
                         <Users size={16} />
-                      </button>
+                      </Link>
                       {c.status !== 'publish' ? (
                         <button
                           onClick={() => handlePublish(c.id_kursus)}

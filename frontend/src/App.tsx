@@ -27,8 +27,9 @@ const AdminLayout    = lazy(() => import('./components/admin/Layout'));
 // ── Trainer Pages ─────────────────────────────────────────────────────────────
 const TrainerLayout      = lazy(() => import('./components/trainer/Layout'));
 const TrainerDashboard   = lazy(() => import('./pages/trainer/Dashboard'));
-const TrainerCourse      = lazy(() => import('./pages/trainer/Course'));
-const TrainerMaterials   = lazy(() => import('./pages/trainer/Materials'));
+const TrainerCourse        = lazy(() => import('./pages/trainer/Course'));
+const TrainerCoursePeserta = lazy(() => import('./pages/trainer/CoursePeserta'));
+const TrainerMaterials     = lazy(() => import('./pages/trainer/Materials'));
 const TrainerAssignments = lazy(() => import('./pages/trainer/Assignments'));
 const TrainerProgress    = lazy(() => import('./pages/trainer/Progress'));
 const TrainerFeedback    = lazy(() => import('./pages/trainer/Feedback'));
@@ -140,8 +141,9 @@ export default function App() {
           >
             <Route index element={<Navigate to="dashboard" replace />} />
             <Route path="dashboard"              element={<TrainerDashboard />} />
-            <Route path="courses"                element={<TrainerCourse />} />
-            <Route path="courses/:id/materials" element={<TrainerMaterials />} />
+            <Route path="courses"                 element={<TrainerCourse />} />
+            <Route path="courses/:id/materials"  element={<TrainerMaterials />} />
+            <Route path="courses/:id/peserta"    element={<TrainerCoursePeserta />} />
             <Route path="assignments"            element={<TrainerAssignments />} />
             <Route path="progress"               element={<TrainerProgress />} />
             <Route path="feedback"               element={<TrainerFeedback />} />

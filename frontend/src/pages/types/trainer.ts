@@ -48,13 +48,17 @@ export interface Peserta {
 }
 
 export interface PesertaProgress {
-  id:            number;
-  nama:          string;
-  id_kursus:     number;
-  course:        string;
-  progress:      number;
-  tugas_selesai: number;
-  total_tugas:   number;
+  id:             number;
+  nama:           string;
+  id_kursus:      number;
+  course:         string;
+  progress:       number;
+  materi_selesai: number;
+  total_materi:   number;
+  tugas_selesai:  number;
+  total_tugas:    number;
+  kuis_selesai:   number;
+  total_kuis:     number;
 }
 
 export interface Feedback {
