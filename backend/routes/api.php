@@ -92,7 +92,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // =========================================================================
     // SUPERADMIN PORTAL
     // =========================================================================
-    Route::prefix('superadmin')->middleware('admin:1')->group(function () {
+    Route::prefix('superadmin')->middleware(['admin:1', 'throttle:60,1'])->group(function () {
         Route::get('/dashboard',            [SuperDashboardController::class, 'index']);
         Route::get('/dashboard/login-recap',[SuperDashboardController::class, 'loginRecap']);
 
