@@ -216,6 +216,12 @@ class UserController extends Controller
             'ip_address'   => $request->ip(),
         ]); } catch (\Throwable) {}
 
+        // Tutup sesi aktif & cabut semua token sebelum soft-delete
+        LoginLog::where('user_id', $user->id_pengguna)
+            ->whereNull('logged_out_at')
+            ->update(['logged_out_at' => now()]);
+        $user->tokens()->delete();
+
         $user->delete();
         return response()->json(['message' => 'User berhasil dihapus.']);
     }
@@ -231,6 +237,14 @@ class UserController extends Controller
         }
 
         $user->update(['status' => $request->status]);
+
+        // Cabut semua token jika user dinonaktifkan
+        if ($request->status === 'nonaktif') {
+            LoginLog::where('user_id', $user->id_pengguna)
+                ->whereNull('logged_out_at')
+                ->update(['logged_out_at' => now()]);
+            $user->tokens()->delete();
+        }
 
         try { ActivityLog::create([
             'user_id'      => $request->user()?->id_pengguna,
@@ -260,6 +274,16 @@ class UserController extends Controller
             Pengguna::whereIn('id_pengguna', $ids)
                 ->whereIn('id_role', [2, 3, 4])
                 ->update(['status' => $request->status]);
+
+            // Cabut token semua user yang dinonaktifkan
+            if ($request->status === 'nonaktif') {
+                \Laravel\Sanctum\PersonalAccessToken::whereIn('tokenable_id', $ids)
+                    ->where('tokenable_type', Pengguna::class)
+                    ->delete();
+                LoginLog::whereIn('user_id', $ids)
+                    ->whereNull('logged_out_at')
+                    ->update(['logged_out_at' => now()]);
+            }
         });
 
         try { ActivityLog::create([
@@ -286,7 +310,14 @@ class UserController extends Controller
         $ids = $request->ids;
 
         DB::transaction(function () use ($ids) {
-            LoginLog::whereIn('user_id', $ids)->delete();
+            // Cabut token & tutup sesi aktif sebelum soft-delete
+            \Laravel\Sanctum\PersonalAccessToken::whereIn('tokenable_id', $ids)
+                ->where('tokenable_type', Pengguna::class)
+                ->delete();
+            LoginLog::whereIn('user_id', $ids)
+                ->whereNull('logged_out_at')
+                ->update(['logged_out_at' => now()]);
+
             Pengguna::whereIn('id_pengguna', $ids)
                 ->whereIn('id_role', [2, 3, 4])
                 ->delete();
