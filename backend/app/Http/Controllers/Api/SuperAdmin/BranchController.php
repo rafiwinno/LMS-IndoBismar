@@ -220,8 +220,12 @@ class BranchController extends Controller
     // Query param: force=1 → hapus semua user di cabang ini sekalian
     public function destroy(Request $request, $id)
     {
-        $cabang    = Cabang::findOrFail($id);
-        $userCount = Pengguna::where('id_cabang', $id)->count();
+        $cabang = Cabang::findOrFail($id);
+
+        // Hanya hitung non-superadmin yang bisa ikut dihapus
+        $userCount = Pengguna::where('id_cabang', $id)
+            ->whereIn('id_role', [2, 3, 4])
+            ->count();
 
         if ($userCount > 0 && !$request->boolean('force')) {
             return response()->json([
@@ -233,9 +237,20 @@ class BranchController extends Controller
 
         DB::transaction(function () use ($id, $cabang, $userCount) {
             if ($userCount > 0) {
-                $userIds = Pengguna::where('id_cabang', $id)->pluck('id_pengguna');
-                LoginLog::whereIn('user_id', $userIds)->delete();
-                Pengguna::where('id_cabang', $id)->delete();
+                // Hanya hapus user non-superadmin (id_role 2,3,4)
+                $userIds = Pengguna::where('id_cabang', $id)
+                    ->whereIn('id_role', [2, 3, 4])
+                    ->pluck('id_pengguna');
+
+                // Cabut token & tutup sesi aktif sebelum soft-delete
+                \Laravel\Sanctum\PersonalAccessToken::whereIn('tokenable_id', $userIds)
+                    ->where('tokenable_type', Pengguna::class)
+                    ->delete();
+                LoginLog::whereIn('user_id', $userIds)
+                    ->whereNull('logged_out_at')
+                    ->update(['logged_out_at' => now()]);
+
+                Pengguna::whereIn('id_pengguna', $userIds)->delete();
             }
             $cabang->delete();
         });
