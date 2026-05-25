@@ -107,7 +107,7 @@ function UserModal({ isOpen, onClose, onSuccess, initialData, branches }:
     if (!nama.trim()) e.nama='Nama wajib diisi';
     if (!username.trim()) e.username='Username wajib diisi';
     if (!isEdit && !password) e.password='Password wajib diisi';
-    if (password && password.length<6) e.password='Minimal 6 karakter';
+    if (password && password.length<8) e.password='Minimal 8 karakter';
     if (password && password!==confirmPw) e.confirmPw='Password tidak cocok';
     if (!idRole) e.idRole='Role wajib dipilih';
     if (!idCabang) e.idCabang='Branch wajib dipilih';
@@ -255,9 +255,16 @@ function UserModal({ isOpen, onClose, onSuccess, initialData, branches }:
 
 // ─── Delete Dialog ────────────────────────────────────────────────────────────
 function DeleteDialog({ user, onCancel, onConfirm }:{ user:UserItem; onCancel:()=>void; onConfirm:()=>void }) {
+  const [loading, setLoading] = useState(false);
+  const handleConfirm = async () => {
+    if (loading) return;
+    setLoading(true);
+    await onConfirm();
+    setLoading(false);
+  };
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
-      onClick={e=>{if(e.target===e.currentTarget)onCancel()}}>
+      onClick={e=>{if(e.target===e.currentTarget && !loading)onCancel()}}>
       <div className="bg-card rounded-2xl w-full max-w-sm shadow-2xl p-6 text-center border border-subtle">
         <div className="w-11 h-11 rounded-full bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20 flex items-center justify-center mx-auto mb-4">
           <Trash2 size={18} className="text-red-600 dark:text-red-400" />
@@ -265,8 +272,11 @@ function DeleteDialog({ user, onCancel, onConfirm }:{ user:UserItem; onCancel:()
         <h3 className="text-sm font-bold text-primary">Hapus User?</h3>
         <p className="text-xs text-label mt-2">User <span className="font-semibold text-secondary">"{user.nama}"</span> akan dihapus permanen dan tidak bisa dipulihkan.</p>
         <div className="flex gap-2 mt-5">
-          <button type="button" onClick={onCancel} className="flex-1 py-2 rounded-lg border border-theme text-xs font-semibold text-secondary hover:bg-muted transition-colors">Batal</button>
-          <button type="button" onClick={onConfirm} className="flex-1 py-2 rounded-lg bg-red-600 text-white text-xs font-bold hover:bg-red-700 transition-colors">Hapus</button>
+          <button type="button" onClick={onCancel} disabled={loading} className="flex-1 py-2 rounded-lg border border-theme text-xs font-semibold text-secondary hover:bg-muted disabled:opacity-50 transition-colors">Batal</button>
+          <button type="button" onClick={handleConfirm} disabled={loading}
+            className="flex-1 py-2 rounded-lg bg-red-600 text-white text-xs font-bold hover:bg-red-700 disabled:opacity-60 transition-colors flex items-center justify-center gap-1.5">
+            {loading ? <><span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"/>Menghapus...</> : 'Hapus'}
+          </button>
         </div>
       </div>
     </div>
@@ -430,9 +440,12 @@ export default function Users() {
     try {
       await api.delete(`/superadmin/users/${delTarget.id}`);
       setDelTarget(null); setDetailTarget(null);
-      showToast(`User "${delTarget.nama}" dihapus.`,'success');
+      showToast(`User "${delTarget.nama}" dihapus.`, 'success');
       fetchUsers();
-    } catch { showToast('Gagal menghapus user.','error'); }
+    } catch {
+      showToast('Gagal menghapus user.', 'error');
+      throw new Error('delete failed');
+    }
   };
 
   const pageNumbers = (): (number|'...')[] => {
