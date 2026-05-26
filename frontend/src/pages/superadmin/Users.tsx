@@ -8,6 +8,7 @@ import {
   Upload, AlertCircle,
 } from 'lucide-react';
 import api from '../../services/api';
+import CustomSelect from '../../components/ui/CustomSelect';
 
 // ─── Import CSV Types ─────────────────────────────────────────────────────────
 interface ImportResult {
@@ -596,18 +597,22 @@ export default function Users() {
           {/* Filters + actions */}
           <div className="flex items-center gap-2 flex-wrap">
             <SlidersHorizontal size={13} className="text-muted hidden sm:block" />
-            <select value={filterRole} onChange={e=>setFilterRole(e.target.value)}
-              className={`px-3 py-2 border rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors ${filterRole?'border-blue-300 dark:border-blue-500/40 bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400':'border-theme bg-card text-secondary'}`}>
-              <option value="">Semua Role</option>
-              <option value="admin">Admin Cabang</option>
-              <option value="trainer">Trainer</option>
-              <option value="user">User</option>
-            </select>
-            <select value={filterCabang} onChange={e=>setFilterCabang(e.target.value)}
-              className={`px-3 py-2 border rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors ${filterCabang?'border-blue-300 dark:border-blue-500/40 bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400':'border-theme bg-card text-secondary'}`}>
-              <option value="">Semua Cabang</option>
-              {branches.map(b=><option key={b.id} value={b.id}>{b.nama_cabang}</option>)}
-            </select>
+            <CustomSelect
+              placeholder="Semua Role"
+              value={filterRole}
+              onChange={v => setFilterRole(String(v))}
+              options={[
+                { value: 'admin', label: 'Admin Cabang' },
+                { value: 'trainer', label: 'Trainer' },
+                { value: 'user', label: 'User' },
+              ]}
+            />
+            <CustomSelect
+              placeholder="Semua Cabang"
+              value={filterCabang}
+              onChange={v => setFilterCabang(String(v))}
+              options={branches.map(b => ({ value: b.id, label: b.nama_cabang }))}
+            />
             {hasFilter && (
               <button type="button" onClick={resetFilters}
                 className="px-3 py-2 border border-theme rounded-lg text-xs text-label hover:bg-muted transition-colors">Reset</button>

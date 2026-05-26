@@ -1,7 +1,7 @@
 import { useParams, Link } from 'react-router-dom';
 import { toast } from '../../lib/toast';
 import { useEffect, useRef, useState, useMemo } from 'react';
-import { Plus, Trash2, Pencil, FileText, Video, File, ArrowLeft, Loader2, ExternalLink, X as XIcon, ChevronLeft, ChevronDown, Check } from 'lucide-react';
+import { Plus, Trash2, Pencil, FileText, Video, File, ArrowLeft, Loader2, ExternalLink, X as XIcon, ChevronLeft, ChevronDown, Check, FolderOpen } from 'lucide-react';
 import { getMaterials, createMaterial, updateMaterial, deleteMaterial } from '../../api/MaterialApi';
 import type { Material } from '../types/trainer';
 import Modal from '../../components/ui/Modal';
@@ -128,6 +128,7 @@ export default function Materials() {
     judul_materi: '',
     tipe_materi:  'pdf' as 'pdf' | 'video' | 'dokumen',
     urutan:       1,
+    sub_bab:      '',
     link_video:   '',
     file_materi:  null as File | null,
   });
@@ -162,16 +163,25 @@ export default function Materials() {
     [materials]
   );
 
+  const existingSubBabs = useMemo(() => {
+    const seen = new Set<string>();
+    const result: string[] = [];
+    for (const m of materials) {
+      if (m.sub_bab && !seen.has(m.sub_bab)) { seen.add(m.sub_bab); result.push(m.sub_bab); }
+    }
+    return result;
+  }, [materials]);
+
   const openCreate = () => {
     setEditTarget(null);
-    setForm({ judul_materi: '', tipe_materi: 'pdf', urutan: materials.length + 1, link_video: '', file_materi: null });
+    setForm({ judul_materi: '', tipe_materi: 'pdf', urutan: materials.length + 1, sub_bab: '', link_video: '', file_materi: null });
     setError('');
     setShowModal(true);
   };
 
   const openEdit = (m: Material) => {
     setEditTarget(m);
-    setForm({ judul_materi: m.judul_materi, tipe_materi: m.tipe_materi, urutan: m.urutan, link_video: m.tipe_materi === 'video' && m.file_materi ? m.file_materi : '', file_materi: null });
+    setForm({ judul_materi: m.judul_materi, tipe_materi: m.tipe_materi, urutan: m.urutan, sub_bab: m.sub_bab ?? '', link_video: m.tipe_materi === 'video' && m.file_materi ? m.file_materi : '', file_materi: null });
     setError('');
     setShowModal(true);
   };
@@ -187,6 +197,7 @@ export default function Materials() {
             judul_materi: form.judul_materi,
             tipe_materi:  form.tipe_materi,
             urutan:       form.urutan,
+            sub_bab:      form.sub_bab.trim() || null,
             link_video:   form.link_video,
           });
         } else if (form.file_materi) {
@@ -194,6 +205,7 @@ export default function Materials() {
           fd.append('judul_materi', form.judul_materi);
           fd.append('tipe_materi',  form.tipe_materi);
           fd.append('urutan',       String(form.urutan));
+          fd.append('sub_bab',      form.sub_bab.trim());
           fd.append('file_materi',  form.file_materi);
           await updateMaterial(editTarget.id_materi, fd);
         } else {
@@ -201,6 +213,7 @@ export default function Materials() {
             judul_materi: form.judul_materi,
             tipe_materi:  form.tipe_materi,
             urutan:       form.urutan,
+            sub_bab:      form.sub_bab.trim() || null,
           });
         }
       } else {
@@ -209,6 +222,7 @@ export default function Materials() {
         fd.append('judul_materi', form.judul_materi);
         fd.append('tipe_materi',  form.tipe_materi);
         fd.append('urutan',       String(form.urutan));
+        fd.append('sub_bab',      form.sub_bab.trim());
         if (form.tipe_materi === 'video') {
           if (!form.link_video.trim()) { setError('Link video wajib diisi'); setLoading(false); return; }
           fd.append('link_video', form.link_video);
@@ -232,7 +246,7 @@ export default function Materials() {
   };
 
   const handleDelete = async (matId: number) => {
-    if (!confirm('Hapus materi ini?')) return;
+    if (!window.confirm('Hapus materi ini? Tindakan ini tidak bisa dibatalkan.')) return;
     setDeletingId(matId);
     try {
       await deleteMaterial(matId);
@@ -281,111 +295,79 @@ export default function Materials() {
           <FileText size={40} className="mx-auto mb-3 text-gray-400 dark:text-gray-500" />
           <p className="text-gray-500 dark:text-gray-400">Belum ada materi untuk course ini.</p>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {materialsWithMeta.map((m) => {
-            const meta = typeMeta[m.tipe_materi] ?? typeMeta.dokumen;
-            const { ytId, fileUrl } = m;
+      ) : (() => {
+        // Group materi by sub_bab
+        const groups: Record<string, typeof materialsWithMeta> = {};
+        for (const m of materialsWithMeta) {
+          const key = m.sub_bab ?? 'Materi Lainnya';
+          if (!groups[key]) groups[key] = [];
+          groups[key].push(m);
+        }
 
-            return (
-              <div
-                key={m.id_materi}
-                className="group bg-white dark:bg-[#161b22] border border-gray-200 dark:border-white/8 rounded-2xl overflow-hidden shadow-sm hover:shadow-md hover:border-gray-300 dark:hover:border-white/15 transition-all duration-200"
-              >
-                {/* Preview area */}
-                {ytId ? (
-                  <button
-                    onClick={() => setPreviewMaterial(m)}
-                    className="relative w-full aspect-video overflow-hidden block"
-                  >
-                    <img
-                      src={`https://img.youtube.com/vi/${ytId}/mqdefault.jpg`}
-                      alt={m.judul_materi}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                    <div className="absolute inset-0 bg-black/30 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                      <div className="w-12 h-12 rounded-full bg-red-600 shadow-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-                        <Video size={20} className="text-white ml-0.5" />
-                      </div>
+        const MaterialCard = ({ m }: { m: typeof materialsWithMeta[number] }) => {
+          const meta = typeMeta[m.tipe_materi] ?? typeMeta.dokumen;
+          const { ytId, fileUrl } = m;
+          return (
+            <div className="group bg-white dark:bg-[#161b22] border border-gray-200 dark:border-white/8 rounded-2xl overflow-hidden shadow-sm hover:shadow-md hover:border-gray-300 dark:hover:border-white/15 transition-all duration-200">
+              {ytId ? (
+                <button onClick={() => setPreviewMaterial(m)} className="relative w-full aspect-video overflow-hidden block">
+                  <img src={`https://img.youtube.com/vi/${ytId}/mqdefault.jpg`} alt={m.judul_materi} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                  <div className="absolute inset-0 bg-black/30 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                    <div className="w-12 h-12 rounded-full bg-red-600 shadow-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+                      <Video size={20} className="text-white ml-0.5" />
                     </div>
-                    <span className="absolute top-2 left-2 bg-black/60 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                      #{m.urutan}
-                    </span>
-                  </button>
-                ) : (
-                  <div className={`relative w-full aspect-video flex items-center justify-center ${meta.bg}`}>
-                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center ${meta.bg} border-2 ${meta.border} ${meta.text}`}>
-                      {meta.icon}
-                    </div>
-                    <span className="absolute top-2 left-2 bg-black/20 dark:bg-black/40 text-gray-700 dark:text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                      #{m.urutan}
-                    </span>
                   </div>
-                )}
-
-                {/* Content */}
-                <div className="p-4">
-                  <div className="flex items-start justify-between gap-2 mb-3">
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-gray-900 dark:text-white text-sm leading-snug line-clamp-2">
-                        {m.judul_materi}
-                      </p>
-                    </div>
-                    <span className={`shrink-0 inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full border ${meta.bg} ${meta.text} ${meta.border}`}>
-                      {meta.label}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-white/6">
-                    {/* Action link */}
-                    {ytId ? (
-                      <button
-                        onClick={() => setPreviewMaterial(m)}
-                        className={`flex items-center gap-1.5 text-xs font-medium ${meta.text} hover:underline`}
-                      >
-                        <Video size={13} /> Tonton Video
-                      </button>
-                    ) : fileUrl ? (
-                      <a
-                        href={fileUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className={`flex items-center gap-1.5 text-xs font-medium ${meta.text} hover:underline`}
-                      >
-                        <ExternalLink size={13} /> Lihat File
-                      </a>
-                    ) : (
-                      <span className="text-xs text-gray-400 dark:text-gray-500">Tidak ada file</span>
-                    )}
-
-                    {/* Edit / Delete */}
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => openEdit(m)}
-                        disabled={deletingId === m.id_materi}
-                        title="Edit"
-                        className="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-40"
-                      >
-                        <Pencil size={14} />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(m.id_materi)}
-                        disabled={deletingId === m.id_materi}
-                        title="Hapus"
-                        className="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-40"
-                      >
-                        {deletingId === m.id_materi
-                          ? <Loader2 size={14} className="animate-spin" />
-                          : <Trash2 size={14} />}
-                      </button>
-                    </div>
+                  <span className="absolute top-2 left-2 bg-black/60 text-white text-xs font-bold px-2 py-0.5 rounded-full">#{m.urutan}</span>
+                </button>
+              ) : (
+                <div className={`relative w-full aspect-video flex items-center justify-center ${meta.bg}`}>
+                  <div className={`w-16 h-16 rounded-2xl flex items-center justify-center ${meta.bg} border-2 ${meta.border} ${meta.text}`}>{meta.icon}</div>
+                  <span className="absolute top-2 left-2 bg-black/20 dark:bg-black/40 text-gray-700 dark:text-white text-xs font-bold px-2 py-0.5 rounded-full">#{m.urutan}</span>
+                </div>
+              )}
+              <div className="p-4">
+                <div className="flex items-start justify-between gap-2 mb-3">
+                  <p className="flex-1 min-w-0 font-semibold text-gray-900 dark:text-white text-sm leading-snug line-clamp-2">{m.judul_materi}</p>
+                  <span className={`shrink-0 inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full border ${meta.bg} ${meta.text} ${meta.border}`}>{meta.label}</span>
+                </div>
+                <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-white/6">
+                  {ytId ? (
+                    <button onClick={() => setPreviewMaterial(m)} className={`flex items-center gap-1.5 text-xs font-medium ${meta.text} hover:underline`}><Video size={13} /> Tonton Video</button>
+                  ) : fileUrl ? (
+                    <a href={fileUrl} target="_blank" rel="noreferrer" className={`flex items-center gap-1.5 text-xs font-medium ${meta.text} hover:underline`}><ExternalLink size={13} /> Lihat File</a>
+                  ) : (
+                    <span className="text-xs text-gray-400 dark:text-gray-500">Tidak ada file</span>
+                  )}
+                  <div className="flex items-center gap-1">
+                    <button onClick={() => openEdit(m)} disabled={deletingId === m.id_materi} title="Edit" className="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-40"><Pencil size={14} /></button>
+                    <button onClick={() => handleDelete(m.id_materi)} disabled={deletingId === m.id_materi} title="Hapus" className="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-40">
+                      {deletingId === m.id_materi ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                    </button>
                   </div>
                 </div>
               </div>
-            );
-          })}
-        </div>
-      )}
+            </div>
+          );
+        };
+
+        return (
+          <div className="space-y-8">
+            {Object.entries(groups).map(([groupName, items]) => (
+              <div key={groupName}>
+                <div className="flex items-center gap-2 mb-4">
+                  <FolderOpen size={16} className="text-red-500 shrink-0" />
+                  <h2 className="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">{groupName}</h2>
+                  <span className="text-xs text-gray-400 dark:text-gray-500 font-normal normal-case">({items.length} materi)</span>
+                  <div className="flex-1 h-px bg-gray-200 dark:bg-white/8 ml-1" />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {items.map((m) => <MaterialCard key={m.id_materi} m={m} />)}
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+      })()}
 
       {showModal && (
         <Modal
@@ -401,6 +383,27 @@ export default function Materials() {
                 placeholder="Masukkan judul materi"
                 className={inputCls}
               />
+            </div>
+            <div>
+              <label className={labelCls}>
+                Sub Bab
+                <span className="ml-1.5 text-xs font-normal text-gray-400">(opsional — untuk pengelompokan materi)</span>
+              </label>
+              <input
+                list="subbab-suggestions"
+                value={form.sub_bab}
+                onChange={(e) => setForm({ ...form, sub_bab: e.target.value })}
+                placeholder="cth: Bab 1 — Pengenalan, Modul A..."
+                className={inputCls}
+              />
+              {existingSubBabs.length > 0 && (
+                <datalist id="subbab-suggestions">
+                  {existingSubBabs.map((s) => <option key={s} value={s} />)}
+                </datalist>
+              )}
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                Kosongkan jika tidak perlu dikelompokkan (akan masuk "Materi Lainnya").
+              </p>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>

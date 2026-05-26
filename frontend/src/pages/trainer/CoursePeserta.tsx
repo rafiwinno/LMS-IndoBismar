@@ -28,7 +28,7 @@ interface PesertaRow {
 }
 
 interface PesertaCabang {
-  id_pengguna: number;
+  id: number;
   nama: string;
 }
 
@@ -136,7 +136,7 @@ export default function TrainerCoursePeserta() {
     });
   };
 
-  const enrollable = allCabang.filter((p) => !peserta.some((ep) => ep.id === p.id_pengguna));
+  const enrollable = allCabang.filter((p) => !peserta.some((ep) => ep.id === p.id));
   const filteredEnrollable = enrollable.filter((p) =>
     p.nama.toLowerCase().includes(dropdownSearch.toLowerCase())
   );
@@ -214,7 +214,7 @@ export default function TrainerCoursePeserta() {
                 >
                   <span className="truncate">
                     {selectedId
-                      ? (enrollable.find((p) => p.id_pengguna === selectedId)?.nama ?? 'Pilih peserta')
+                      ? (enrollable.find((p) => p.id === selectedId)?.nama ?? 'Pilih peserta')
                       : 'Pilih peserta'}
                   </span>
                   <ChevronDown
@@ -243,10 +243,10 @@ export default function TrainerCoursePeserta() {
                       ) : (
                         filteredEnrollable.map((p) => (
                           <li
-                            key={p.id_pengguna}
-                            onClick={() => { setSelectedId(p.id_pengguna); setDropdownOpen(false); }}
+                            key={p.id}
+                            onClick={() => { setSelectedId(p.id); setDropdownOpen(false); }}
                             className={`px-3 py-2.5 text-sm cursor-pointer transition-colors
-                              ${selectedId === p.id_pengguna
+                              ${selectedId === p.id
                                 ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400'
                                 : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5'}`}
                           >
