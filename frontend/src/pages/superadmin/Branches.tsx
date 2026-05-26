@@ -585,7 +585,6 @@ export default function Branches() {
 
   const [deleteError,     setDeleteError]     = useState<string|null>(null);
   const [deleteUserCount, setDeleteUserCount] = useState<number|null>(null);
-  const [forceDelete,     setForceDelete]     = useState(false);
 
   const handleDelete = async (force = false) => {
     if (!delTarget) return;
@@ -593,7 +592,7 @@ export default function Branches() {
     try {
       await api.delete(`/superadmin/cabang/${delTarget.id}`, { params: force ? { force: 1 } : {} });
       setDelTarget(null); setDetailTarget(null);
-      setDeleteError(null); setDeleteUserCount(null); setForceDelete(false);
+      setDeleteError(null); setDeleteUserCount(null);
       showToast(`Cabang "${delTarget.nama_cabang}" dihapus.`, 'success');
       fetchBranches();
     } catch (err:any) {
@@ -742,7 +741,7 @@ export default function Branches() {
       <BranchModal isOpen={editTarget!==null} onClose={()=>setEditTarget(null)}
         onSuccess={()=>{ showToast('Cabang berhasil diupdate!'); fetchBranches(); }}
         initialData={editTarget} cities={cities}/>
-      {delTarget    && <DeleteDialog branch={delTarget}    onCancel={()=>{setDelTarget(null);setDeleteError(null);setDeleteUserCount(null);setForceDelete(false);}}    onConfirm={()=>handleDelete(false)} onForceConfirm={()=>handleDelete(true)} error={deleteError} userCount={deleteUserCount}/>}
+      {delTarget    && <DeleteDialog branch={delTarget}    onCancel={()=>{setDelTarget(null);setDeleteError(null);setDeleteUserCount(null);}}    onConfirm={()=>handleDelete(false)} onForceConfirm={()=>handleDelete(true)} error={deleteError} userCount={deleteUserCount}/>}
       {detailTarget && <DetailDrawer branch={detailTarget} onClose={()=>setDetailTarget(null)}  onEdit={()=>{ setEditTarget(detailTarget); setDetailTarget(null); }} onViewUsers={()=>openUsersModal(detailTarget)}/>}
       {usersTarget  && <UsersModal   branch={usersTarget}  onClose={()=>setUsersTarget(null)}/>}
     </div>
