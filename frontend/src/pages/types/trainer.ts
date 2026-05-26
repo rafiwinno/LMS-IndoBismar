@@ -25,6 +25,7 @@ export interface Material {
   file_materi:  string | null;
   file_url:     string | null;
   urutan:       number;
+  sub_bab:      string | null;
   dibuat_pada:  string;
 }
 

@@ -3,6 +3,7 @@ import { Search, Mail, BookOpen, Calendar as CalendarIcon, Clock, Plus, Trash2, 
 import { api } from '../../lib/api';
 import { toast } from '../../lib/toast';
 import { confirm } from '../../lib/confirm';
+import CustomSelect from '../../components/ui/CustomSelect';
 
 interface Trainer {
   id: number; nama: string; username: string; email: string; nomor_hp: string;
@@ -498,17 +499,15 @@ export function Trainers() {
                 <div>
                   <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Tambah sebagai Pengajar Kursus</h4>
                   <div className="flex gap-2">
-                    <select
-                      className="flex-1 px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-red-500 outline-none bg-white dark:bg-[#161b22] dark:text-white text-sm"
+                    <CustomSelect
+                      placeholder="-- Pilih Kursus --"
                       value={assignKursusId}
-                      onChange={e => setAssignKursusId(e.target.value)}
-                    >
-                      <option value="">-- Pilih Kursus --</option>
-                      {kursus
+                      onChange={v => setAssignKursusId(String(v))}
+                      options={kursus
                         .filter(k => !detailTrainer.kursus_list?.some((dk: any) => dk.id === k.id))
-                        .map(k => <option key={k.id} value={k.id}>{k.judul}</option>)
+                        .map(k => ({ value: k.id, label: k.judul }))
                       }
-                    </select>
+                    />
                     <button
                       onClick={handleAssignKursus}
                       disabled={!assignKursusId || assigningKursus}

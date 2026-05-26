@@ -49,6 +49,7 @@ class MaterialController extends Controller
             'judul_materi' => 'required|string|max:200',
             'tipe_materi'  => 'required|in:video,pdf,dokumen',
             'urutan'       => 'nullable|integer|min:1',
+            'sub_bab'      => 'nullable|string|max:100',
         ]);
 
         $course = Course::findOrFail($request->id_kursus);
@@ -75,6 +76,7 @@ class MaterialController extends Controller
             'tipe_materi'  => $request->tipe_materi,
             'file_materi'  => $fileMateri,
             'urutan'       => $request->urutan ?? 1,
+            'sub_bab'      => $request->sub_bab ?: null,
         ]);
 
         return response()->json([
@@ -99,6 +101,7 @@ class MaterialController extends Controller
             'judul_materi' => 'sometimes|required|string|max:200',
             'tipe_materi'  => 'sometimes|required|in:video,pdf,dokumen',
             'urutan'       => 'nullable|integer|min:1',
+            'sub_bab'      => 'nullable|string|max:100',
             'link_video'   => 'sometimes|nullable|url',
             'file_materi'  => "sometimes|file|mimes:{$mimes}|max:10240",
         ]);
@@ -116,6 +119,9 @@ class MaterialController extends Controller
         $material->judul_materi = $request->judul_materi ?? $material->judul_materi;
         $material->tipe_materi  = $request->tipe_materi  ?? $material->tipe_materi;
         $material->urutan       = $request->urutan       ?? $material->urutan;
+        if ($request->has('sub_bab')) {
+            $material->sub_bab = $request->sub_bab ?: null;
+        }
         $material->save();
 
         return response()->json([

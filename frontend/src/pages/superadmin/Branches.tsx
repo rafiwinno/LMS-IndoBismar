@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import api from '../../services/api';
 import type { Branch, BranchUser, BranchUserRole, BranchUsersResponse } from '../types/cabang';
+import CustomSelect from '../../components/ui/CustomSelect';
 
 const PER_PAGE = 6;
 
@@ -653,17 +654,21 @@ export default function Branches() {
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <SlidersHorizontal size={13} className="text-muted hidden sm:block"/>
-          <select value={filterStatus} onChange={e=>setFilterStatus(e.target.value)}
-            className={`px-3 py-2 border rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors ${filterStatus?'border-blue-300 dark:border-blue-500/40 bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400':'border-theme bg-card text-secondary'}`}>
-            <option value="">Semua Status</option>
-            <option value="aktif">Aktif</option>
-            <option value="nonaktif">Nonaktif</option>
-          </select>
-          <select value={filterKota} onChange={e=>setFilterKota(e.target.value)}
-            className={`px-3 py-2 border rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors ${filterKota?'border-blue-300 dark:border-blue-500/40 bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400':'border-theme bg-card text-secondary'}`}>
-            <option value="">Semua Kota</option>
-            {cities.map(c=><option key={c} value={c}>{c}</option>)}
-          </select>
+          <CustomSelect
+            placeholder="Semua Status"
+            value={filterStatus}
+            onChange={v => setFilterStatus(String(v))}
+            options={[
+              { value: 'aktif', label: 'Aktif' },
+              { value: 'nonaktif', label: 'Nonaktif' },
+            ]}
+          />
+          <CustomSelect
+            placeholder="Semua Kota"
+            value={filterKota}
+            onChange={v => setFilterKota(String(v))}
+            options={cities.map(c => ({ value: c, label: c }))}
+          />
           {hasFilter && (
             <button type="button" onClick={resetFilters}
               className="px-3 py-2 border border-theme rounded-lg text-xs text-label hover:bg-muted transition-colors">Reset</button>
