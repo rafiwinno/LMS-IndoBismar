@@ -18,7 +18,12 @@ class NilaiController extends Controller
             ->leftJoin('pengguna as penilai', 'penilaian_pkl.dinilai_oleh', '=', 'penilai.id_pengguna')
             ->where('penilaian_pkl.id_pengguna', $id_pengguna)
             ->select(
-                'penilaian_pkl.*',
+                'penilaian_pkl.nilai_teknis',
+                'penilaian_pkl.nilai_non_teknis',
+                'penilaian_pkl.nilai_akhir',
+                'penilaian_pkl.kode_sertifikat',
+                'penilaian_pkl.catatan',
+                'penilaian_pkl.tanggal_penilaian',
                 'penilai.nama as nama_penilai'
             )
             ->first();
@@ -28,11 +33,12 @@ class NilaiController extends Controller
             ->where('id_pengguna', $id_pengguna)
             ->get();
 
-        // Riwayat kuis peserta
+        // Riwayat kuis peserta (hanya yang sudah selesai)
         $riwayatKuis = DB::table('attempt_kuis')
             ->join('kuis', 'attempt_kuis.id_kuis', '=', 'kuis.id_kuis')
             ->join('kursus', 'kuis.id_kursus', '=', 'kursus.id_kursus')
             ->where('attempt_kuis.id_pengguna', $id_pengguna)
+            ->where('attempt_kuis.status', 'selesai')
             ->select(
                 'kuis.judul_kuis',
                 'kursus.judul_kursus',
@@ -42,19 +48,18 @@ class NilaiController extends Controller
             )
             ->get();
 
-        // Nilai tugas peserta (hanya yang sudah dinilai)
-        $nilaiTugas = DB::table('pengumpulan_tugas')
+        // Semua pengumpulan tugas (termasuk yang belum dinilai)
+        $riwayatTugas = DB::table('pengumpulan_tugas')
             ->join('tugas', 'pengumpulan_tugas.id_tugas', '=', 'tugas.id_tugas')
             ->join('kursus', 'tugas.id_kursus', '=', 'kursus.id_kursus')
             ->where('pengumpulan_tugas.id_pengguna', $id_pengguna)
-            ->whereNotNull('pengumpulan_tugas.nilai')
             ->select(
                 'tugas.judul_tugas',
                 'kursus.judul_kursus',
-                'pengumpulan_tugas.nilai',
                 'tugas.nilai_maksimal',
-                'pengumpulan_tugas.tanggal_kumpul',
-                'pengumpulan_tugas.feedback'
+                'pengumpulan_tugas.nilai',
+                'pengumpulan_tugas.feedback',
+                'pengumpulan_tugas.tanggal_kumpul'
             )
             ->get();
 
@@ -62,7 +67,7 @@ class NilaiController extends Controller
             'nilai_pkl'        => $nilaiPkl,
             'nilai_non_teknis' => $nilaiNonTeknis,
             'riwayat_kuis'     => $riwayatKuis,
-            'nilai_tugas'      => $nilaiTugas,
+            'riwayat_tugas'    => $riwayatTugas,
         ]);
     }
 }

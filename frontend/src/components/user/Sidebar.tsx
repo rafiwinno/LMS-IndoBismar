@@ -36,8 +36,8 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
 
   const handleLogout = async () => {
     try { await api.post('/logout'); } catch {}
-    sessionStorage.removeItem('token');
-    sessionStorage.removeItem('user');
+    localStorage.removeItem('lms_token');
+    sessionStorage.removeItem('lms_user');
     navigate('/login');
   };
 
@@ -62,13 +62,11 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
         {/* Logo */}
         <div className="flex items-center justify-between h-16 px-5 border-b border-gray-200 dark:border-white/8 shrink-0">
           <div className="flex items-center gap-3">
-            {/* Logo gambar */}
             <img
               src="/src/assets/logo-bismar.png"
               alt="Logo Indo Bismar"
               className="w-9 h-9 rounded-full object-cover shrink-0"
             />
-            {/* Teks nama + subtitle */}
             <div className="leading-tight">
               <p className="text-[14px] font-bold text-gray-900 dark:text-white tracking-tight">
                 Indo Bismar
@@ -137,7 +135,6 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
               {dark ? <Sun size={18} /> : <Moon size={18} />}
               {dark ? 'Dark Mode' : 'Light Mode'}
             </span>
-            {/* Toggle switch */}
             <div className={cn(
               'relative w-11 h-6 rounded-full transition-colors duration-200',
               dark ? 'bg-red-500' : 'bg-gray-300'

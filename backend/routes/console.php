@@ -8,9 +8,7 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-// ── Cleanup notifikasi lama ────────────────────────────────────────────────────
 // Hapus notifikasi yang sudah dibaca dan lebih dari 90 hari
-// Jalankan setiap hari: php artisan schedule:run (via cronjob)
 Schedule::call(function () {
     $deleted = \App\Models\Notifikasi::where('dibaca', true)
         ->where('dibuat_pada', '<', now()->subDays(90))
@@ -21,7 +19,7 @@ Schedule::call(function () {
   ->name('cleanup-old-notifications')
   ->withoutOverlapping();
 
-// ── Cleanup OTP kedaluwarsa ────────────────────────────────────────────────────
+// Hapus OTP yang sudah kedaluwarsa setiap jam
 Schedule::call(function () {
     \App\Models\OtpCode::where('expires_at', '<', now())
         ->orWhere('used', true)
@@ -29,3 +27,6 @@ Schedule::call(function () {
 })->hourly()
   ->name('cleanup-expired-otps')
   ->withoutOverlapping();
+
+// Hapus token Sanctum yang sudah expired setiap malam
+Schedule::command('sanctum:prune-expired --hours=0')->daily();

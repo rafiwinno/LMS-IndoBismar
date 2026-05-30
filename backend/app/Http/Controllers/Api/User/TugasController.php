@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\User;
 
 use App\Http\Controllers\Controller;
+use App\Models\Notifikasi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -31,6 +32,7 @@ class TugasController extends Controller
                 'kursus.judul_kursus',
                 'pengumpulan_tugas.id_pengumpulan',
                 'pengumpulan_tugas.nilai',
+                'pengumpulan_tugas.feedback',
                 DB::raw('CASE WHEN pengumpulan_tugas.id_pengumpulan IS NOT NULL THEN "sudah" ELSE "belum" END as status_pengumpulan')
             )
             ->get();
@@ -43,13 +45,11 @@ class TugasController extends Controller
     {
         $id_pengguna = $request->user()->id_pengguna;
 
-        // Cek apakah tugas ada
         $tugas = DB::table('tugas')->where('id_tugas', $id_tugas)->first();
         if (!$tugas) {
             return response()->json(['message' => 'Tugas tidak ditemukan'], 404);
         }
 
-        // Cek apakah peserta terdaftar di kursus tugas ini
         $terdaftar = DB::table('peserta_kursus')
             ->where('id_pengguna', $id_pengguna)
             ->where('id_kursus', $tugas->id_kursus)
@@ -59,7 +59,10 @@ class TugasController extends Controller
             return response()->json(['message' => 'Kamu tidak terdaftar di kursus ini'], 403);
         }
 
-        // Cek apakah sudah pernah mengumpulkan
+        if ($tugas->deadline && now()->gt($tugas->deadline)) {
+            return response()->json(['message' => 'Deadline tugas sudah terlewat'], 403);
+        }
+
         $sudahKumpul = DB::table('pengumpulan_tugas')
             ->where('id_pengguna', $id_pengguna)
             ->where('id_tugas', $id_tugas)
@@ -73,17 +76,30 @@ class TugasController extends Controller
             'file_tugas' => 'required|file|max:51200|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,zip,txt',
         ]);
 
-        $file     = $request->file('file_tugas');
-        $safeName = uniqid() . '_' . time() . '.' . $file->getClientOriginalExtension();
-        $path     = $file->storeAs("tugas/{$id_tugas}", $safeName, 'local');
+        $path = $request->file('file_tugas')->store("tugas/{$id_tugas}", 'public');
 
-        // Simpan pengumpulan tugas
         DB::table('pengumpulan_tugas')->insert([
             'id_pengguna'    => $id_pengguna,
             'id_tugas'       => $id_tugas,
             'file_tugas'     => $path,
             'tanggal_kumpul' => now(),
         ]);
+
+        // Notifikasi ke trainer kursus
+        $trainer = DB::table('kursus')
+            ->where('id_kursus', $tugas->id_kursus)
+            ->value('id_trainer');
+
+        if ($trainer) {
+            $namaPeserta = $request->user()->nama;
+            Notifikasi::create([
+                'id_penerima'  => $trainer,
+                'judul'        => 'Tugas Baru Dikumpulkan',
+                'pesan'        => "{$namaPeserta} mengumpulkan tugas \"{$tugas->judul_tugas}\".",
+                'tipe'         => 'tugas_masuk',
+                'id_referensi' => $id_tugas,
+            ]);
+        }
 
         return response()->json(['message' => 'Tugas berhasil dikumpulkan'], 201);
     }
@@ -103,7 +119,6 @@ class TugasController extends Controller
             return response()->json(['message' => 'Tugas tidak ditemukan'], 404);
         }
 
-        // Cek apakah peserta terdaftar di kursus ini
         $terdaftar = DB::table('peserta_kursus')
             ->where('id_pengguna', $id_pengguna)
             ->where('id_kursus', $tugas->id_kursus)

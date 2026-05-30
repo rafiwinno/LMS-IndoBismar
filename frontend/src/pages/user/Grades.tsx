@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Award, TrendingUp, BookOpen, CheckCircle, Clock, FileText } from 'lucide-react';
+import { Award, TrendingUp, BookOpen, CheckCircle, Clock, ClipboardList, BadgeCheck, Copy } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import API from '../../api/api';
 import { GradesSkeleton } from '../../components/ui/Skeleton';
@@ -8,6 +8,7 @@ interface NilaiPkl {
   nilai_teknis: number;
   nilai_non_teknis: number;
   nilai_akhir: number;
+  kode_sertifikat: string | null;
   catatan: string;
   nama_penilai: string;
   tanggal_penilaian: string;
@@ -21,29 +22,31 @@ interface RiwayatKuis {
   status: string;
 }
 
-interface NilaiTugas {
+interface RiwayatTugas {
   judul_tugas: string;
   judul_kursus: string;
-  nilai: number;
   nilai_maksimal: number;
-  tanggal_kumpul: string;
+  nilai: number | null;
   feedback: string | null;
+  tanggal_kumpul: string;
 }
 
 export default function Grades() {
   const [nilaiPkl, setNilaiPkl] = useState<NilaiPkl | null>(null);
   const [riwayatKuis, setRiwayatKuis] = useState<RiwayatKuis[]>([]);
-  const [nilaiTugas, setNilaiTugas] = useState<NilaiTugas[]>([]);
+  const [riwayatTugas, setRiwayatTugas] = useState<RiwayatTugas[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     API.get('/user/nilai')
       .then(res => {
         setNilaiPkl(res.data.nilai_pkl);
         setRiwayatKuis(res.data.riwayat_kuis);
-        setNilaiTugas(res.data.nilai_tugas ?? []);
+        setRiwayatTugas(res.data.riwayat_tugas ?? []);
       })
-      .catch(err => console.error(err))
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, []);
 
@@ -57,6 +60,7 @@ export default function Grades() {
   }));
 
   if (loading) return <GradesSkeleton />;
+  if (error) return <div className="text-center text-red-500 py-12">Gagal memuat nilai. Silakan refresh halaman.</div>;
 
   return (
     <div className="space-y-6">
@@ -69,7 +73,7 @@ export default function Grades() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
           { icon: Award, color: 'blue', label: 'Nilai Akhir PKL', value: nilaiPkl?.nilai_akhir ?? '-' },
-          { icon: FileText, color: 'indigo', label: 'Tugas Dinilai', value: nilaiTugas.length },
+          { icon: ClipboardList, color: 'indigo', label: 'Tugas Dikumpulkan', value: riwayatTugas.length },
           { icon: CheckCircle, color: 'emerald', label: 'Kuis Selesai', value: riwayatKuis.length },
           { icon: TrendingUp, color: 'purple', label: 'Rata-rata Nilai Kuis', value: rataKuis },
         ].map(({ icon: Icon, color, label, value }) => (
@@ -116,6 +120,53 @@ export default function Grades() {
           )}
         </div>
       )}
+
+      {/* Kode Sertifikat */}
+      <div className="bg-white dark:bg-[#161b27] rounded-2xl shadow-sm border border-gray-200 dark:border-white/8 overflow-hidden">
+        <div className="p-6 border-b border-gray-100 dark:border-white/8">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+            <BadgeCheck size={20} className="text-red-500" />
+            Kode Sertifikat
+          </h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+            Gunakan kode ini untuk verifikasi sertifikat di website Indo Bismar
+          </p>
+        </div>
+        <div className="p-6">
+          {nilaiPkl?.kode_sertifikat ? (
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              <div className="flex-1 flex items-center gap-3 px-5 py-4 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl min-w-0">
+                <BadgeCheck size={20} className="text-emerald-500 shrink-0" />
+                <span className="font-mono text-lg font-bold tracking-widest text-gray-900 dark:text-white truncate">
+                  {nilaiPkl.kode_sertifikat}
+                </span>
+              </div>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(nilaiPkl.kode_sertifikat!);
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 2000);
+                }}
+                className={`flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition-colors shrink-0 ${
+                  copied
+                    ? 'bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
+                    : 'bg-gray-100 dark:bg-white/8 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/12'
+                }`}
+              >
+                <Copy size={15} />
+                {copied ? 'Tersalin!' : 'Salin Kode'}
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3 px-5 py-4 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl">
+              <BadgeCheck size={20} className="text-amber-500 shrink-0" />
+              <p className="text-sm text-amber-700 dark:text-amber-400">
+                Kode sertifikat belum tersedia. Admin akan mengisinya setelah PKL selesai.
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* Riwayat Kuis */}
       <div className="bg-white dark:bg-[#161b27] rounded-2xl shadow-sm border border-gray-200 dark:border-white/8 overflow-hidden">
@@ -168,16 +219,16 @@ export default function Grades() {
         )}
       </div>
 
-      {/* Nilai Tugas */}
+      {/* Riwayat Tugas */}
       <div className="bg-white dark:bg-[#161b27] rounded-2xl shadow-sm border border-gray-200 dark:border-white/8 overflow-hidden">
         <div className="p-6 border-b border-gray-100 dark:border-white/8">
           <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-            <FileText size={20} className="text-red-500" />
-            Nilai Tugas
+            <ClipboardList size={20} className="text-red-500" />
+            Riwayat Tugas
           </h2>
         </div>
-        {nilaiTugas.length === 0 ? (
-          <div className="p-8 text-center text-gray-500 dark:text-gray-400">Belum ada tugas yang dinilai.</div>
+        {riwayatTugas.length === 0 ? (
+          <div className="p-8 text-center text-gray-500 dark:text-gray-400">Belum ada tugas yang dikumpulkan.</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm text-gray-600 dark:text-gray-400">
@@ -186,20 +237,26 @@ export default function Grades() {
                   <th className="px-6 py-4">Nama Tugas</th>
                   <th className="px-6 py-4">Kursus</th>
                   <th className="px-6 py-4 text-center">Nilai</th>
-                  <th className="px-6 py-4">Tanggal</th>
+                  <th className="px-6 py-4">Tanggal Kumpul</th>
                   <th className="px-6 py-4">Feedback</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-white/8">
-                {nilaiTugas.map((item, index) => (
+                {riwayatTugas.map((item, index) => (
                   <tr key={index} className="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
                     <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">{item.judul_tugas}</td>
-                    <td className="px-6 py-4 text-gray-600 dark:text-gray-400">{item.judul_kursus}</td>
+                    <td className="px-6 py-4">{item.judul_kursus}</td>
                     <td className="px-6 py-4 text-center">
-                      <span className={`text-lg font-bold ${item.nilai >= item.nilai_maksimal * 0.7 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
-                        {item.nilai}
-                        <span className="text-xs font-normal text-gray-400 dark:text-gray-500">/{item.nilai_maksimal}</span>
-                      </span>
+                      {item.nilai !== null ? (
+                        <span className={`text-lg font-bold ${item.nilai >= item.nilai_maksimal * 0.7 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                          {item.nilai}
+                          <span className="text-xs font-normal text-gray-400 dark:text-gray-500"> / {item.nilai_maksimal}</span>
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400">
+                          Menunggu
+                        </span>
+                      )}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400">
@@ -207,8 +264,8 @@ export default function Grades() {
                         {new Date(item.tanggal_kumpul).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-gray-500 dark:text-gray-400 max-w-xs truncate">
-                      {item.feedback ?? <span className="italic text-gray-300 dark:text-gray-600">-</span>}
+                    <td className="px-6 py-4 max-w-xs text-gray-500 dark:text-gray-400">
+                      {item.feedback ?? <span className="text-gray-300 dark:text-gray-600">-</span>}
                     </td>
                   </tr>
                 ))}

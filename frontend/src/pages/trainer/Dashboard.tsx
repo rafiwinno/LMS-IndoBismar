@@ -29,6 +29,7 @@ export default function TrainerDashboard() {
   const draft = courses.filter((c) => c.status === 'draft').length;
 
   return (
+<<<<<<< HEAD
     <div className="space-y-6">
 
       {/* Page heading */}
@@ -172,6 +173,12 @@ export default function TrainerDashboard() {
           </div>
         )}
       </div>
+=======
+    <div className="p-8">
+      <h1 className="text-2xl font-bold text-slate-800">Dashboard Trainer</h1>
+      <p className="mt-2 text-slate-600">Selamat datang, {user?.nama}!</p>
+      <p className="mt-1 text-sm text-slate-400">Role: {user?.role}</p>
+>>>>>>> user
     </div>
   );
 }

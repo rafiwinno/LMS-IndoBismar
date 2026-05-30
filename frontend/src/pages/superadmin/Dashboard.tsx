@@ -89,6 +89,7 @@ function AnimatedNumber({ value, duration = 800 }: { value: number; duration?: n
 // ─── Shimmer skeleton ─────────────────────────────────────────────────────────
 function Skel({ className = '' }) {
   return (
+<<<<<<< HEAD
     <div className={`relative overflow-hidden bg-muted rounded-lg ${className}`}>
       <div className="absolute inset-0 -translate-x-full"
         style={{ background:'linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent)', animation:'shimmer 1.5s infinite' }} />
@@ -565,6 +566,12 @@ export default function Dashboard() {
         )}
 
       </div>
+=======
+    <div className="p-8">
+      <h1 className="text-2xl font-bold text-slate-800">Dashboard Super Admin</h1>
+      <p className="mt-2 text-slate-600">Selamat datang, {user?.nama}!</p>
+      <p className="mt-1 text-sm text-slate-400">Role: {user?.role}</p>
+>>>>>>> user
     </div>
   );
 }

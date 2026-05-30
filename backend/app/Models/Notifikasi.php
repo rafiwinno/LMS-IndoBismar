@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -10,7 +11,7 @@ class Notifikasi extends Model
     public $timestamps    = false;
 
     protected $fillable = [
-        'id_penerima', 'judul', 'pesan', 'tipe', 'id_referensi', 'dibaca',
+        'id_penerima', 'judul', 'pesan', 'tipe', 'id_referensi', 'dibaca', 'dibuat_pada',
     ];
 
     protected $casts = [
@@ -18,5 +19,8 @@ class Notifikasi extends Model
         'dibuat_pada' => 'datetime',
     ];
 
-    public function penerima() { return $this->belongsTo(Pengguna::class, 'id_penerima', 'id_pengguna'); }
+    public function penerima()
+    {
+        return $this->belongsTo(Pengguna::class, 'id_penerima', 'id_pengguna');
+    }
 }

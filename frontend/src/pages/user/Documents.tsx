@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { FileText, UploadCloud, AlertCircle, BadgeCheck, CheckCircle, Loader2, ShieldCheck, Clock } from 'lucide-react';
+﻿import { useEffect, useState } from 'react';
+import { FileText, UploadCloud, AlertCircle, BadgeCheck, CheckCircle, Loader2, ShieldCheck, Clock, Download } from 'lucide-react';
 import API from '../../api/api';
 import { DocumentsSkeleton } from '../../components/ui/Skeleton';
 
@@ -13,6 +13,11 @@ interface Dokumen {
 const DOKUMEN_LIST = [
   { jenis: 'surat_siswa', label: 'Surat Pernyataan Magang', deskripsi: 'Upload surat pernyataan magang yang telah ditandatangani.' },
   { jenis: 'surat_orang_tua', label: 'Surat Pernyataan Orang Tua', deskripsi: 'Upload surat pernyataan orang tua yang telah ditandatangani.' },
+];
+
+const TEMPLATE_LIST = [
+  { label: 'Template Surat Pernyataan Siswa PKL', file: '/templates/surat-pernyataan-siswa-pkl.pdf' },
+  { label: 'Template Surat Pernyataan Orang Tua', file: '/templates/surat-pernyataan-orang-tua.pdf' },
 ];
 
 const statusBadge: Record<string, { label: string; className: string; icon: JSX.Element }> = {
@@ -49,7 +54,7 @@ export default function Documents() {
     try {
       const res = await API.get('/user/dokumen');
       setDokumen(res.data.data);
-    } catch (err) { console.error(err); }
+    } catch { setErrorMsg('Gagal memuat dokumen.'); }
     finally { setLoading(false); }
   };
 
@@ -117,6 +122,31 @@ export default function Documents() {
           ❌ {errorMsg}
         </div>
       )}
+
+      <div className="bg-white dark:bg-[#161b27] rounded-2xl shadow-sm border border-gray-200 dark:border-white/8 p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-2.5 rounded-xl bg-blue-100 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400">
+            <Download size={20} />
+          </div>
+          <div>
+            <h2 className="text-base font-bold text-gray-900 dark:text-white">Download Template</h2>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Unduh template surat, isi, tandatangani, lalu upload di bawah</p>
+          </div>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-3">
+          {TEMPLATE_LIST.map(({ label, file }) => (
+            <a
+              key={file}
+              href={file}
+              download
+              className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-blue-200 dark:border-blue-500/30 bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 text-sm font-medium hover:bg-blue-100 dark:hover:bg-blue-500/20 transition-colors"
+            >
+              <FileText size={16} />
+              {label}
+            </a>
+          ))}
+        </div>
+      </div>
 
       <div className="space-y-4">
         {DOKUMEN_LIST.map(({ jenis, label, deskripsi }) => {

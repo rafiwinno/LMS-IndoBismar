@@ -11,6 +11,8 @@ use App\Http\Controllers\Api\User\NilaiController    as UserNilaiController;
 use App\Http\Controllers\Api\User\ProfileController  as UserProfileController;
 use App\Http\Controllers\Api\User\DocumentController as UserDocumentController;
 use App\Http\Controllers\Api\User\FeedbackController as UserFeedbackController;
+use App\Http\Controllers\Api\User\TugasController    as UserTugasController;
+use App\Http\Controllers\Api\User\NotifikasiController as UserNotifikasiController;
 
 // ── Admin Controllers ─────────────────────────────────────────────────────────
 use App\Http\Controllers\Api\Admin\AuthController        as AdminAuthController;
@@ -80,11 +82,13 @@ Route::post('/auth/register',     [AdminAuthController::class, 'register'])->mid
 Route::middleware('auth:sanctum')->group(function () {
 
     // ── Shared auth ──────────────────────────────────────────────────────────
-    Route::post('/logout',            [UserAuthController::class, 'logout']);
-    Route::post('/auth/logout',       [AdminAuthController::class, 'logout']);
-    Route::post('/auth/logout-all',   [AdminAuthController::class, 'logoutAll']);
-    Route::get('/auth/me',            [AdminAuthController::class, 'me']);
-    Route::post('/auth/refresh',      [AdminAuthController::class, 'refresh'])->middleware('throttle:10,1');
+    Route::get('/me',                [UserAuthController::class, 'me']);
+    Route::post('/logout',           [UserAuthController::class, 'logout']);
+    Route::post('/logout-semua',     [UserAuthController::class, 'logoutSemua']);
+    Route::post('/auth/logout',      [AdminAuthController::class, 'logout']);
+    Route::post('/auth/logout-all',  [AdminAuthController::class, 'logoutAll']);
+    Route::get('/auth/me',           [AdminAuthController::class, 'me']);
+    Route::post('/auth/refresh',     [AdminAuthController::class, 'refresh'])->middleware('throttle:10,1');
 
     // ── Download dokumen PKL secara aman (private storage) ───────────────────
     Route::get('/dokumen/secure/{path}', [AdminSecureDocumentController::class, 'download'])
@@ -136,19 +140,23 @@ Route::middleware('auth:sanctum')->group(function () {
 
         Route::get('/kuis',              [UserKuisController::class, 'index']);
         Route::get('/kuis/{id_kuis}',    [UserKuisController::class, 'show']);
+        Route::post('/kuis/{id_kuis}/mulai',    [UserKuisController::class, 'mulai']);
         Route::post('/kuis/{id_kuis}/kerjakan', [UserKuisController::class, 'kerjakan']);
 
         Route::get('/nilai',             [UserNilaiController::class, 'index']);
 
-        // Tugas peserta
-        Route::get('/tugas',                        [\App\Http\Controllers\Api\User\TugasController::class, 'index']);
-        Route::get('/tugas/{id_tugas}',             [\App\Http\Controllers\Api\User\TugasController::class, 'show']);
-        Route::post('/tugas/{id_tugas}/kumpul',     [\App\Http\Controllers\Api\User\TugasController::class, 'kumpul']);
+        Route::get('/tugas',                        [UserTugasController::class, 'index']);
+        Route::get('/tugas/{id_tugas}',             [UserTugasController::class, 'show']);
+        Route::post('/tugas/{id_tugas}/kumpul',     [UserTugasController::class, 'kumpul']);
 
         Route::get('/feedback',          [UserFeedbackController::class, 'index']);
 
         Route::get('/profil',            [UserProfileController::class, 'show']);
         Route::put('/profil',            [UserProfileController::class, 'update']);
+
+        Route::get('/notifikasi',                   [UserNotifikasiController::class, 'index']);
+        Route::patch('/notifikasi/baca-semua',      [UserNotifikasiController::class, 'bacaSemua']);
+        Route::patch('/notifikasi/{id}/baca',       [UserNotifikasiController::class, 'baca']);
 
         // Upload dokumen PKL milik sendiri
         Route::post('/dokumen-pkl', [\App\Http\Controllers\Api\Admin\PesertaController::class, 'uploadDokumen']);

@@ -6,3 +6,11 @@ coverage/
 *.log
 .env*
 !.env.example
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Vite specific
+.vite/

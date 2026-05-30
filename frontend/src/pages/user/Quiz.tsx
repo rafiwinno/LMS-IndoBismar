@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
-import { Clock, CheckCircle, ChevronLeft } from 'lucide-react';
+import { Clock, CheckCircle, ChevronLeft, AlertTriangle } from 'lucide-react';
 import API from '../../api/api';
 import { toast } from '../../lib/toast';
 
@@ -31,49 +31,42 @@ export default function Quiz() {
   const [kuis, setKuis] = useState<KuisDetail | null>(null);
   const [pertanyaan, setPertanyaan] = useState<Pertanyaan[]>([]);
   const [loading, setLoading] = useState(true);
-  const [accessError, setAccessError] = useState('');
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<Record<number, number | string>>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [hasil, setHasil] = useState<{ nilai: number; benar: number; total: number; ada_essay?: boolean } | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [timeLeft, setTimeLeft] = useState<number | null>(null);
+  const [timeLeft, setTimeLeft] = useState(1800);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   useEffect(() => {
-    API.get(`/user/kuis/${id}`)
-      .then(res => {
-        const kuisData = res.data.kuis;
-        setKuis(kuisData);
-        setPertanyaan(res.data.pertanyaan);
+    const init = async () => {
+      try {
+        const [detailRes, mulaiRes] = await Promise.all([
+          API.get(`/user/kuis/${id}`),
+          API.post(`/user/kuis/${id}/mulai`),
+        ]);
 
-        if (kuisData?.waktu_selesai) {
-          const sisa = Math.max(0, Math.floor(
-            (new Date(kuisData.waktu_selesai).getTime() - Date.now()) / 1000
-          ));
-          setTimeLeft(sisa);
-        }
-      })
-      .catch(err => {
-        const msg = err.response?.data?.message;
-        if (err.response?.status === 403 && msg) setAccessError(msg);
-        else console.error(err);
-      })
-      .finally(() => setLoading(false));
+        setKuis(detailRes.data.kuis);
+        setPertanyaan(detailRes.data.pertanyaan);
 
-    API.get('/user/kuis')
-      .then(res => {
-        const kuisList = res.data.data;
-        const thisKuis = kuisList.find((k: any) => k.id_kuis === Number(id));
-        if (thisKuis?.status_attempt === 'sudah') {
-          navigate(fromCourse ? `/courses/${fromCourse}` : '/tasks');
-        }
-      });
+        const waktuMulai = new Date(mulaiRes.data.waktu_mulai).getTime();
+        const durasiDetik = (mulaiRes.data.durasi_menit ?? 30) * 60;
+        const elapsed = Math.floor((Date.now() - waktuMulai) / 1000);
+        const sisa = Math.max(0, durasiDetik - elapsed);
+        setTimeLeft(sisa);
+      } catch (err: any) {
+        navigate(fromCourse ? `/courses/${fromCourse}` : '/tasks');
+      } finally {
+        setLoading(false);
+      }
+    };
+    init();
   }, [id]);
 
   useEffect(() => {
-    if (timeLeft === null) return;
     if (timeLeft > 0 && !isSubmitted) {
-      const timer = setTimeout(() => setTimeLeft(t => (t ?? 1) - 1), 1000);
+      const timer = setTimeout(() => setTimeLeft(t => t - 1), 1000);
       return () => clearTimeout(timer);
     } else if (timeLeft === 0 && !isSubmitted) {
       handleSubmit();
@@ -120,29 +113,13 @@ export default function Quiz() {
   };
 
   if (loading) return (
-    <div className="text-center text-gray-500 dark:text-gray-400 py-12">
-      Memuat kuis...
-    </div>
-  );
-
-  if (accessError) return (
-    <div className="max-w-md mx-auto mt-20 text-center bg-white dark:bg-[#161b27] rounded-2xl p-8 shadow-sm border border-gray-200 dark:border-white/8">
-      <Clock size={40} className="mx-auto mb-4 text-amber-500" />
-      <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2">{accessError}</h2>
-      <Link to={fromCourse ? `/courses/${fromCourse}` : '/tasks'}
-        className="mt-4 inline-flex items-center gap-1 text-sm text-red-600 hover:underline">
-        <ChevronLeft size={16} /> Kembali
-      </Link>
-    </div>
+    <div className="text-center text-gray-500 dark:text-gray-400 py-12">Memuat kuis...</div>
   );
 
   if (!kuis) return (
-    <div className="text-center text-gray-500 dark:text-gray-400 py-12">
-      Kuis tidak ditemukan.
-    </div>
+    <div className="text-center text-gray-500 dark:text-gray-400 py-12">Kuis tidak ditemukan.</div>
   );
 
-  // Halaman hasil
   if (isSubmitted && hasil) {
     return (
       <div className="max-w-2xl mx-auto mt-12 text-center">
@@ -150,18 +127,13 @@ export default function Quiz() {
           <div className="w-20 h-20 bg-emerald-100 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-6">
             <CheckCircle size={40} />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-            Kuis Berhasil Dikumpulkan!
-          </h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-2">
-            Terima kasih telah mengerjakan {kuis.judul_kuis}.
-          </p>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Kuis Berhasil Dikumpulkan!</h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-2">Terima kasih telah mengerjakan {kuis.judul_kuis}.</p>
           {hasil?.ada_essay && (
             <p className="text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-lg px-4 py-2 mb-6 inline-block">
               Soal essay akan dinilai oleh trainer. Nilai di bawah adalah nilai sementara dari soal pilihan ganda.
             </p>
           )}
-
           <div className="bg-gray-50 dark:bg-white/5 rounded-xl p-6 border border-gray-100 dark:border-white/8 mb-8 inline-block text-left">
             <div className="flex items-center gap-4 mb-3">
               <span className="text-gray-500 dark:text-gray-400 font-medium w-32">Nilai:</span>
@@ -172,7 +144,6 @@ export default function Quiz() {
               <span className="text-gray-900 dark:text-white font-semibold">{hasil.benar} / {hasil.total}</span>
             </div>
           </div>
-
           <div>
             <Link
               to={fromCourse ? `/courses/${fromCourse}` : '/tasks'}
@@ -200,12 +171,12 @@ export default function Quiz() {
       <div className="bg-white dark:bg-[#161b27] rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-white/8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <h1 className="text-xl font-bold text-gray-900 dark:text-white">{kuis.judul_kuis}</h1>
         <div className={`flex items-center gap-2 px-4 py-2 rounded-lg font-mono text-lg font-bold ${
-          timeLeft !== null && timeLeft < 300
+          timeLeft < 300
             ? 'bg-rose-100 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400 animate-pulse'
             : 'bg-gray-100 dark:bg-white/8 text-gray-800 dark:text-gray-200'
         }`}>
           <Clock size={20} />
-          {timeLeft === null ? '--:--' : formatTime(timeLeft)}
+          {formatTime(timeLeft)}
         </div>
       </div>
 
@@ -234,7 +205,7 @@ export default function Quiz() {
             </div>
             <div className="mt-6 pt-6 border-t border-gray-100 dark:border-white/8">
               <button
-                onClick={handleSubmit}
+                onClick={() => setShowConfirm(true)}
                 disabled={submitting}
                 className="w-full py-2.5 px-4 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
               >
@@ -252,17 +223,13 @@ export default function Quiz() {
                 Soal {currentQuestion + 1} dari {pertanyaan.length}
               </span>
             </div>
-
             <h2 className="text-lg md:text-xl font-medium text-gray-900 dark:text-white mb-8 leading-relaxed">
               {pertanyaan[currentQuestion]?.pertanyaan}
             </h2>
-
             <div className="flex-1">
               {pertanyaan[currentQuestion]?.tipe === 'essay' ? (
                 <div className="flex flex-col h-full">
-                  <span className="text-xs font-medium text-gray-400 dark:text-gray-500 mb-2">
-                    Tulis jawabanmu di bawah ini:
-                  </span>
+                  <span className="text-xs font-medium text-gray-400 dark:text-gray-500 mb-2">Tulis jawabanmu di bawah ini:</span>
                   <textarea
                     value={(answers[currentQuestion] as string) ?? ''}
                     onChange={e => handleAnswer(e.target.value)}
@@ -289,15 +256,12 @@ export default function Quiz() {
                         onChange={() => handleAnswer(pilihan.id_pilihan)}
                         className="w-4 h-4 text-red-600 border-gray-300 focus:ring-red-600"
                       />
-                      <span className="ml-3 text-gray-700 dark:text-gray-300 font-medium">
-                        {pilihan.teks_jawaban}
-                      </span>
+                      <span className="ml-3 text-gray-700 dark:text-gray-300 font-medium">{pilihan.teks_jawaban}</span>
                     </label>
                   ))}
                 </div>
               )}
             </div>
-
             <div className="flex justify-between mt-8 pt-6 border-t border-gray-100 dark:border-white/8">
               <button
                 onClick={() => setCurrentQuestion(Math.max(0, currentQuestion - 1))}
@@ -315,7 +279,7 @@ export default function Quiz() {
                 </button>
               ) : (
                 <button
-                  onClick={handleSubmit}
+                  onClick={() => setShowConfirm(true)}
                   disabled={submitting}
                   className="px-5 py-2.5 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
                 >
@@ -326,6 +290,37 @@ export default function Quiz() {
           </div>
         </div>
       </div>
+
+      {/* Modal Konfirmasi */}
+      {showConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white dark:bg-[#161b27] rounded-2xl p-8 shadow-xl border border-gray-200 dark:border-white/8 max-w-sm w-full mx-4 text-center">
+            <div className="w-16 h-16 bg-amber-100 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertTriangle size={32} />
+            </div>
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Kumpulkan Kuis?</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+              {Object.keys(answers).length} dari {pertanyaan.length} soal dijawab.
+            </p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Setelah dikumpulkan, jawaban tidak bisa diubah.</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowConfirm(false)}
+                className="flex-1 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-white/8 hover:bg-gray-200 dark:hover:bg-white/10 rounded-lg transition-colors"
+              >
+                Batal
+              </button>
+              <button
+                onClick={() => { setShowConfirm(false); handleSubmit(); }}
+                disabled={submitting}
+                className="flex-1 py-2.5 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors disabled:opacity-50"
+              >
+                Ya, Kumpulkan
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
