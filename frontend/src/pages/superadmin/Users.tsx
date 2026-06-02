@@ -678,7 +678,7 @@ export default function Users() {
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-theme">
+            <tbody className="divide-y divide-white/5 dark:divide-white/5">
               {loading ? (
                 Array.from({length:6}).map((_,i)=>(
                   <tr key={i}>{Array.from({length:7}).map((_,j)=>(
@@ -884,7 +884,7 @@ export default function Users() {
                               <th className="px-3 py-2 text-left">Tgl Lahir</th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-theme">
+                          <tbody className="divide-y divide-white/5 dark:divide-white/5">
                             {importResult.berhasil.map((b, i) => (
                               <tr key={i} className="hover:bg-muted/60">
                                 <td className="px-3 py-2 font-medium text-primary">{b.nama}</td>

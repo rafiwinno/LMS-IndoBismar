@@ -61,7 +61,6 @@ export function Dashboard() {
   const activities = data?.recent_activity || [];
 
   return (
-<<<<<<< HEAD
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <StatCard title="Total Peserta"    value={loading ? null : String(stats.total_peserta ?? 0)}  icon={Users}         color="text-blue-500"    bg="bg-blue-500/10" />
@@ -185,12 +184,6 @@ function StatCard({ title, value, icon: Icon, color, bg }: { title: string; valu
           : <h4 className="text-xl font-bold text-gray-900 dark:text-white">{value}</h4>
         }
       </div>
-=======
-    <div className="p-8">
-      <h1 className="text-2xl font-bold text-slate-800">Dashboard Admin</h1>
-      <p className="mt-2 text-slate-600">Selamat datang, {user?.nama}!</p>
-      <p className="mt-1 text-sm text-slate-400">Role: {user?.role}</p>
->>>>>>> user
     </div>
   );
 }

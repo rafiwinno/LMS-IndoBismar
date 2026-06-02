@@ -2,7 +2,7 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Shield, UserPlus, Eye, EyeOff, ArrowLeft, CheckCircle2, BookOpen, Award, Users, GraduationCap } from 'lucide-react';
 import API from '../api/api';
-import { saveUser } from './types';
+import { saveUser, saveToken } from './types';
 import logoBismar from '../assets/logo-bismar.png';
 
 type Mode = 'main' | 'admin' | 'trainer' | 'register';
@@ -23,6 +23,7 @@ export default function Login() {
 
   const handleLogin = (user: any, token: string) => {
     localStorage.setItem('lms_token', token);
+    saveToken(token);
     const idRole = user.id_role;
     saveUser({
       id_pengguna: user.id_pengguna,

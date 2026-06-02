@@ -458,7 +458,7 @@ export function Courses() {
                 {selectedCourse.deskripsi && <p className="text-sm text-gray-500 mt-1">{selectedCourse.deskripsi}</p>}
                 <div className="flex flex-wrap items-center gap-3 mt-2">
                   {selectedCourse.trainer && <span className="text-sm text-gray-600">Trainer: <span className="font-medium">{selectedCourse.trainer}</span></span>}
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${selectedCourse.status === 'publish' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${selectedCourse.status === 'publish' ? 'bg-green-100 dark:bg-green-500/20 text-green-800 dark:text-green-400' : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'}`}>
                     {selectedCourse.status}
                   </span>
                   <span className="text-sm text-gray-500">{selectedCourse.participants} peserta</span>
@@ -1122,7 +1122,7 @@ export function Courses() {
                     </td>
                     <td className="px-6 py-4 text-gray-600">{k.trainer || '-'}</td>
                     <td className="px-6 py-4">
-                      <button onClick={e => toggleStatus(k, e)} className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium cursor-pointer ${k.status === 'publish' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                      <button onClick={e => toggleStatus(k, e)} className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium cursor-pointer capitalize ${k.status === 'publish' ? 'bg-green-100 dark:bg-green-500/20 text-green-800 dark:text-green-400' : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'}`}>
                         {k.status}
                       </button>
                     </td>
