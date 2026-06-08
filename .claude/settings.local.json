@@ -9,7 +9,13 @@
       "Bash(xargs grep -l \"import\\|Import\\|Excel\\|Csv\")",
       "Bash(xargs grep -l \"login_logs\\|activity_logs\\|login_log\")",
       "Bash(php -l app/Http/Controllers/Api/Admin/PesertaController.php)",
-      "Bash(Get-Content \"C:\\laragon\\www\\LMS-IndoBismar\\backend\\storage\\logs\\laravel.log\" -Tail 50)"
+      "Bash(Get-Content \"C:\\laragon\\www\\LMS-IndoBismar\\backend\\storage\\logs\\laravel.log\" -Tail 50)",
+      "Bash(Get-ChildItem -Path \"C:\\\\xampp\\\\htdocs\\\\lms-pt-indo-bismar\" -Depth 2 -Directory)",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(Sort-Object)",
+      "Bash(Get-ChildItem -Path \"C:\\\\xampp\\\\htdocs\\\\lms-pt-indo-bismar\\\\backend\\\\database\\\\migrations\" -Filter \"*.php\")",
+      "Bash(Select-Object -ExpandProperty Name)",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\xampp\\\\htdocs\\\\lms-pt-indo-bismar\\\\backend\\\\app\\\\Http\\\\Controllers\\\\Api\" -Directory | ForEach-Object { $_.Name })"
     ]
   }
 }

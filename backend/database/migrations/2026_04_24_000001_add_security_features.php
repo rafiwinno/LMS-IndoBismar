@@ -15,8 +15,12 @@ return new class extends Migration
 
         // 2. Soft deletes + updated_at untuk kursus (concurrency control)
         Schema::table('kursus', function (Blueprint $table) {
-            $table->timestamp('updated_at')->nullable()->after('dibuat_pada');
-            $table->softDeletes()->after('updated_at');
+            if (!Schema::hasColumn('kursus', 'updated_at')) {
+                $table->timestamp('updated_at')->nullable()->after('dibuat_pada');
+            }
+            if (!Schema::hasColumn('kursus', 'deleted_at')) {
+                $table->softDeletes()->after('updated_at');
+            }
         });
 
         // 3. Audit log: mencatat setiap aksi admin (verifikasi, hapus, ubah status)

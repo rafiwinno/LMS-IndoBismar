@@ -8,6 +8,7 @@ import { twMerge } from 'tailwind-merge';
 import { useDarkMode } from '../../hooks/useDarkMode';
 import { getUser } from '../../pages/types';
 import api from '../../api/api';
+import logoImg from '../../assets/logo-bismar.png';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -63,7 +64,7 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
         <div className="flex items-center justify-between h-16 px-5 border-b border-gray-200 dark:border-white/8 shrink-0">
           <div className="flex items-center gap-3">
             <img
-              src="/src/assets/logo-bismar.png"
+              src={logoImg}
               alt="Logo Indo Bismar"
               className="w-9 h-9 rounded-full object-cover shrink-0"
             />
