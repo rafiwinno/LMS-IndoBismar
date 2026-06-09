@@ -19,7 +19,7 @@ class KursusController extends Controller
                      ->where('peserta_kursus.id_pengguna', '=', $id_pengguna);
             })
             ->leftJoin('pengguna as trainer', 'kursus.id_trainer', '=', 'trainer.id_pengguna')
-            ->where('kursus.status', 'publish')
+            ->where('kursus.status', 'aktif')
             ->select('kursus.id_kursus', 'kursus.judul_kursus', 'kursus.deskripsi',
                      'kursus.status', 'trainer.nama as nama_trainer',
                      'peserta_kursus.status as status_progress')

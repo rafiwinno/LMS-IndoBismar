@@ -28,11 +28,6 @@ class NilaiController extends Controller
             )
             ->first();
 
-        // Nilai non teknis
-        $nilaiNonTeknis = DB::table('nilai_non_teknis')
-            ->where('id_pengguna', $id_pengguna)
-            ->get();
-
         // Riwayat kuis peserta (hanya yang sudah selesai)
         $riwayatKuis = DB::table('attempt_kuis')
             ->join('kuis', 'attempt_kuis.id_kuis', '=', 'kuis.id_kuis')
@@ -64,10 +59,9 @@ class NilaiController extends Controller
             ->get();
 
         return response()->json([
-            'nilai_pkl'        => $nilaiPkl,
-            'nilai_non_teknis' => $nilaiNonTeknis,
-            'riwayat_kuis'     => $riwayatKuis,
-            'riwayat_tugas'    => $riwayatTugas,
+            'nilai_pkl'    => $nilaiPkl,
+            'riwayat_kuis' => $riwayatKuis,
+            'riwayat_tugas' => $riwayatTugas,
         ]);
     }
 }
