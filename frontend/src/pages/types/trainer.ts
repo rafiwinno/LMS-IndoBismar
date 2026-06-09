@@ -13,7 +13,7 @@ export interface Course {
   judul_kursus:  string;
   deskripsi:     string | null;
   gambar_kursus: string | null;
-  status:        'draft' | 'publish';
+  status:        'draft' | 'aktif' | 'nonaktif';
   dibuat_pada:   string;
 }
 

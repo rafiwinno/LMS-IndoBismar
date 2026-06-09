@@ -263,7 +263,7 @@ class CourseController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        $course->update(['status' => 'publish']);
+        $course->update(['status' => 'aktif']);
 
         Cache::forget("trainer_courses_{$request->user()->id_pengguna}");
 

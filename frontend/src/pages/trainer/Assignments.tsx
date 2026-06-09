@@ -707,11 +707,17 @@ function KuisTab({ courses, coursesError, initialCourseId }: { courses: Course[]
       if (qForm.pilihan?.some((p) => !p.teks_jawaban.trim())) { setError('Semua pilihan wajib diisi'); return; }
     }
     setLoading(true);
+    const payload = {
+      pertanyaan:  qForm.pertanyaan,
+      tipe:        qForm.tipe,
+      bobot_nilai: qForm.bobot_nilai,
+      ...(qForm.tipe === 'pilihan_ganda' ? { pilihan: qForm.pilihan } : {}),
+    };
     try {
       if (editQuestion) {
-        await api.put(`/trainer/questions/${editQuestion.id_pertanyaan}`, qForm);
+        await api.put(`/trainer/questions/${editQuestion.id_pertanyaan}`, payload);
       } else {
-        await api.post(`/trainer/quizzes/${selectedQuiz.id_kuis}/questions`, qForm);
+        await api.post(`/trainer/quizzes/${selectedQuiz.id_kuis}/questions`, payload);
       }
       setShowQModal(false);
       setEditQuestion(null);
@@ -928,7 +934,7 @@ function KuisTab({ courses, coursesError, initialCourseId }: { courses: Course[]
             <Field label="Judul Kuis">
               <input value={quizForm.judul_kuis} onChange={(e) => setQuizForm({ ...quizForm, judul_kuis: e.target.value })} placeholder="Contoh: Quiz Bab 1" className={inputCls} />
             </Field>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3">
               <Field label="Waktu Mulai">
                 <DateTimeInput value={quizForm.waktu_mulai} onChange={(v) => setQuizForm({ ...quizForm, waktu_mulai: v })} />
               </Field>

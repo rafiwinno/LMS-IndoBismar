@@ -139,9 +139,9 @@ class QuizController extends Controller
             'pertanyaan'  => 'required|string',
             'tipe'        => 'required|in:pilihan_ganda,essay',
             'bobot_nilai' => 'nullable|integer|min:1',
-            'pilihan'     => 'required_if:tipe,pilihan_ganda|array|min:2',
-            'pilihan.*.teks_jawaban' => 'required_if:tipe,pilihan_ganda|string',
-            'pilihan.*.benar'        => 'required_if:tipe,pilihan_ganda|boolean',
+            'pilihan'     => 'required_if:tipe,pilihan_ganda|nullable|array|min:2',
+            'pilihan.*.teks_jawaban' => 'required_if:tipe,pilihan_ganda|nullable|string',
+            'pilihan.*.benar'        => 'required_if:tipe,pilihan_ganda|nullable|boolean',
         ]);
 
         $duplicate = Question::where('id_kuis', $quizId)
@@ -199,9 +199,9 @@ class QuizController extends Controller
             'pertanyaan'  => 'required|string',
             'tipe'        => 'required|in:pilihan_ganda,essay',
             'bobot_nilai' => 'nullable|integer|min:1',
-            'pilihan'     => 'required_if:tipe,pilihan_ganda|array|min:2',
-            'pilihan.*.teks_jawaban' => 'required_if:tipe,pilihan_ganda|string',
-            'pilihan.*.benar'        => 'required_if:tipe,pilihan_ganda|boolean',
+            'pilihan'     => 'required_if:tipe,pilihan_ganda|nullable|array|min:2',
+            'pilihan.*.teks_jawaban' => 'required_if:tipe,pilihan_ganda|nullable|string',
+            'pilihan.*.benar'        => 'required_if:tipe,pilihan_ganda|nullable|boolean',
         ]);
 
         if ($request->tipe === 'pilihan_ganda') {
