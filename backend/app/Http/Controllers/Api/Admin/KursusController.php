@@ -61,7 +61,7 @@ class KursusController extends Controller
                     if (! $ok) $fail('Trainer tidak ditemukan di cabang Anda.');
                 },
             ],
-            'status'       => 'nullable|in:draft,publish',
+            'status'       => 'nullable|in:draft,aktif,nonaktif',
         ]);
 
         $kursus = Kursus::create([
@@ -114,7 +114,7 @@ class KursusController extends Controller
                     if (! $ok) $fail('Trainer tidak ditemukan di cabang Anda.');
                 },
             ],
-            'status'       => 'sometimes|in:draft,publish',
+            'status'       => 'sometimes|in:draft,aktif,nonaktif',
         ]);
 
         $kursus->update($request->only(['judul_kursus', 'deskripsi', 'id_trainer', 'status']));
@@ -150,7 +150,7 @@ class KursusController extends Controller
 
     public function updateStatus(Request $request, $id)
     {
-        $request->validate(['status' => 'required|in:draft,publish']);
+        $request->validate(['status' => 'required|in:draft,aktif,nonaktif']);
 
         $kursus = Kursus::where('id_cabang', $request->user()->id_cabang)->findOrFail($id);
         $kursus->update(['status' => $request->status]);

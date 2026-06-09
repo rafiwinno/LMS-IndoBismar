@@ -37,7 +37,7 @@ class PesertaController extends Controller
 
         if ($request->status) $query->where('status', $request->status);
 
-        $peserta = $query->orderBy('dibuat_pada', 'desc')
+        $peserta = $query->orderBy('id_pengguna', 'desc')
             ->paginate($request->per_page ?? 15);
 
         return response()->json([

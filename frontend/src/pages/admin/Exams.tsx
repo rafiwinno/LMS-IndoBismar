@@ -313,7 +313,7 @@ export function Exams() {
     catch (e: any) { toast.error(e.message); }
   };
 
-  const fmt = (d: string) => d ? new Date(d).toLocaleString('id-ID') : '-';
+  const fmt = (d: string) => d ? new Date(d).toLocaleString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
   const closeModal = () => { setModalMode('none'); setError(''); setGradingAttempt(null); setPgDetailAttempt(null); };
 
   // ── Soal saat ini ──────────────────────────────────────────────────────────

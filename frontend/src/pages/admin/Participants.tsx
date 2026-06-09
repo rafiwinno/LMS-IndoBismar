@@ -100,7 +100,7 @@ export function Participants() {
     return () => clearTimeout(t);
   }, [searchTerm, activeTab]);
 
-  const openAdd = () => { setEditData(null); setForm(emptyForm); setShowModal(true); };
+  const openAdd = () => { setEditData(null); setForm(emptyForm); setError(''); setShowModal(true); };
   const openEdit = (p: Peserta) => {
     setEditData(p);
     setForm({ ...emptyForm, nama: p.nama, email: p.email, nomor_hp: p.nomor_hp || '', asal_sekolah: p.asal_sekolah || '', jurusan: p.jurusan || '', status: p.status, password: '' });
@@ -146,7 +146,7 @@ export function Participants() {
     try {
       const [detail, kursusRes] = await Promise.all([
         api.getPesertaDetail(p.id),
-        api.getKursus('status=publish&per_page=100'),
+        api.getKursus('status=aktif&per_page=100'),
       ]);
       setDetailPeserta(detail);
       setAllKursus(kursusRes.data ?? []);
@@ -792,12 +792,12 @@ export function Participants() {
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white dark:bg-[#161b22] rounded-xl shadow-2xl w-full max-w-md">
-            <div className="flex items-center justify-between p-6 border-b dark:border-white/10">
+          <div className="bg-white dark:bg-[#161b22] rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between p-6 border-b dark:border-white/10 shrink-0">
               <h3 className="text-lg font-semibold dark:text-white">{editData ? 'Edit Peserta' : 'Tambah Peserta'}</h3>
               <button onClick={() => setShowModal(false)}><X className="w-5 h-5 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300" /></button>
             </div>
-            <div className="p-6 space-y-4">
+            <div className="p-6 space-y-4 overflow-y-auto flex-1">
               {error && <p className="text-red-500 text-sm bg-red-50 p-2 rounded">{error}</p>}
               {['nama', 'email', 'nomor_hp', 'asal_sekolah'].map(field => (
                 <div key={field}>
