@@ -15,7 +15,9 @@
       "Bash(sed -i 's/removeUser\\(\\);/logout\\(\\);/' \"c:/Kampus Semester 6/PKL  - IndoBismar/LMS_IndoBismar/frontend/src/pages/Unauthorized.tsx\")",
       "Read(//c/laragon/bin/**)",
       "Read(//c//**)",
-      "PowerShell(& \"C:\\\\Program Files\\\\MySQL\\\\MySQL Server 8.4\\\\bin\\\\mysql.exe\" --version)"
+      "PowerShell(& \"C:\\\\Program Files\\\\MySQL\\\\MySQL Server 8.4\\\\bin\\\\mysql.exe\" --version)",
+      "Bash(git commit *)",
+      "Bash(git push *)"
     ],
     "additionalDirectories": [
       "c:\\Kampus Semester 6\\PKL  - IndoBismar\\LMS_IndoBismar\\frontend\\src\\services"
