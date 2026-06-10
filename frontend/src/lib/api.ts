@@ -107,8 +107,8 @@ export const api = {
 
   // Tugas (admin/trainer)
   getTugas: (params?: string) => apiFetch(`/tugas${params ? '?' + params : ''}`),
-  createTugas: (data: FormData) => apiFetch('/tugas', { method: 'POST', body: data }),
-  updateTugas: (id: number, data: FormData) => apiFetch(`/tugas/${id}`, { method: 'PUT', body: data }),
+  createTugas: (data: FormData | Record<string, any>) => apiFetch('/tugas', { method: 'POST', body: data instanceof FormData ? data : JSON.stringify(data) }),
+  updateTugas: (id: number, data: FormData | Record<string, any>) => apiFetch(`/tugas/${id}`, { method: 'PUT', body: data instanceof FormData ? data : JSON.stringify(data) }),
   deleteTugas: (id: number) => apiFetch(`/tugas/${id}`, { method: 'DELETE' }),
   getSubmissions: (id: number) => apiFetch(`/tugas/${id}/submissions`),
   gradeTugas: (subId: number, data: any) =>

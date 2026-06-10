@@ -90,20 +90,24 @@ class BranchController extends Controller
         $userIds = $pengguna->pluck('id_pengguna');
 
         // Ambil log login terbaru per user (subquery — sama dengan UserController)
-        $latestLogs = LoginLog::whereIn('ll.user_id', $userIds)
-            ->from('login_logs as ll')
-            ->joinSub(
-                LoginLog::whereIn('user_id', $userIds)
-                    ->selectRaw('user_id, MAX(logged_in_at) as max_logged_in_at')
-                    ->groupBy('user_id'),
-                'latest',
-                fn($join) => $join
-                    ->on('ll.user_id', '=', 'latest.user_id')
-                    ->on('ll.logged_in_at', '=', 'latest.max_logged_in_at')
-            )
-            ->select('ll.user_id', 'll.logged_in_at as last_login_at', 'll.logged_out_at')
-            ->get()
-            ->keyBy('user_id');
+        try {
+            $latestLogs = LoginLog::whereIn('ll.user_id', $userIds)
+                ->from('login_logs as ll')
+                ->joinSub(
+                    LoginLog::whereIn('user_id', $userIds)
+                        ->selectRaw('user_id, MAX(logged_in_at) as max_logged_in_at')
+                        ->groupBy('user_id'),
+                    'latest',
+                    fn($join) => $join
+                        ->on('ll.user_id', '=', 'latest.user_id')
+                        ->on('ll.logged_in_at', '=', 'latest.max_logged_in_at')
+                )
+                ->select('ll.user_id', 'll.logged_in_at as last_login_at', 'll.logged_out_at')
+                ->get()
+                ->keyBy('user_id');
+        } catch (\Throwable) {
+            $latestLogs = collect();
+        }
 
         $onlineThreshold = now()->subMinutes(15);
 

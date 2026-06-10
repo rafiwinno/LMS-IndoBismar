@@ -402,24 +402,24 @@ export default function TrainerCourses() {
                   </td>
                   <td className="px-5 py-4">
                     <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${
-                      c.status === 'publish'
+                      c.status === 'aktif'
                         ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
                         : 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
                     }`}>
-                      {c.status === 'publish' && <Check size={12} />}
-                      {c.status === 'publish' ? 'Published' : 'Draft'}
+                      {c.status === 'aktif' && <Check size={12} />}
+                      {c.status === 'aktif' ? 'Published' : 'Draft'}
                     </span>
                   </td>
                   <td className="px-5 py-4">
                     <div className="flex items-center justify-end gap-1">
-                      <Link
-                        to={`/trainer/courses/${c.id_kursus}/peserta`}
+                      <button
+                        onClick={() => openPesertaModal(c)}
                         title="Lihat Peserta"
-                        className="p-2 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors inline-flex"
+                        className="p-2 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
                       >
                         <Users size={16} />
-                      </Link>
-                      {c.status !== 'publish' ? (
+                      </button>
+                      {c.status !== 'aktif' ? (
                         <button
                           onClick={() => handlePublish(c.id_kursus)}
                           disabled={actionId === c.id_kursus}
@@ -502,6 +502,7 @@ export default function TrainerCourses() {
                     src={imagePreview}
                     alt="Preview gambar course"
                     className="w-full h-44 object-cover rounded-xl border border-gray-200 dark:border-white/10"
+                    onError={() => setImagePreview(null)}
                   />
                   <button
                     type="button"

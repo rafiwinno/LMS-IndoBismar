@@ -7,9 +7,10 @@ return [
 
     'allowed_origins' => array_filter([
         env('FRONTEND_URL'),                    // URL production (set di .env)
+        'https://bismarlearning.bismareducation.com',
         'http://LMS-IndoBismar.test',
         'http://lms-indobismar.test',
-        'https://LMS-IndoBismar.test',          // HTTPS production
+        'https://LMS-IndoBismar.test',
         'https://lms-indobismar.test',
     ]),
 

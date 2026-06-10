@@ -217,8 +217,8 @@ function StatusBadge({ status }: { status: string }) {
     aktif:   'bg-green-100 text-green-800',
     pending: 'bg-yellow-100 text-yellow-800',
     ditolak: 'bg-red-100 text-red-800',
-    publish: 'bg-blue-100 text-blue-800',
-    draft:   'bg-gray-100 text-gray-600',
+    nonaktif: 'bg-blue-100 text-blue-800',
+    draft:    'bg-gray-100 text-gray-600',
     selesai: 'bg-green-100 text-green-800',
   };
   return (

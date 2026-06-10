@@ -7,7 +7,7 @@ export interface User {
   role: Role;
 }
 
-// User 
+// User — pakai sessionStorage agar bersih saat tab ditutup
 export const saveUser = (user: User) => {
   sessionStorage.setItem("lms_user", JSON.stringify(user));
 }
@@ -21,26 +21,13 @@ export const removeUser = () => {
   sessionStorage.removeItem("lms_user");
 }
 
-// Token 
-export const saveToken = (token: string) => {
-  sessionStorage.setItem("lms_token", token);
-}
-
-export const getToken = (): string | null => {
-  return sessionStorage.getItem("lms_token");
-}
-
-export const removeToken = () => {
-  sessionStorage.removeItem("lms_token");
-}
-
-// Redirect 
+// Redirect
 export const getDashboardPath = (role: Role): string => {
   switch (role) {
     case "superadmin":  return "/admin/dashboard";
     case "admin":       return "/admin/dashboard";
     case "trainer":     return "/trainer/dashboard";
-    case "user":      
+    case "user":
     default:            return "/dashboard";
   }
 };

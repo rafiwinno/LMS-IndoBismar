@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { CheckCircle, AlertCircle, FileText, Clock, Search, Upload, Star, HelpCircle } from 'lucide-react';
+import { CheckCircle, AlertCircle, FileText, Clock, Search, Upload, HelpCircle } from 'lucide-react';
 import API from '../../api/api';
 
 interface Tugas {
@@ -21,6 +21,7 @@ export default function Tasks() {
   const [tugasList, setTugasList]   = useState<Tugas[]>([]);
   const [kuisList, setKuisList]     = useState<Kuis[]>([]);
   const [loading, setLoading]       = useState(true);
+  const [error, setError]           = useState('');
   const [filter, setFilter]         = useState('semua');
   const [search, setSearch]         = useState('');
   const location  = useLocation();
@@ -28,9 +29,8 @@ export default function Tasks() {
   const searchRef = useRef<HTMLInputElement>(null);
 
   // Upload state
-  const [error, setError]           = useState('');
-  const [uploading, setUploading]   = useState<number | null>(null);
-  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploading, setUploading]     = useState<number | null>(null);
+  const [uploadFile, setUploadFile]   = useState<File | null>(null);
   const [uploadError, setUploadError] = useState('');
   const [uploadSuccess, setUploadSuccess] = useState('');
 
@@ -73,7 +73,6 @@ export default function Tasks() {
     }
   };
 
-  // Filter & search helpers
   const filteredTugas = tugasList.filter(t => {
     const matchSearch = search
       ? t.judul_tugas.toLowerCase().includes(search) || t.judul_kursus.toLowerCase().includes(search)
@@ -138,7 +137,6 @@ export default function Tasks() {
       {loading ? (
         <div className="text-center text-gray-400 py-16">Memuat...</div>
       ) : tab === 'tugas' ? (
-        /* ── TUGAS TAB ── */
         filteredTugas.length === 0 ? (
           <div className="text-center text-gray-400 py-16">Tidak ada tugas ditemukan.</div>
         ) : (
@@ -189,7 +187,7 @@ export default function Tasks() {
                       <td className="px-6 py-4 text-right">
                         {t.status_pengumpulan === 'sudah' ? (
                           <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
-                            {t.nilai !== null ? `Nilai: ${t.nilai}` : '✓ Dikumpulkan'}
+                            {t.nilai !== null ? `Nilai: ${t.nilai}` : 'Dikumpulkan'}
                           </span>
                         ) : (
                           <div className="flex items-center justify-end gap-2">
@@ -222,7 +220,6 @@ export default function Tasks() {
           </div>
         )
       ) : (
-        /* ── KUIS TAB ── */
         filteredKuis.length === 0 ? (
           <div className="text-center text-gray-400 py-16">Tidak ada kuis ditemukan.</div>
         ) : (

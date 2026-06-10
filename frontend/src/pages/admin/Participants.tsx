@@ -101,7 +101,7 @@ export function Participants() {
     return () => clearTimeout(t);
   }, [searchTerm, activeTab]);
 
-  const openAdd = () => { setEditData(null); setForm(emptyForm); setShowModal(true); };
+  const openAdd = () => { setEditData(null); setForm(emptyForm); setError(''); setShowModal(true); };
   const openEdit = (p: Peserta) => {
     setEditData(p);
     setForm({ ...emptyForm, nama: p.nama, email: p.email, nomor_hp: p.nomor_hp || '', asal_sekolah: p.asal_sekolah || '', jurusan: p.jurusan || '', status: p.status, password: '' });
@@ -147,7 +147,7 @@ export function Participants() {
     try {
       const [detail, kursusRes] = await Promise.all([
         api.getPesertaDetail(p.id),
-        api.getKursus('status=publish&per_page=100'),
+        api.getKursus('status=aktif&per_page=100'),
       ]);
       setDetailPeserta(detail);
       setAllKursus(kursusRes.data ?? []);
@@ -318,7 +318,7 @@ export function Participants() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <button onClick={() => handleStatusToggle(p)} className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium cursor-pointer ${p.status === 'aktif' ? 'bg-green-100 text-green-800' : p.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800'}`}>
+                      <button onClick={() => handleStatusToggle(p)} className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium cursor-pointer capitalize ${p.status === 'aktif' ? 'bg-green-100 dark:bg-green-500/20 text-green-800 dark:text-green-400' : p.status === 'pending' ? 'bg-yellow-100 dark:bg-yellow-500/20 text-yellow-800 dark:text-yellow-400' : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'}`}>
                         {p.status}
                       </button>
                     </td>
@@ -359,7 +359,7 @@ export function Participants() {
                 <div className="h-12 w-12 rounded-full bg-red-100 flex items-center justify-center">
                   <span className="text-red-600 font-bold text-lg">{p.nama.split(' ').map(n => n[0]).join('').substring(0, 2)}</span>
                 </div>
-                <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${p.status === 'aktif' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>{p.status}</span>
+                <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${p.status === 'aktif' ? 'bg-green-100 dark:bg-green-500/20 text-green-800 dark:text-green-400' : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'}`}>{p.status}</span>
               </div>
               <h3 className="font-semibold text-gray-900 dark:text-white mb-1">{p.nama}</h3>
               <p className="text-xs text-gray-500 mb-3 flex items-center"><MapPin className="w-3 h-3 mr-1" />{p.asal_sekolah || '-'}</p>
@@ -393,7 +393,7 @@ export function Participants() {
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold leading-tight">{detailPeserta.nama}</h3>
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${detailPeserta.status === 'aktif' ? 'bg-green-100 text-green-700' : detailPeserta.status === 'pending' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-600'}`}>
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium capitalize ${detailPeserta.status === 'aktif' ? 'bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400' : detailPeserta.status === 'pending' ? 'bg-yellow-100 dark:bg-yellow-500/20 text-yellow-700 dark:text-yellow-400' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}>
                     {detailPeserta.status}
                   </span>
                 </div>
@@ -789,12 +789,12 @@ export function Participants() {
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white dark:bg-[#161b22] rounded-xl shadow-2xl w-full max-w-md">
-            <div className="flex items-center justify-between p-6 border-b dark:border-white/10">
+          <div className="bg-white dark:bg-[#161b22] rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between p-6 border-b dark:border-white/10 shrink-0">
               <h3 className="text-lg font-semibold dark:text-white">{editData ? 'Edit Peserta' : 'Tambah Peserta'}</h3>
               <button onClick={() => setShowModal(false)}><X className="w-5 h-5 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300" /></button>
             </div>
-            <div className="p-6 space-y-4">
+            <div className="p-6 space-y-4 overflow-y-auto flex-1">
               {error && <p className="text-red-500 text-sm bg-red-50 p-2 rounded">{error}</p>}
               {['nama', 'email', 'nomor_hp', 'asal_sekolah'].map(field => (
                 <div key={field}>

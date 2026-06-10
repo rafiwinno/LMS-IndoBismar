@@ -52,20 +52,24 @@ class UserController extends Controller
 
         // Ambil log terakhir per user — subquery untuk pastikan logged_out_at
         // berasal dari baris yang sama dengan MAX(logged_in_at)
-        $latestLogs = LoginLog::whereIn('ll.user_id', $userIds)
-            ->from('login_logs as ll')
-            ->joinSub(
-                LoginLog::whereIn('user_id', $userIds)
-                    ->selectRaw('user_id, MAX(logged_in_at) as max_logged_in_at')
-                    ->groupBy('user_id'),
-                'latest',
-                fn($join) => $join
-                    ->on('ll.user_id', '=', 'latest.user_id')
-                    ->on('ll.logged_in_at', '=', 'latest.max_logged_in_at')
-            )
-            ->select('ll.user_id', 'll.logged_in_at as last_login_at', 'll.logged_out_at')
-            ->get()
-            ->keyBy('user_id');
+        try {
+            $latestLogs = LoginLog::whereIn('ll.user_id', $userIds)
+                ->from('login_logs as ll')
+                ->joinSub(
+                    LoginLog::whereIn('user_id', $userIds)
+                        ->selectRaw('user_id, MAX(logged_in_at) as max_logged_in_at')
+                        ->groupBy('user_id'),
+                    'latest',
+                    fn($join) => $join
+                        ->on('ll.user_id', '=', 'latest.user_id')
+                        ->on('ll.logged_in_at', '=', 'latest.max_logged_in_at')
+                )
+                ->select('ll.user_id', 'll.logged_in_at as last_login_at', 'll.logged_out_at')
+                ->get()
+                ->keyBy('user_id');
+        } catch (\Throwable) {
+            $latestLogs = collect();
+        }
 
         $onlineThreshold = now()->subMinutes(self::ONLINE_THRESHOLD_MINUTES);
         $roleNames = [1 => 'superadmin', 2 => 'admin', 3 => 'trainer', 4 => 'user'];

@@ -16,8 +16,8 @@ return [
     |--------------------------------------------------------------------------
     | Expiration Minutes
     |--------------------------------------------------------------------------
-    | 60 = token expire setelah 1 jam tidak dipakai.
-    | Sanctum akan otomatis reject token yang sudah expired.
+    | 480 = token expire setelah 8 jam (safety net).
+    | Token peserta dibuat dengan expiry eksplisit di AuthController.
     */
     'expiration' => 480,
 

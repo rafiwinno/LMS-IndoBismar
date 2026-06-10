@@ -84,24 +84,38 @@ class AuthController extends Controller
             ], 401);
         }
 
-        if ($user->status !== 'aktif') {
+        if ($user->status === 'pending') {
             return response()->json([
-                'message' => 'Akun Anda belum aktif atau telah dinonaktifkan.'
+                'message' => 'Akun Anda belum diverifikasi oleh admin. Silakan upload dokumen persyaratan.'
             ], 403);
         }
 
-        $token = $user->createToken('auth_token', ['*'], now()->addHours(8))->plainTextToken;
+        if ($user->status === 'nonaktif') {
+            return response()->json([
+                'message' => 'Akun Anda telah dinonaktifkan. Hubungi admin untuk informasi lebih lanjut.'
+            ], 403);
+        }
+
+        $ingat = $request->boolean('remember');
+        $expiredAt = now()->addDays($ingat ? 30 : 7);
+        $token = $user->createToken('auth_token', ['*'], $expiredAt)->plainTextToken;
+        $menit = $ingat ? 60 * 24 * 30 : 60 * 24 * 7;
 
         return response()->json([
             'message' => 'Login berhasil',
+            'user'    => $user,
             'token'   => $token,
-            'user'    => $user
-        ]);
+        ])->cookie('lms_token', $token, $menit, '/', null, false, true);
     }
 
     // LOGIN ADMIN / TRAINER (USERNAME)
     public function loginStaff(Request $request)
     {
+        $request->validate([
+            'username' => 'required|string',
+            'password' => 'required|string',
+        ]);
+
         $user = Pengguna::where('username', $request->username)
                     ->whereIn('id_role', [1, 2, 3])
                     ->first();
@@ -122,12 +136,18 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Login berhasil',
+            'user'    => $user,
             'token'   => $token,
-            'user'    => $user
-        ]);
+        ])->cookie('lms_token', $token, 60 * 24 * 7, '/', null, false, true);
     }
 
-    // LOGOUT
+    // CEK SESSION AKTIF (untuk restore session di tab baru)
+    public function me(Request $request)
+    {
+        return response()->json(['user' => $request->user()]);
+    }
+
+    // LOGOUT (perangkat saat ini)
     public function logout(Request $request)
     {
         $user = $request->user();
@@ -142,6 +162,16 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Logout berhasil'
-        ]);
+        ])->withoutCookie('lms_token');
+    }
+
+    // LOGOUT SEMUA PERANGKAT
+    public function logoutSemua(Request $request)
+    {
+        $request->user()->tokens()->delete();
+
+        return response()->json([
+            'message' => 'Berhasil keluar dari semua perangkat'
+        ])->withoutCookie('lms_token');
     }
 }

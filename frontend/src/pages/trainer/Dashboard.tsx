@@ -25,7 +25,7 @@ export default function TrainerDashboard() {
       .catch(() => {});
   }, []);
 
-  const published = courses.filter((c) => c.status === 'publish').length;
+  const published = courses.filter((c) => c.status === 'aktif').length;
   const draft = courses.filter((c) => c.status === 'draft').length;
 
   return (
@@ -136,9 +136,9 @@ export default function TrainerDashboard() {
                 className="border border-gray-100 dark:border-white/6 rounded-lg p-4 hover:border-red-300 dark:hover:border-red-800/60 transition-colors group"
               >
                 <div className="flex items-center gap-2 mb-3">
-                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${c.status === 'publish' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
-                  <span className={`text-xs font-medium ${c.status === 'publish' ? 'text-emerald-500' : 'text-amber-500'}`}>
-                    {c.status === 'publish' ? 'Published' : 'Draft'}
+                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${c.status === 'aktif' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                  <span className={`text-xs font-medium ${c.status === 'aktif' ? 'text-emerald-500' : 'text-amber-500'}`}>
+                    {c.status === 'aktif' ? 'Published' : 'Draft'}
                   </span>
                 </div>
                 <p className="font-semibold text-sm text-gray-800 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors line-clamp-1 mb-1">
