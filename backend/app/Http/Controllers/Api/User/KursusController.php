@@ -105,7 +105,7 @@ class KursusController extends Controller
                 'tugas.deskripsi',
                 'tugas.deadline',
                 'tugas.nilai_maksimal',
-                'tugas.file_tugas as file_soal',
+                'tugas.file_soal',
                 'pengumpulan_tugas.id_pengumpulan',
                 'pengumpulan_tugas.nilai',
                 'pengumpulan_tugas.feedback',
