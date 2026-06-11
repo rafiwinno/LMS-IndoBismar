@@ -58,7 +58,7 @@ export default function CourseDetail() {
   const [kuisList, setKuisList] = useState<KuisItem[]>([]);
   const [tugasList, setTugasList] = useState<TugasItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [fetchError, setFetchError] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [activeMateri, setActiveMateri] = useState<Materi | null>(null);
   const [openBab, setOpenBab] = useState<Record<string, boolean>>({});
   const [markingDone, setMarkingDone] = useState(false);
@@ -80,7 +80,13 @@ export default function CourseDetail() {
         });
         setOpenBab(babKeys);
       })
-      .catch(() => setFetchError(true))
+      .catch((err: any) => {
+        if (err.response?.status === 403) {
+          setFetchError(err.response?.data?.message ?? 'Kamu tidak terdaftar di kursus ini.');
+        } else {
+          setFetchError('Gagal memuat kursus. Silakan refresh halaman.');
+        }
+      })
       .finally(() => setLoading(false));
   };
 
@@ -132,7 +138,7 @@ export default function CourseDetail() {
     return acc;
   }, {} as Record<string, Materi[]>);
 
-  if (fetchError) return <div className="text-center text-red-500 py-12">Gagal memuat kursus. Silakan refresh halaman.</div>;
+  if (fetchError) return <div className="text-center text-red-500 py-12">{fetchError}</div>;
 
   if (loading) return (
     <div className="text-center text-gray-500 dark:text-gray-400 py-12">Memuat detail kursus...</div>
