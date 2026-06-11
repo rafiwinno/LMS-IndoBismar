@@ -414,7 +414,7 @@ export default function TrainerCourses() {
                     <div className="flex items-center justify-end gap-1">
                       <button
                         onClick={() => openPesertaModal(c)}
-                        title="Kelola Peserta"
+                        title="Lihat Peserta"
                         className="p-2 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
                       >
                         <Users size={16} />

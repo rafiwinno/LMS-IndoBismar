@@ -19,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'ensure.admin'   => \App\Http\Middleware\EnsureIsAdmin::class,
             'ensure.trainer' => \App\Http\Middleware\EnsureIsTrainer::class,
+            'ensure.peserta' => \App\Http\Middleware\EnsureIsPeserta::class,
             'admin'          => \App\Http\Middleware\EnsureIsAdmin::class,
             'role'           => \App\Http\Middleware\CheckRole::class,
         ]);

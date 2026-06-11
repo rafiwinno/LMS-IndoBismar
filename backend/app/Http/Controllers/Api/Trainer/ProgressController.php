@@ -20,6 +20,10 @@ class ProgressController extends Controller
 
         $cacheKey = "trainer_progress_v6_{$trainerId}_c{$courseId}_p{$page}_pp{$perPage}";
 
+        if ($request->boolean('bust')) {
+            Cache::forget($cacheKey);
+        }
+
         $result = Cache::remember($cacheKey, 120, function () use ($trainerId, $courseId, $perPage, $offset) {
             if ($courseId) {
                 $courseClause  = 'AND k.id_kursus = ?';
@@ -99,14 +103,48 @@ class ProgressController extends Controller
     public function allPesertaCabang(Request $request)
     {
         $cabangId = $request->user()->id_cabang;
+        $search   = trim($request->query('search', ''));
 
-        $peserta = Pengguna::where('id_role', 4)
+        $peserta = Pengguna::with('dataPkl')
+            ->where('id_role', 4)
             ->where('id_cabang', $cabangId)
             ->where('status', 'aktif')
-            ->select('id_pengguna', 'nama', 'email')
+            ->when($search, fn ($q) => $q->where(function ($q) use ($search) {
+                $q->where('nama', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhereHas('dataPkl', fn ($q) => $q->where('asal_sekolah', 'like', "%{$search}%"));
+            }))
             ->orderBy('nama')
-            ->get();
+            ->get()
+            ->map(fn ($p) => [
+                'id'           => $p->id_pengguna,
+                'nama'         => $p->nama,
+                'email'        => $p->email,
+                'nomor_hp'     => $p->nomor_hp,
+                'status'       => $p->status,
+                'asal_sekolah' => $p->dataPkl?->asal_sekolah,
+                'jurusan'      => $p->dataPkl?->jurusan,
+            ]);
 
         return response()->json(['data' => $peserta]);
+    }
+
+    public function updatePeserta(Request $request, $id)
+    {
+        $trainer  = $request->user();
+
+        $pengguna = Pengguna::where('id_pengguna', $id)
+            ->where('id_cabang', $trainer->id_cabang)
+            ->where('id_role', 4)
+            ->firstOrFail();
+
+        $request->validate([
+            'nama'     => 'sometimes|required|string|max:100',
+            'nomor_hp' => 'nullable|string|max:20',
+        ]);
+
+        $pengguna->update($request->only(['nama', 'nomor_hp']));
+
+        return response()->json(['message' => 'Data peserta berhasil diperbarui.']);
     }
 }

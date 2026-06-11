@@ -95,10 +95,6 @@ Route::middleware('auth:sanctum')->group(function () {
         ->where('path', '.*')
         ->middleware('throttle:60,1');
 
-    // ── Upload dokumen PKL oleh peserta (role 4) — harus di luar admin:1,2 ──
-    Route::post('/peserta/saya/dokumen', [AdminPesertaController::class, 'uploadDokumen'])
-        ->middleware('throttle:10,1');
-
     // =========================================================================
     // SUPERADMIN PORTAL
     // =========================================================================
@@ -127,7 +123,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // =========================================================================
     // USER / PESERTA PORTAL
     // =========================================================================
-    Route::prefix('user')->group(function () {
+    Route::prefix('user')->middleware('ensure.peserta')->group(function () {
         Route::get('/dashboard', [UserDashboardController::class, 'stats']);
 
         Route::get('/dokumen',           [UserDocumentController::class, 'index']);
@@ -159,7 +155,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::patch('/notifikasi/{id}/baca',       [UserNotifikasiController::class, 'baca']);
 
         // Upload dokumen PKL milik sendiri
-        Route::post('/dokumen-pkl', [\App\Http\Controllers\Api\Admin\PesertaController::class, 'uploadDokumen']);
+        Route::post('/dokumen-pkl', [AdminPesertaController::class, 'uploadDokumen'])->middleware('throttle:10,1');
     });
 
     // =========================================================================
@@ -210,9 +206,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/trainer/materials/{id}',        [TrainerMaterialController::class, 'update']); // method spoofing untuk FormData upload
         Route::delete('/trainer/materials/{id}',      [TrainerMaterialController::class, 'destroy']);
 
-        // Progress peserta
+        // Progress & manajemen peserta
         Route::get('/trainer/peserta/progress',       [TrainerProgressController::class, 'index']);
         Route::get('/trainer/peserta/semua',          [TrainerProgressController::class, 'allPesertaCabang']);
+        Route::put('/trainer/peserta/{id}',           [TrainerProgressController::class, 'updatePeserta']);
 
         // Notifications
         Route::get('/trainer/notifications',          [TrainerNotificationController::class, 'index']);

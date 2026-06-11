@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, Eye, Mail, MapPin, BookOpen, TrendingUp, Plus, Edit2, Trash2, X, CheckCircle, Clock, FileText, CheckCircle2, XCircle, ExternalLink, UserPlus, UserMinus, Upload, Download, AlertCircle } from 'lucide-react';
+import CustomSelect from '../../components/ui/CustomSelect';
 import { api } from '../../lib/api';
 import { sanitizeUrl } from '../../lib/sanitize';
 import { confirm } from '../../lib/confirm';
@@ -470,19 +471,15 @@ export function Participants() {
 
                   {/* Enroll form */}
                   <div className="flex gap-2 mb-4">
-                    <select
+                    <CustomSelect
+                      placeholder="-- Pilih kursus untuk didaftarkan --"
                       value={selectedKursusId}
-                      onChange={e => setSelectedKursusId(e.target.value === '' ? '' : Number(e.target.value))}
-                      className="flex-1 text-sm border border-gray-200 dark:border-white/10 rounded-lg px-3 py-2 bg-white dark:bg-[#0d0f14] text-gray-800 dark:text-white outline-none focus:ring-2 focus:ring-red-500"
-                    >
-                      <option value="">-- Pilih kursus untuk didaftarkan --</option>
-                      {allKursus
-                        .filter(k => !detailPeserta.kursus?.some((dk: any) => dk.id === k.id))
-                        .map((k: any) => (
-                          <option key={k.id} value={k.id}>{k.judul}</option>
-                        ))
+                      onChange={v => setSelectedKursusId(v === '' ? '' : Number(v))}
+                      options={allKursus
+                        .filter((k: any) => !detailPeserta.kursus?.some((dk: any) => dk.id === k.id))
+                        .map((k: any) => ({ value: k.id, label: k.judul }))
                       }
-                    </select>
+                    />
                     <button
                       onClick={handleEnroll}
                       disabled={!selectedKursusId || enrolling}
