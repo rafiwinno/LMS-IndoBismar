@@ -109,7 +109,7 @@ export default function TrainerProgress() {
       const courses = progressMap.get(p.id) ?? [];
       const avgProgress =
         courses.length > 0
-          ? Math.round(courses.reduce((sum, c) => sum + (c.progress ?? 0), 0) / courses.length)
+          ? Math.min(100, Math.round(courses.reduce((sum, c) => sum + Number(c.progress ?? 0), 0) / courses.length))
           : 0;
       return { ...p, enrolled_courses: courses.length, progress: avgProgress, courses };
     });

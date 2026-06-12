@@ -14,10 +14,10 @@ class FileController extends Controller
             abort(403, 'Link tidak valid atau sudah kadaluarsa.');
         }
 
-        if (!Storage::disk('local')->exists($path)) {
+        if (!Storage::disk('public')->exists($path)) {
             abort(404);
         }
 
-        return Storage::disk('local')->response($path);
+        return Storage::disk('public')->response($path);
     }
 }

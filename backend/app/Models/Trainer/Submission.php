@@ -3,7 +3,7 @@
 namespace App\Models\Trainer;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Models\User;
+use App\Models\Pengguna;
 
 class Submission extends Model
 {
@@ -22,7 +22,7 @@ class Submission extends Model
 
     public function peserta()
     {
-        return $this->belongsTo(User::class, 'id_pengguna', 'id_pengguna');
+        return $this->belongsTo(Pengguna::class, 'id_pengguna', 'id_pengguna');
     }
 
     public function tugas()
