@@ -246,7 +246,9 @@ class KuisController extends Controller
             'scores.*' => 'required|integer|min:0|max:100',
         ]);
 
-        $attempt = AttemptKuis::findOrFail($attemptId);
+        $kursusIds = \App\Models\Kursus::where('id_cabang', $request->user()->id_cabang)->pluck('id_kursus');
+        $attempt = AttemptKuis::whereHas('kuis', fn($q) => $q->whereIn('id_kursus', $kursusIds))
+            ->findOrFail($attemptId);
 
         $totalSkor = 0;
 

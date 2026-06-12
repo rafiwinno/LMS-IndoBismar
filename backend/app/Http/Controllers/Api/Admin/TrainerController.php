@@ -216,7 +216,9 @@ class TrainerController extends Controller
 
     public function updateJadwal(Request $request, $id)
     {
-        $jadwal = JadwalTrainer::findOrFail($id);
+        $cabangId = $request->user()->id_cabang;
+        $jadwal = JadwalTrainer::whereHas('trainer', fn($q) => $q->where('id_cabang', $cabangId))
+            ->findOrFail($id);
 
         $request->validate([
             'tanggal'    => 'sometimes|date',
@@ -234,9 +236,12 @@ class TrainerController extends Controller
         ]);
     }
 
-    public function deleteJadwal($id)
+    public function deleteJadwal(Request $request, $id)
     {
-        JadwalTrainer::findOrFail($id)->delete();
+        $cabangId = $request->user()->id_cabang;
+        JadwalTrainer::whereHas('trainer', fn($q) => $q->where('id_cabang', $cabangId))
+            ->findOrFail($id)
+            ->delete();
 
         return response()->json(['message' => 'Jadwal berhasil dihapus.']);
     }

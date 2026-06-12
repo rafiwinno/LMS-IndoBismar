@@ -15,7 +15,9 @@
       "Bash(Sort-Object)",
       "Bash(Get-ChildItem -Path \"C:\\\\xampp\\\\htdocs\\\\lms-pt-indo-bismar\\\\backend\\\\database\\\\migrations\" -Filter \"*.php\")",
       "Bash(Select-Object -ExpandProperty Name)",
-      "PowerShell(Get-ChildItem -Path \"C:\\\\xampp\\\\htdocs\\\\lms-pt-indo-bismar\\\\backend\\\\app\\\\Http\\\\Controllers\\\\Api\" -Directory | ForEach-Object { $_.Name })"
+      "PowerShell(Get-ChildItem -Path \"C:\\\\xampp\\\\htdocs\\\\lms-pt-indo-bismar\\\\backend\\\\app\\\\Http\\\\Controllers\\\\Api\" -Directory | ForEach-Object { $_.Name })",
+      "Bash(Select-String -Path \"c:/laragon/www/LMS-IndoBismar/frontend/dist/assets/*.js\" -Pattern \"bismareducation|lms-indobismar|8000\")",
+      "Bash(Select-Object -First 5)"
     ]
   }
 }

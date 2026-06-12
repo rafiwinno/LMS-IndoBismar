@@ -23,10 +23,10 @@ export const deleteCourse = (id: number) =>
   api.delete(`/trainer/courses/${id}`);
 
 export const publishCourse = (id: number) =>
-  api.patch(`/trainer/courses/${id}/publish`);
+  api.post(`/trainer/courses/${id}/publish`);
 
 export const unpublishCourse = (id: number) =>
-  api.patch(`/trainer/courses/${id}/unpublish`);
+  api.post(`/trainer/courses/${id}/unpublish`);
 
 export const getAllPesertaCabang = () =>
   api.get('/trainer/peserta/semua');

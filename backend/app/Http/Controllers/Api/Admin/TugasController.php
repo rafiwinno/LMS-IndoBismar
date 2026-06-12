@@ -195,7 +195,9 @@ class TugasController extends Controller
             'feedback' => 'nullable|string',
         ]);
 
-        $submission = PengumpulanTugas::findOrFail($subId);
+        $kursusIds = \App\Models\Kursus::where('id_cabang', $request->user()->id_cabang)->pluck('id_kursus');
+        $submission = PengumpulanTugas::whereHas('tugas', fn($q) => $q->whereIn('id_kursus', $kursusIds))
+            ->findOrFail($subId);
         $submission->update([
             'nilai'    => $request->nilai,
             'feedback' => $request->feedback,

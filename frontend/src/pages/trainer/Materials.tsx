@@ -1,5 +1,6 @@
 import { useParams, Link } from 'react-router-dom';
 import { toast } from '../../lib/toast';
+import { confirm } from '../../lib/confirm';
 import { useEffect, useRef, useState, useMemo } from 'react';
 import { Plus, Trash2, Pencil, FileText, Video, File, ArrowLeft, Loader2, ExternalLink, X as XIcon, ChevronLeft, ChevronDown, Check, FolderOpen } from 'lucide-react';
 import { getMaterials, createMaterial, updateMaterial, deleteMaterial } from '../../api/MaterialApi';
@@ -246,7 +247,7 @@ export default function Materials() {
   };
 
   const handleDelete = async (matId: number) => {
-    if (!window.confirm('Hapus materi ini? Tindakan ini tidak bisa dibatalkan.')) return;
+    if (!await confirm('Hapus materi ini? Tindakan ini tidak bisa dibatalkan.')) return;
     setDeletingId(matId);
     try {
       await deleteMaterial(matId);

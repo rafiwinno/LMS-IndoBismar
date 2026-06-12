@@ -10,7 +10,7 @@ export const createMaterial = (data: FormData) =>
 
 export const updateMaterial = (
   id: number,
-  data: FormData | { judul_materi?: string; tipe_materi?: string; urutan?: number; link_video?: string }
+  data: FormData | { judul_materi?: string; tipe_materi?: string; urutan?: number; link_video?: string; sub_bab?: string | null }
 ) => {
   if (data instanceof FormData) {
     data.append('_method', 'PUT');
