@@ -31,7 +31,8 @@ interface Question {
 }
 interface Quiz {
   id_kuis: number; id_kursus: number; judul_kuis: string;
-  waktu_mulai: string | null; waktu_selesai: string | null; pertanyaan_count?: number;
+  waktu_mulai: string | null; waktu_selesai: string | null;
+  durasi_menit: number | null; pertanyaan_count?: number;
 }
 interface EssayAnswer {
   id_jawaban: number; pertanyaan: string; bobot_nilai: number;
@@ -624,7 +625,7 @@ function KuisTab({ courses, coursesError, initialCourseId }: { courses: Course[]
   const [showQModal, setShowQModal] = useState(false);
   const [editQuiz, setEditQuiz] = useState<Quiz | null>(null);
   const [editQuestion, setEditQuestion] = useState<Question | null>(null);
-  const [quizForm, setQuizForm] = useState({ judul_kuis: '', waktu_mulai: '', waktu_selesai: '' });
+  const [quizForm, setQuizForm] = useState({ judul_kuis: '', waktu_mulai: '', waktu_selesai: '', durasi_menit: 60 });
   const [qForm, setQForm] = useState<Question>({
     pertanyaan: '', tipe: 'pilihan_ganda', bobot_nilai: 10,
     pilihan: Array(4).fill(null).map(() => ({ teks_jawaban: '', benar: false })),
@@ -819,7 +820,7 @@ function KuisTab({ courses, coursesError, initialCourseId }: { courses: Course[]
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <CoursePills courses={courses} selected={selectedCourse} onSelect={setSelectedCourse} />
         <button
-          onClick={() => { setEditQuiz(null); setQuizForm({ judul_kuis: '', waktu_mulai: '', waktu_selesai: '' }); setError(''); setShowQuizModal(true); }}
+          onClick={() => { setEditQuiz(null); setQuizForm({ judul_kuis: '', waktu_mulai: '', waktu_selesai: '', durasi_menit: 60 }); setError(''); setShowQuizModal(true); }}
           disabled={!selectedCourse}
           className="flex items-center gap-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-100 dark:disabled:bg-white/6 disabled:text-gray-400 dark:disabled:text-gray-500 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-all shadow-lg shadow-red-600/20">
           <Plus size={15} /> Tambah Kuis
@@ -846,6 +847,7 @@ function KuisTab({ courses, coursesError, initialCourseId }: { courses: Course[]
                   <p className="font-bold text-gray-900 dark:text-white mb-1">{q.judul_kuis}</p>
                   <div className="flex gap-4 text-xs text-gray-400 dark:text-gray-500">
                     <span className="flex items-center gap-1"><BookOpen size={11} />{q.pertanyaan_count ?? 0} soal</span>
+                    {q.durasi_menit && <span className="flex items-center gap-1"><Clock size={11} />{q.durasi_menit} mnt</span>}
                     {q.waktu_mulai && <span className="flex items-center gap-1"><Clock size={11} />{new Date(q.waktu_mulai).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</span>}
                   </div>
                 </div>
@@ -859,7 +861,7 @@ function KuisTab({ courses, coursesError, initialCourseId }: { courses: Course[]
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-gray-50 dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-colors">
                     <BarChart2 size={13} />Hasil
                   </button>
-                  <button onClick={() => { setEditQuiz(q); setQuizForm({ judul_kuis: q.judul_kuis, waktu_mulai: q.waktu_mulai?.slice(0, 16) ?? '', waktu_selesai: q.waktu_selesai?.slice(0, 16) ?? '' }); setError(''); setShowQuizModal(true); }}
+                  <button onClick={() => { setEditQuiz(q); setQuizForm({ judul_kuis: q.judul_kuis, waktu_mulai: q.waktu_mulai?.slice(0, 16) ?? '', waktu_selesai: q.waktu_selesai?.slice(0, 16) ?? '', durasi_menit: q.durasi_menit ?? 60 }); setError(''); setShowQuizModal(true); }}
                     className="p-2 text-gray-300 dark:text-gray-600 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"><Pencil size={15} /></button>
                   <button onClick={() => handleDeleteQuiz(q.id_kuis)} disabled={deletingId === q.id_kuis} className="p-2 text-gray-300 dark:text-gray-600 hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors disabled:opacity-40">
                     {deletingId === q.id_kuis ? <Loader2 size={15} className="animate-spin" /> : <Trash2 size={15} />}
@@ -940,6 +942,17 @@ function KuisTab({ courses, coursesError, initialCourseId }: { courses: Course[]
               </Field>
               <Field label="Waktu Selesai">
                 <DateTimeInput value={quizForm.waktu_selesai} onChange={(v) => setQuizForm({ ...quizForm, waktu_selesai: v })} />
+              </Field>
+              <Field label="Durasi Pengerjaan (menit)">
+                <input
+                  type="number"
+                  min={1}
+                  max={480}
+                  value={quizForm.durasi_menit}
+                  onChange={(e) => setQuizForm({ ...quizForm, durasi_menit: Math.max(1, parseInt(e.target.value) || 60) })}
+                  className={inputCls}
+                  placeholder="Contoh: 60"
+                />
               </Field>
             </div>
             {error && <p className="text-xs text-red-500 bg-red-50 dark:bg-red-900/20 px-4 py-2.5 rounded-xl">{error}</p>}

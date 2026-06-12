@@ -13,7 +13,7 @@ interface Tugas {
 interface Kuis {
   id_kuis: number; judul_kuis: string; judul_kursus: string;
   waktu_mulai: string; waktu_selesai: string;
-  skor: number | null; status_attempt: string;
+  skor: number | null; status_attempt: 'belum' | 'berlangsung' | 'menunggu' | 'selesai';
 }
 
 export default function Tasks() {
@@ -89,7 +89,7 @@ export default function Tasks() {
       : true;
     const matchFilter =
       filter === 'belum'   ? k.status_attempt === 'belum' :
-      filter === 'selesai' ? k.status_attempt === 'sudah' : true;
+      filter === 'selesai' ? (k.status_attempt === 'selesai' || k.status_attempt === 'menunggu') : true;
     return matchSearch && matchFilter;
   });
 
@@ -254,9 +254,13 @@ export default function Tasks() {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        {k.status_attempt === 'sudah' ? (
+                        {k.status_attempt === 'selesai' ? (
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">
                             <CheckCircle size={13} /> Selesai
+                          </span>
+                        ) : k.status_attempt === 'menunggu' ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-500/10 text-purple-700 dark:text-purple-400">
+                            <AlertCircle size={13} /> Menunggu Penilaian
                           </span>
                         ) : (
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-rose-100 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400">
@@ -265,8 +269,10 @@ export default function Tasks() {
                         )}
                       </td>
                       <td className="px-6 py-4 text-right">
-                        {k.status_attempt === 'sudah' ? (
+                        {k.status_attempt === 'selesai' ? (
                           <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">Nilai: {k.skor ?? '-'}</span>
+                        ) : k.status_attempt === 'menunggu' ? (
+                          <span className="text-sm text-purple-600 dark:text-purple-400">Menunggu trainer</span>
                         ) : (
                           <Link to={`/tasks/quiz/${k.id_kuis}`}
                             className="inline-flex items-center px-4 py-1.5 text-xs font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors">

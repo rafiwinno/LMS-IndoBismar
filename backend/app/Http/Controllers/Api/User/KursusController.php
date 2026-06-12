@@ -78,7 +78,11 @@ class KursusController extends Controller
         $attemptSubQuery = DB::table('attempt_kuis')
             ->where('id_pengguna', $id_pengguna)
             ->groupBy('id_kuis')
-            ->select('id_kuis', DB::raw('MAX(skor) as skor'));
+            ->select(
+                'id_kuis',
+                DB::raw('MAX(skor) as skor'),
+                DB::raw('MAX(status) as attempt_status')
+            );
 
         $kuis = DB::table('kuis')
             ->where('kuis.id_kursus', $id_kursus)
@@ -89,7 +93,12 @@ class KursusController extends Controller
                 'kuis.waktu_mulai',
                 'kuis.waktu_selesai',
                 'ak.skor',
-                DB::raw('CASE WHEN ak.id_kuis IS NOT NULL THEN "sudah" ELSE "belum" END as status_attempt')
+                DB::raw('CASE
+                    WHEN ak.id_kuis IS NULL THEN "belum"
+                    WHEN ak.attempt_status = "selesai" AND ak.skor IS NOT NULL THEN "selesai"
+                    WHEN ak.attempt_status = "selesai" THEN "menunggu"
+                    ELSE "berlangsung"
+                END as status_attempt')
             )
             ->get();
 

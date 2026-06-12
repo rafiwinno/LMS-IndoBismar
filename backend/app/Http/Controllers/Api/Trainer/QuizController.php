@@ -51,6 +51,7 @@ class QuizController extends Controller
             'judul_kuis'    => 'required|string|max:200',
             'waktu_mulai'   => 'nullable|date',
             'waktu_selesai' => 'nullable|date|after:waktu_mulai',
+            'durasi_menit'  => 'nullable|integer|min:1|max:480',
         ]);
 
         $course = Course::findOrFail($request->id_kursus);
@@ -63,6 +64,7 @@ class QuizController extends Controller
             'judul_kuis'    => $request->judul_kuis,
             'waktu_mulai'   => $request->waktu_mulai,
             'waktu_selesai' => $request->waktu_selesai,
+            'durasi_menit'  => $request->durasi_menit ?? 60,
         ]);
 
         return response()->json([
@@ -91,12 +93,14 @@ class QuizController extends Controller
             'judul_kuis'    => 'sometimes|required|string|max:200',
             'waktu_mulai'   => 'nullable|date',
             'waktu_selesai' => $waktuSelesaiRules,
+            'durasi_menit'  => 'nullable|integer|min:1|max:480',
         ]);
 
         $quiz->update([
             'judul_kuis'    => $request->judul_kuis    ?? $quiz->judul_kuis,
             'waktu_mulai'   => $request->waktu_mulai   ?? $quiz->waktu_mulai,
             'waktu_selesai' => $request->waktu_selesai ?? $quiz->waktu_selesai,
+            'durasi_menit'  => $request->durasi_menit  ?? $quiz->durasi_menit,
         ]);
 
         return response()->json(['message' => 'Kuis berhasil diupdate', 'data' => $quiz]);
@@ -341,7 +345,9 @@ class QuizController extends Controller
             $jawaban->update(['skor' => min((int) $skor, (int) $pertanyaan->bobot_nilai)]);
         }
 
-        $totalSkor = JawabanKuis::where('id_attempt', $attemptId)->sum('skor');
+        $rawSum    = JawabanKuis::where('id_attempt', $attemptId)->sum('skor');
+        $totalBobot = \App\Models\Pertanyaan::where('id_kuis', $attempt->id_kuis)->sum('bobot_nilai');
+        $totalSkor  = $totalBobot > 0 ? round(($rawSum / $totalBobot) * 100, 2) : $rawSum;
         $attempt->update(['skor' => $totalSkor]);
 
         if (!$sudahDinilai) {

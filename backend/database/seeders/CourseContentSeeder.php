@@ -112,11 +112,12 @@ class CourseContentSeeder extends Seeder
         // ─── Kuis ─────────────────────────────────────────────────────────────────
         // Kursus 1 — Kuis HTML & CSS Dasar
         $kuis1Id = DB::table('kuis')->insertGetId([
-            'id_kursus'    => $kursus1Id,
-            'judul_kuis'   => 'Kuis HTML & CSS Dasar',
-            'waktu_mulai'  => Carbon::now()->subDays(1),
+            'id_kursus'     => $kursus1Id,
+            'judul_kuis'    => 'Kuis HTML & CSS Dasar',
+            'waktu_mulai'   => Carbon::now()->subDays(1),
             'waktu_selesai' => Carbon::now()->addDays(13),
-            'dibuat_pada'  => $now,
+            'durasi_menit'  => 60,
+            'dibuat_pada'   => $now,
         ]);
 
         $soalKuis1 = [
@@ -195,11 +196,12 @@ class CourseContentSeeder extends Seeder
 
         // Kursus 1 — Kuis JavaScript
         $kuis2Id = DB::table('kuis')->insertGetId([
-            'id_kursus'    => $kursus1Id,
-            'judul_kuis'   => 'Kuis JavaScript Dasar',
-            'waktu_mulai'  => Carbon::now()->subDays(1),
+            'id_kursus'     => $kursus1Id,
+            'judul_kuis'    => 'Kuis JavaScript Dasar',
+            'waktu_mulai'   => Carbon::now()->subDays(1),
             'waktu_selesai' => Carbon::now()->addDays(20),
-            'dibuat_pada'  => $now,
+            'durasi_menit'  => 60,
+            'dibuat_pada'   => $now,
         ]);
 
         $soalKuis2 = [
@@ -262,11 +264,12 @@ class CourseContentSeeder extends Seeder
 
         // Kursus 2 — Kuis Laravel Dasar
         $kuis3Id = DB::table('kuis')->insertGetId([
-            'id_kursus'    => $kursus2Id,
-            'judul_kuis'   => 'Kuis Laravel Dasar',
-            'waktu_mulai'  => Carbon::now()->subDays(1),
+            'id_kursus'     => $kursus2Id,
+            'judul_kuis'    => 'Kuis Laravel Dasar',
+            'waktu_mulai'   => Carbon::now()->subDays(1),
             'waktu_selesai' => Carbon::now()->addDays(13),
-            'dibuat_pada'  => $now,
+            'durasi_menit'  => 60,
+            'dibuat_pada'   => $now,
         ]);
 
         $soalKuis3 = [
@@ -340,11 +343,12 @@ class CourseContentSeeder extends Seeder
 
         // Kursus 2 — Kuis REST API & Sanctum
         $kuis4Id = DB::table('kuis')->insertGetId([
-            'id_kursus'    => $kursus2Id,
-            'judul_kuis'   => 'Kuis REST API & Sanctum',
-            'waktu_mulai'  => Carbon::now()->subDays(1),
+            'id_kursus'     => $kursus2Id,
+            'judul_kuis'    => 'Kuis REST API & Sanctum',
+            'waktu_mulai'   => Carbon::now()->subDays(1),
             'waktu_selesai' => Carbon::now()->addDays(20),
-            'dibuat_pada'  => $now,
+            'durasi_menit'  => 60,
+            'dibuat_pada'   => $now,
         ]);
 
         $soalKuis4 = [

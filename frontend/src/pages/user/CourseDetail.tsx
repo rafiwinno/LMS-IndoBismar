@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
   PlayCircle, FileText, CheckCircle, Circle,
@@ -22,7 +22,7 @@ interface KuisItem {
   judul_kuis: string;
   waktu_selesai: string;
   skor: number | null;
-  status_attempt: 'sudah' | 'belum';
+  status_attempt: 'belum' | 'berlangsung' | 'menunggu' | 'selesai';
 }
 
 interface TugasItem {
@@ -66,6 +66,8 @@ export default function CourseDetail() {
   const [uploading, setUploading] = useState<number | null>(null);
   const [uploadMsg, setUploadMsg] = useState<{ id: number; type: 'success' | 'error'; text: string } | null>(null);
 
+  const isInitialLoad = useRef(true);
+
   const fetchData = () => {
     API.get(`/user/kursus/${id}`)
       .then(res => {
@@ -79,18 +81,45 @@ export default function CourseDetail() {
           babKeys[key] = true;
         });
         setOpenBab(babKeys);
+        setFetchError(null);
       })
       .catch((err: any) => {
-        if (err.response?.status === 403) {
-          setFetchError(err.response?.data?.message ?? 'Kamu tidak terdaftar di kursus ini.');
-        } else {
-          setFetchError('Gagal memuat kursus. Silakan refresh halaman.');
+        // Hanya tampilkan error pada load pertama; poll berikutnya abaikan agar data lama tetap tampil
+        if (isInitialLoad.current) {
+          if (err.response?.status === 403) {
+            setFetchError(err.response?.data?.message ?? 'Kamu tidak terdaftar di kursus ini.');
+          } else {
+            setFetchError('Gagal memuat kursus. Silakan refresh halaman.');
+          }
         }
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        setLoading(false);
+        isInitialLoad.current = false;
+      });
   };
 
   useEffect(() => { fetchData(); }, [id]);
+
+  // Re-fetch saat trainer menilai essay atau saat user kembali ke tab
+  useEffect(() => {
+    const handleEvent = () => fetchData();
+    const handleVisibility = () => { if (!document.hidden) fetchData(); };
+    window.addEventListener('kuis-dinilai', handleEvent);
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => {
+      window.removeEventListener('kuis-dinilai', handleEvent);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, []);
+
+  // Poll otomatis setiap 15 detik selama ada kuis yang menunggu penilaian
+  useEffect(() => {
+    const adaMenunggu = kuisList.some(k => k.status_attempt === 'menunggu');
+    if (!adaMenunggu) return;
+    const timer = setInterval(fetchData, 15000);
+    return () => clearInterval(timer);
+  }, [kuisList]);
 
   const handleMarkDone = async () => {
     if (!activeMateri) return;
@@ -313,9 +342,17 @@ export default function CourseDetail() {
               <div key={kuis.id_kuis} className="rounded-xl border border-gray-200 dark:border-white/8 p-4 space-y-3">
                 <div className="flex items-start justify-between gap-2">
                   <p className="font-semibold text-gray-900 dark:text-white text-sm leading-snug">{kuis.judul_kuis}</p>
-                  {kuis.status_attempt === 'sudah' ? (
+                  {kuis.status_attempt === 'selesai' ? (
                     <span className="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">
                       <CheckCircle size={11} /> Selesai
+                    </span>
+                  ) : kuis.status_attempt === 'menunggu' ? (
+                    <span className="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-500/10 text-purple-700 dark:text-purple-400">
+                      <AlertCircle size={11} /> Menunggu Penilaian
+                    </span>
+                  ) : kuis.status_attempt === 'berlangsung' ? (
+                    <span className="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400">
+                      <AlertCircle size={11} /> Berlangsung
                     </span>
                   ) : (
                     <span className="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400">
@@ -327,16 +364,20 @@ export default function CourseDetail() {
                   <Clock size={12} />
                   Deadline: {new Date(kuis.waktu_selesai).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
                 </div>
-                {kuis.status_attempt === 'sudah' ? (
+                {kuis.status_attempt === 'selesai' ? (
                   <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
                     {kuis.skor} <span className="text-sm font-normal text-gray-400">/ 100</span>
+                  </p>
+                ) : kuis.status_attempt === 'menunggu' ? (
+                  <p className="text-sm text-purple-600 dark:text-purple-400">
+                    Jawaban kamu sedang dinilai oleh trainer.
                   </p>
                 ) : (
                   <button
                     onClick={() => navigate(`/tasks/quiz/${kuis.id_kuis}`, { state: { fromCourse: id } })}
                     className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
                   >
-                    Mulai Kuis
+                    {kuis.status_attempt === 'berlangsung' ? 'Lanjutkan Kuis' : 'Mulai Kuis'}
                   </button>
                 )}
               </div>

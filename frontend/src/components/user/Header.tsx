@@ -5,9 +5,10 @@ import { getUser } from '../../pages/types';
 import API from '../../api/api';
 
 interface Notif {
-  id_notifikasi: number;
+  id_notif: number;
   judul: string;
   pesan: string;
+  tipe: string;
   dibaca: number;
   dibuat_pada: string;
 }
@@ -47,18 +48,28 @@ export default function Header({ onMenuClick }: HeaderProps) {
     return () => window.removeEventListener('lms_user_updated', handleUpdate);
   }, []);
 
+  const prevUnreadRef = useRef<number>(0);
+
   const fetchNotif = () => {
     API.get('/user/notifikasi')
       .then(res => {
-        setNotifList(res.data.data ?? []);
-        setBelumDibaca(res.data.belum_dibaca ?? 0);
+        const list: Notif[] = res.data.data ?? [];
+        const unread: number = res.data.belum_dibaca ?? 0;
+        // Jika ada notifikasi penilaian baru, refresh data kuis di halaman yang sedang aktif
+        if (unread > prevUnreadRef.current) {
+          const hasPenilaian = list.some(n => n.dibaca === 0 && n.tipe === 'penilaian');
+          if (hasPenilaian) window.dispatchEvent(new CustomEvent('kuis-dinilai'));
+        }
+        prevUnreadRef.current = unread;
+        setNotifList(list);
+        setBelumDibaca(unread);
       })
       .catch(() => {});
   };
 
   useEffect(() => {
     fetchNotif();
-    const interval = setInterval(fetchNotif, 60000);
+    const interval = setInterval(fetchNotif, 15000);
     return () => clearInterval(interval);
   }, []);
 
@@ -124,8 +135,8 @@ export default function Header({ onMenuClick }: HeaderProps) {
                   <p className="text-center text-sm text-gray-400 py-8">Tidak ada notifikasi.</p>
                 ) : notifList.map(n => (
                   <div
-                    key={n.id_notifikasi}
-                    onClick={() => handleBaca(n.id_notifikasi)}
+                    key={n.id_notif}
+                    onClick={() => handleBaca(n.id_notif)}
                     className={`px-4 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 transition-colors ${
                       n.dibaca === 0 ? 'bg-red-50 dark:bg-red-500/5' : ''
                     }`}

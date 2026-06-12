@@ -128,22 +128,24 @@ export default function Quiz() {
             <CheckCircle size={40} />
           </div>
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Kuis Berhasil Dikumpulkan!</h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-2">Terima kasih telah mengerjakan {kuis.judul_kuis}.</p>
-          {hasil?.ada_essay && (
-            <p className="text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-lg px-4 py-2 mb-6 inline-block">
-              Soal essay akan dinilai oleh trainer. Nilai di bawah adalah nilai sementara dari soal pilihan ganda.
-            </p>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">Terima kasih telah mengerjakan {kuis.judul_kuis}.</p>
+          {hasil?.ada_essay ? (
+            <div className="bg-purple-50 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/20 rounded-xl p-6 mb-8 text-center">
+              <p className="text-lg font-semibold text-purple-700 dark:text-purple-300 mb-1">Menunggu Penilaian Trainer</p>
+              <p className="text-sm text-purple-600 dark:text-purple-400">Kuis ini mengandung soal essay. Nilai akan keluar setelah trainer menilai jawaban kamu.</p>
+            </div>
+          ) : (
+            <div className="bg-gray-50 dark:bg-white/5 rounded-xl p-6 border border-gray-100 dark:border-white/8 mb-8 inline-block text-left">
+              <div className="flex items-center gap-4 mb-3">
+                <span className="text-gray-500 dark:text-gray-400 font-medium w-32">Nilai:</span>
+                <span className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">{hasil.nilai}</span>
+              </div>
+              <div className="flex items-center gap-4">
+                <span className="text-gray-500 dark:text-gray-400 font-medium w-32">Jawaban Benar:</span>
+                <span className="text-gray-900 dark:text-white font-semibold">{hasil.benar} / {hasil.total}</span>
+              </div>
+            </div>
           )}
-          <div className="bg-gray-50 dark:bg-white/5 rounded-xl p-6 border border-gray-100 dark:border-white/8 mb-8 inline-block text-left">
-            <div className="flex items-center gap-4 mb-3">
-              <span className="text-gray-500 dark:text-gray-400 font-medium w-32">Nilai:</span>
-              <span className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">{hasil.nilai}</span>
-            </div>
-            <div className="flex items-center gap-4">
-              <span className="text-gray-500 dark:text-gray-400 font-medium w-32">Jawaban Benar:</span>
-              <span className="text-gray-900 dark:text-white font-semibold">{hasil.benar} / {hasil.total}</span>
-            </div>
-          </div>
           <div>
             <Link
               to={fromCourse ? `/courses/${fromCourse}` : '/tasks'}

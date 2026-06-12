@@ -16,7 +16,11 @@ class KuisController extends Controller
         $attemptSubQuery = DB::table('attempt_kuis')
             ->where('id_pengguna', $id_pengguna)
             ->groupBy('id_kuis')
-            ->select('id_kuis', DB::raw('MAX(skor) as skor'));
+            ->select(
+                'id_kuis',
+                DB::raw('MAX(skor) as skor'),
+                DB::raw('MAX(status) as attempt_status')
+            );
 
         $kuis = DB::table('kuis')
             ->join('kursus', 'kuis.id_kursus', '=', 'kursus.id_kursus')
@@ -32,7 +36,12 @@ class KuisController extends Controller
                 'kuis.waktu_selesai',
                 'kursus.judul_kursus',
                 'ak.skor',
-                DB::raw('CASE WHEN ak.id_kuis IS NOT NULL THEN "sudah" ELSE "belum" END as status_attempt')
+                DB::raw('CASE
+                    WHEN ak.id_kuis IS NULL THEN "belum"
+                    WHEN ak.attempt_status = "selesai" AND ak.skor IS NOT NULL THEN "selesai"
+                    WHEN ak.attempt_status = "selesai" THEN "menunggu"
+                    ELSE "berlangsung"
+                END as status_attempt')
             )
             ->get();
 
@@ -61,7 +70,7 @@ class KuisController extends Controller
         $sudahKerjakan = DB::table('attempt_kuis')
             ->where('id_pengguna', $id_pengguna)
             ->where('id_kuis', $id_kuis)
-            ->whereNotNull('skor')
+            ->where('status', 'selesai')
             ->exists();
 
         if ($sudahKerjakan) {
@@ -72,7 +81,7 @@ class KuisController extends Controller
         $existing = DB::table('attempt_kuis')
             ->where('id_pengguna', $id_pengguna)
             ->where('id_kuis', $id_kuis)
-            ->whereNull('skor')
+            ->where('status', 'berlangsung')
             ->first();
 
         if (!$existing) {
@@ -107,7 +116,7 @@ class KuisController extends Controller
             ->where('id_kuis', $id_kuis)
             ->first();
 
-        if ($attempt && !is_null($attempt->skor)) {
+        if ($attempt && $attempt->status === 'selesai') {
             return response()->json(['message' => 'Kamu sudah mengerjakan kuis ini'], 409);
         }
 
@@ -164,16 +173,19 @@ class KuisController extends Controller
             $nilai = $totalMC > 0 ? round(($benar / $totalMC) * 100, 2) : 0;
         }
 
+        // Jika ada essay, skor dikosongkan — trainer harus nilai dulu
+        $skorFinal = $adaEssay ? null : $nilai;
+
         if ($attempt) {
             DB::table('attempt_kuis')
                 ->where('id_attempt', $attempt->id_attempt)
-                ->update(['skor' => $nilai, 'status' => 'selesai']);
+                ->update(['skor' => $skorFinal, 'status' => 'selesai']);
             $id_attempt = $attempt->id_attempt;
         } else {
             $id_attempt = DB::table('attempt_kuis')->insertGetId([
                 'id_pengguna' => $id_pengguna,
                 'id_kuis'     => $id_kuis,
-                'skor'        => $nilai,
+                'skor'        => $skorFinal,
                 'waktu_mulai' => now(),
                 'status'      => 'selesai',
             ]);
