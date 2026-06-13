@@ -1,7 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, BookOpen,
-  Award, User, FolderOpen, X, LogOut, Sun, Moon,
+  Award, User, FolderOpen, MessageSquare, X, LogOut, Sun, Moon,
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -23,6 +23,7 @@ const navItems = [
   { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
   { name: 'Courses',   path: '/courses',   icon: BookOpen },
   { name: 'Nilai',     path: '/grades',    icon: Award },
+  { name: 'Feedback',  path: '/feedback',  icon: MessageSquare },
   { name: 'Dokumen',   path: '/documents', icon: FolderOpen },
   { name: 'Profil',    path: '/profile',   icon: User },
 ];

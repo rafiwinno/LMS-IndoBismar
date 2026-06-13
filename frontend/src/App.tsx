@@ -20,6 +20,7 @@ const Quiz           = lazy(() => import('./pages/user/Quiz'));
 const Grades         = lazy(() => import('./pages/user/Grades'));
 const Profile        = lazy(() => import('./pages/user/Profile'));
 const Documents      = lazy(() => import('./pages/user/Documents'));
+const UserFeedback   = lazy(() => import('./pages/user/Feedback'));
 
 // ── Admin Pages ───────────────────────────────────────────────────────────────
 const AdminLayout    = lazy(() => import('./components/admin/Layout'));
@@ -101,6 +102,7 @@ export default function App() {
             <Route path="tasks"          element={<Tasks />} />
             <Route path="tasks/quiz/:id" element={<Quiz />} />
             <Route path="grades"         element={<Grades />} />
+            <Route path="feedback"       element={<UserFeedback />} />
             <Route path="documents"      element={<Documents />} />
             <Route path="profile"        element={<Profile />} />
           </Route>

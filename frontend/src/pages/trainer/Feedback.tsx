@@ -3,7 +3,7 @@ import { Send, MessageSquare, AlertCircle, ChevronDown, Search, Check, BookOpen 
 import api from '../../api/axiosInstance';
 
 interface PesertaItem {
-  id_pengguna: number;
+  id: number;
   nama: string;
 }
 
@@ -201,7 +201,7 @@ export default function TrainerFeedback() {
     });
   }, []);
 
-  const selectedPeserta = pesertaList.find((p) => String(p.id_pengguna) === form.id_peserta);
+  const selectedPeserta = pesertaList.find((p) => String(p.id) === form.id_peserta);
   const selectedCourse  = courseList.find((c) => String(c.id_kursus) === form.id_kursus);
 
   const handleSend = async () => {
@@ -281,7 +281,7 @@ export default function TrainerFeedback() {
               onChange={(val) => setForm({ ...form, id_peserta: val, id_kursus: '' })}
               placeholder="Cari & pilih peserta..."
               getLabel={(p) => p.nama}
-              getValue={(p) => String(p.id_pengguna)}
+              getValue={(p) => String(p.id)}
               renderOption={(p, selected) => (
                 <div className="flex items-center gap-3">
                   <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-colors
