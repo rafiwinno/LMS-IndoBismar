@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import Header from './Header';
 import { ToastProvider } from '../../lib/toast';
+import { ConfirmDialog } from './ConfirmDialog';
 import { getUser, logout as clearSession } from '../../pages/types';
 import { api } from '../../lib/api';
 // Admin pages
@@ -59,6 +60,7 @@ export default function Layout() {
         </main>
       </div>
     </div>
+      <ConfirmDialog />
     </ToastProvider>
   );
 }

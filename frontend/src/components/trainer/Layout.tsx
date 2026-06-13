@@ -3,6 +3,7 @@ import { useState } from 'react';
 import TrainerSidebar from './Sidebar';
 import TrainerHeader from './Header';
 import { ToastProvider } from '../../lib/toast';
+import { ConfirmDialog } from '../admin/ConfirmDialog';
 
 export default function TrainerLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -20,6 +21,7 @@ export default function TrainerLayout() {
         </main>
       </div>
     </div>
+      <ConfirmDialog />
     </ToastProvider>
   );
 }
