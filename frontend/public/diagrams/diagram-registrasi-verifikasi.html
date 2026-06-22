@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <title>Flowchart Registrasi dan Verifikasi – LMS IndoBismar</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: true, theme: 'neutral', flowchart: { curve: 'linear' } });</script>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f5f5f5; padding: 24px 16px; margin: 0; }
+    header { text-align: center; margin-bottom: 20px; }
+    header .label { font-size: 11px; color: #888; letter-spacing: 1px; text-transform: uppercase; }
+    header h1 { font-size: 18px; color: #111; margin: 4px 0 4px; }
+    header p { font-size: 12px; color: #666; }
+    .diagram-box { background: #fff; border: 1px solid #ccc; border-radius: 8px;
+      padding: 32px 24px; max-width: 960px; margin: 0 auto; overflow-x: auto; }
+    .mermaid svg { max-width: 100% !important; height: auto !important; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="label">LMS IndoBismar</div>
+  <h1>Flowchart Registrasi dan Verifikasi Peserta</h1>
+  <p>Alur pendaftaran akun peserta hingga verifikasi dokumen PKL dan aktivasi akun</p>
+</header>
+
+<div class="diagram-box">
+  <div class="mermaid">
+flowchart TD
+    A([Mulai]) --> B{Cara Pendaftaran}
+
+    B -- Mandiri --> C[Peserta Buka\nHalaman Registrasi]
+    B -- Oleh Admin --> D[Admin Tambah Peserta Manual\natau Import CSV Massal]
+
+    C --> E[Isi Form Registrasi\nNama Username Email Password]
+    E --> F{Data Valid\ndan Unik?}
+    F -- Tidak --> G[Tampil Pesan Error\nUsername atau Email Sudah Digunakan]
+    G --> E
+    F -- Ya --> H[Akun Peserta Dibuat\nid role = 4 status = aktif]
+    D --> H
+
+    H --> I[Peserta Login\ndengan Email dan Password]
+    I --> J{Login Berhasil?}
+    J -- Tidak --> K[Tampil Error\nKredensial Salah]
+    K --> I
+    J -- Ya --> L[Dashboard Peserta\nStatus Dokumen Belum Upload]
+
+    L --> M[Buka Halaman\nUpload Dokumen PKL]
+    M --> N[Upload Surat Siswa PDF\ndan Surat Orang Tua PDF]
+    N --> O{File Valid?\nPDF JPG PNG max 2MB}
+    O -- Tidak --> P[Tampil Error\nFormat atau Ukuran Salah]
+    P --> N
+    O -- Ya --> Q[Dokumen Disimpan\nStatus Menunggu Verifikasi]
+    Q --> R[Notifikasi Dikirim\nke Admin Cabang]
+
+    R --> S[Admin Cabang Membuka\nDetail Peserta]
+    S --> T[Admin Melihat Dokumen\nvia Secure Viewer]
+    T --> U{Dokumen Lengkap\ndan Valid?}
+
+    U -- Tidak --> V[Admin Masukkan\nCatatan Penolakan]
+    V --> W[Status Dokumen Ditolak\nStatus Akun Pending]
+    W --> X[Notifikasi Penolakan\nDikirim ke Peserta]
+    X --> Y{Peserta Upload\nUlang Dokumen?}
+    Y -- Ya --> M
+    Y -- Tidak --> Z([Proses Berhenti])
+
+    U -- Ya --> AA[Status Dokumen Diterima\nStatus Akun Aktif Penuh]
+    AA --> AB[Notifikasi Persetujuan\nDikirim ke Peserta]
+    AB --> AC([Peserta Dapat\nAkses Penuh LMS])
+  </div>
+</div>
+
+</body>
+</html>

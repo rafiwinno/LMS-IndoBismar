@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <title>Flowchart Admin Cabang – LMS IndoBismar</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: true, theme: 'neutral', flowchart: { curve: 'linear' } });</script>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f5f5f5; padding: 24px 16px; margin: 0; }
+    header { text-align: center; margin-bottom: 20px; }
+    header .label { font-size: 11px; color: #888; letter-spacing: 1px; text-transform: uppercase; }
+    header h1 { font-size: 18px; color: #111; margin: 4px 0 4px; }
+    header p { font-size: 12px; color: #666; }
+    .diagram-box { background: #fff; border: 1px solid #ccc; border-radius: 8px;
+      padding: 32px 24px; max-width: 960px; margin: 0 auto; overflow-x: auto; }
+    .mermaid svg { max-width: 100% !important; height: auto !important; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="label">LMS IndoBismar</div>
+  <h1>Flowchart Admin Cabang</h1>
+  <p>Alur autentikasi OTP dan seluruh fitur manajemen Admin Cabang</p>
+</header>
+
+<div class="diagram-box">
+  <div class="mermaid">
+flowchart TD
+    A([Mulai]) --> B[Buka Aplikasi LMS]
+    B --> C{Sudah Login?}
+    C -- Belum --> D[Halaman Login Admin Cabang]
+    C -- Sudah --> K
+    D --> E[Input Username dan Password]
+    E --> F{Kredensial Valid?}
+    F -- Tidak --> G[Tampil Pesan Error]
+    G --> D
+    F -- Ya --> H[Sistem Kirim OTP\nke Email Admin Cabang]
+    H --> I[Input Kode OTP dari Email]
+    I --> J{OTP Valid?}
+    J -- Tidak --> J2[Tampil Error OTP]
+    J2 --> I
+    J -- Ya --> K[Dashboard Admin Cabang\nKPI Cards Statistik Cabang]
+    K --> L{Pilih Menu}
+
+    L --> PES[Manajemen Peserta]
+    L --> KRS[Manajemen Kursus]
+    L --> KONT[Manajemen Konten\nMateri Tugas Kuis]
+    L --> TRN[Manajemen Trainer]
+    L --> LAP[Laporan]
+    L --> OUT[Logout]
+
+    PES --> PA{Pilih Aksi}
+    PA --> PA1[Tambah Peserta Manual\natau Import CSV Massal]
+    PA --> PA2[Edit Data dan\nUpdate Status Peserta]
+    PA --> PA3[Verifikasi Dokumen PKL\nSetujui atau Tolak]
+    PA --> PA4[Hapus Peserta]
+    PA1 --> PS[Simpan Perubahan]
+    PA2 --> PS
+    PA3 --> PS
+    PA4 --> PS
+    PS --> K
+
+    KRS --> KA{Pilih Aksi}
+    KA --> KA1[Tambah atau Edit Kursus\nNama Deskripsi Trainer]
+    KA --> KA2[Update Status Kursus\nDraft Aktif Nonaktif]
+    KA --> KA3[Kelola Enrollment\nDaftarkan atau Keluarkan Peserta]
+    KA1 --> KS[Simpan Perubahan]
+    KA2 --> KS
+    KA3 --> KS
+    KS --> K
+
+    KONT --> KO{Pilih Modul Konten}
+    KO --> KO1[Materi\nUpload File atau Link Video]
+    KO --> KO2[Tugas\nBuat Tugas dan Nilai Pengumpulan]
+    KO --> KO3[Kuis\nBuat Soal dan Nilai Esai Manual]
+    KO1 --> OS[Simpan Perubahan]
+    KO2 --> OS
+    KO3 --> OS
+    OS --> K
+
+    TRN --> TA{Pilih Aksi}
+    TA --> TA1[Tambah atau Edit Trainer\nNama Email Status]
+    TA --> TA2[Kelola Jadwal Trainer\nOnline atau Offline]
+    TA1 --> TS[Simpan Perubahan]
+    TA2 --> TS
+    TS --> K
+
+    LAP --> LA1[Lihat Laporan\nPeserta Kursus Kuis Trainer]
+    LA1 --> LA2[Ekspor Laporan CSV\nsesuai Filter Aktif]
+    LA2 --> K
+
+    OUT --> END([Selesai])
+  </div>
+</div>
+
+</body>
+</html>

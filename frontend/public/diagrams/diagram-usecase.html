@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Use Case Diagram – LMS IndoBismar</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; background: #f0f3f8; padding: 24px 16px; }
+    header { text-align: center; margin-bottom: 20px; }
+    header .label { font-size: 11px; color: #888; letter-spacing: 1px; text-transform: uppercase; }
+    header h1 { font-size: 20px; color: #1a3c6e; margin: 5px 0 3px; }
+    header p { font-size: 12px; color: #666; }
+    .wrap { max-width: 1000px; margin: 0 auto; }
+    .tab-bar { display: flex; gap: 4px; flex-wrap: wrap; }
+    .tab-btn { padding: 8px 16px; border: 2px solid #dce3ed; border-bottom: none;
+               border-radius: 8px 8px 0 0; background: #f5f7fa; cursor: pointer;
+               font-size: 13px; color: #555; font-family: Arial; }
+    .tab-btn.active { background: #fff; border-color: #1a3c6e; color: #1a3c6e; font-weight: bold; }
+    .tab-btn:hover:not(.active) { background: #eef1f7; }
+    .tab-panel { display: none; background: #fff; border: 2px solid #1a3c6e;
+                 border-radius: 0 8px 8px 8px; padding: 20px; box-shadow: 0 2px 8px #0001; overflow-x: auto; }
+    .tab-panel.active { display: block; }
+    .panel-title { font-size: 14px; font-weight: bold; color: #1a3c6e;
+                   margin-bottom: 14px; padding-bottom: 8px; border-bottom: 2px solid #bbdefb; }
+    svg { display: block; width: 100%; height: auto; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="label">LMS IndoBismar</div>
+  <h1>Use Case Diagram – Sistem LMS IndoBismar</h1>
+  <p>Use case seluruh aktor: Super Admin, Admin Cabang, Trainer, dan Peserta PKL</p>
+</header>
+
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="showTab('overview',this)">Overview</button>
+  <button class="tab-btn" onclick="showTab('superadmin',this)">Super Admin</button>
+  <button class="tab-btn" onclick="showTab('admincabang',this)">Admin Cabang</button>
+  <button class="tab-btn" onclick="showTab('trainer',this)">Trainer</button>
+  <button class="tab-btn" onclick="showTab('peserta',this)">Peserta PKL</button>
+</div>
+
+<!-- helper: person silhouette as SVG group via <use> -->
+<!-- We define actor shapes inline per-SVG to avoid cross-SVG id conflicts -->
+
+<!-- ══════════════════════════════ OVERVIEW ══════════════════════════════ -->
+<div id="tab-overview" class="tab-panel active">
+  <div class="panel-title">Use Case Overview – Seluruh Aktor</div>
+  <svg viewBox="0 0 960 1110" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="ov-arr" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0,8 3,0 6" fill="#666"/>
+      </marker>
+    </defs>
+
+    <rect x="120" y="20" width="820" height="1078" rx="6" fill="#f0f2ff" stroke="#333" stroke-width="1.5"/>
+    <text x="530" y="42" text-anchor="middle" font-size="13" font-family="Arial" fill="#333">Sistem LMS Indo Bismar</text>
+    <line x1="121" y1="555" x2="939" y2="555" stroke="#bbb" stroke-width="1" stroke-dasharray="8,5"/>
+    <line x1="530" y1="21"  x2="530" y2="1097" stroke="#bbb" stroke-width="1" stroke-dasharray="8,5"/>
+
+    <!-- ── SUPER ADMIN (top-left) ── -->
+    <text x="270" y="63" text-anchor="middle" font-size="11" font-family="Arial" fill="#1565C0" font-weight="bold">Super Admin</text>
+    <!-- actor box -->
+    <rect x="128" y="232" width="110" height="46" rx="4" fill="#e3f2fd" stroke="#1565C0" stroke-width="1.5"/>
+    <circle cx="148" cy="244" r="6" fill="#1565C0" stroke="none"/>
+    <path d="M136,278 Q148,261 160,278 Z" fill="#1565C0" stroke="none"/>
+    <text x="196" y="255" text-anchor="middle" font-size="11" font-weight="bold" font-family="Arial" fill="#1565C0">Super Admin</text>
+    <!-- lines from actor right edge (238,255) to UC left -->
+    <line x1="238" y1="255" x2="284" y2="110" stroke="#1565C0" stroke-width="1.3"/>
+    <line x1="238" y1="255" x2="284" y2="200" stroke="#1565C0" stroke-width="1.3"/>
+    <line x1="238" y1="255" x2="284" y2="290" stroke="#1565C0" stroke-width="1.3"/>
+    <line x1="238" y1="255" x2="284" y2="380" stroke="#1565C0" stroke-width="1.3"/>
+    <line x1="238" y1="255" x2="284" y2="470" stroke="#1565C0" stroke-width="1.3"/>
+    <!-- UCs -->
+    <circle cx="340" cy="110" r="56" fill="#fff" stroke="#1565C0" stroke-width="1.5"/>
+    <text x="340" y="104" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Login</text>
+    <text x="340" y="120" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">dengan OTP</text>
+    <circle cx="340" cy="200" r="56" fill="#fff" stroke="#1565C0" stroke-width="1.5"/>
+    <text x="340" y="194" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Kelola</text>
+    <text x="340" y="210" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Data Cabang</text>
+    <circle cx="340" cy="290" r="56" fill="#fff" stroke="#1565C0" stroke-width="1.5"/>
+    <text x="340" y="284" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Kelola Semua</text>
+    <text x="340" y="300" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Pengguna</text>
+    <circle cx="340" cy="380" r="56" fill="#fff" stroke="#1565C0" stroke-width="1.5"/>
+    <text x="340" y="374" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Dashboard</text>
+    <text x="340" y="390" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Sistem</text>
+    <circle cx="340" cy="470" r="56" fill="#fff" stroke="#1565C0" stroke-width="1.5"/>
+    <text x="340" y="464" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Rekap Login</text>
+    <text x="340" y="480" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Sistem</text>
+
+    <!-- ── TRAINER (top-right) ── -->
+    <text x="720" y="63" text-anchor="middle" font-size="11" font-family="Arial" fill="#2E7D32" font-weight="bold">Trainer</text>
+    <rect x="722" y="232" width="110" height="46" rx="4" fill="#e8f5e9" stroke="#2E7D32" stroke-width="1.5"/>
+    <circle cx="742" cy="244" r="6" fill="#2E7D32" stroke="none"/>
+    <path d="M730,278 Q742,261 754,278 Z" fill="#2E7D32" stroke="none"/>
+    <text x="790" y="255" text-anchor="middle" font-size="12" font-weight="bold" font-family="Arial" fill="#2E7D32">Trainer</text>
+    <line x1="722" y1="255" x2="676" y2="110" stroke="#2E7D32" stroke-width="1.3"/>
+    <line x1="722" y1="255" x2="676" y2="200" stroke="#2E7D32" stroke-width="1.3"/>
+    <line x1="722" y1="255" x2="676" y2="290" stroke="#2E7D32" stroke-width="1.3"/>
+    <line x1="722" y1="255" x2="676" y2="380" stroke="#2E7D32" stroke-width="1.3"/>
+    <line x1="722" y1="255" x2="676" y2="470" stroke="#2E7D32" stroke-width="1.3"/>
+    <circle cx="620" cy="110" r="56" fill="#fff" stroke="#2E7D32" stroke-width="1.5"/>
+    <text x="620" y="104" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Kelola</text>
+    <text x="620" y="120" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Materi Kursus</text>
+    <circle cx="620" cy="200" r="56" fill="#fff" stroke="#2E7D32" stroke-width="1.5"/>
+    <text x="620" y="194" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Buat &amp;</text>
+    <text x="620" y="210" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Kelola Kuis</text>
+    <circle cx="620" cy="290" r="56" fill="#fff" stroke="#2E7D32" stroke-width="1.5"/>
+    <text x="620" y="284" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Buat &amp;</text>
+    <text x="620" y="300" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Kelola Tugas</text>
+    <circle cx="620" cy="380" r="56" fill="#fff" stroke="#2E7D32" stroke-width="1.5"/>
+    <text x="620" y="374" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Nilai Tugas</text>
+    <text x="620" y="390" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Peserta PKL</text>
+    <circle cx="620" cy="470" r="56" fill="#fff" stroke="#2E7D32" stroke-width="1.5"/>
+    <text x="620" y="464" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Monitor</text>
+    <text x="620" y="480" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Progres</text>
+
+    <!-- ── ADMIN CABANG (bottom-left) ── -->
+    <text x="270" y="577" text-anchor="middle" font-size="11" font-family="Arial" fill="#6A1B9A" font-weight="bold">Admin Cabang</text>
+    <rect x="128" y="765" width="110" height="46" rx="4" fill="#f3e5f5" stroke="#6A1B9A" stroke-width="1.5"/>
+    <circle cx="148" cy="777" r="6" fill="#6A1B9A" stroke="none"/>
+    <path d="M136,811 Q148,794 160,811 Z" fill="#6A1B9A" stroke="none"/>
+    <text x="196" y="788" text-anchor="middle" font-size="11" font-weight="bold" font-family="Arial" fill="#6A1B9A">Admin</text>
+    <text x="196" y="802" text-anchor="middle" font-size="11" font-weight="bold" font-family="Arial" fill="#6A1B9A">Cabang</text>
+    <line x1="238" y1="788" x2="284" y2="635" stroke="#6A1B9A" stroke-width="1.3"/>
+    <line x1="238" y1="788" x2="284" y2="725" stroke="#6A1B9A" stroke-width="1.3"/>
+    <line x1="238" y1="788" x2="284" y2="815" stroke="#6A1B9A" stroke-width="1.3"/>
+    <line x1="238" y1="788" x2="284" y2="905" stroke="#6A1B9A" stroke-width="1.3"/>
+    <line x1="238" y1="788" x2="284" y2="995" stroke="#6A1B9A" stroke-width="1.3"/>
+    <circle cx="340" cy="635" r="56" fill="#fff" stroke="#6A1B9A" stroke-width="1.5"/>
+    <text x="340" y="629" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Kelola</text>
+    <text x="340" y="645" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Peserta PKL</text>
+    <circle cx="340" cy="725" r="56" fill="#fff" stroke="#6A1B9A" stroke-width="1.5"/>
+    <text x="340" y="719" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Verifikasi</text>
+    <text x="340" y="735" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Dokumen PKL</text>
+    <circle cx="340" cy="815" r="56" fill="#fff" stroke="#6A1B9A" stroke-width="1.5"/>
+    <text x="340" y="809" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Kelola</text>
+    <text x="340" y="825" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Kursus</text>
+    <circle cx="340" cy="905" r="56" fill="#fff" stroke="#6A1B9A" stroke-width="1.5"/>
+    <text x="340" y="899" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Kelola</text>
+    <text x="340" y="915" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Trainer</text>
+    <circle cx="340" cy="995" r="56" fill="#fff" stroke="#6A1B9A" stroke-width="1.5"/>
+    <text x="340" y="989" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Lihat</text>
+    <text x="340" y="1005" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Laporan</text>
+
+    <!-- ── PESERTA PKL (bottom-right) ── -->
+    <text x="720" y="577" text-anchor="middle" font-size="11" font-family="Arial" fill="#E65100" font-weight="bold">Peserta PKL</text>
+    <rect x="722" y="825" width="110" height="46" rx="4" fill="#fff3e0" stroke="#E65100" stroke-width="1.5"/>
+    <circle cx="742" cy="837" r="6" fill="#E65100" stroke="none"/>
+    <path d="M730,871 Q742,854 754,871 Z" fill="#E65100" stroke="none"/>
+    <text x="790" y="848" text-anchor="middle" font-size="11" font-weight="bold" font-family="Arial" fill="#E65100">Peserta</text>
+    <text x="790" y="862" text-anchor="middle" font-size="11" font-weight="bold" font-family="Arial" fill="#E65100">PKL</text>
+    <line x1="722" y1="848" x2="676" y2="635" stroke="#E65100" stroke-width="1.3"/>
+    <line x1="722" y1="848" x2="676" y2="725" stroke="#E65100" stroke-width="1.3"/>
+    <line x1="722" y1="848" x2="676" y2="815" stroke="#E65100" stroke-width="1.3"/>
+    <line x1="722" y1="848" x2="676" y2="905" stroke="#E65100" stroke-width="1.3"/>
+    <line x1="722" y1="848" x2="676" y2="995" stroke="#E65100" stroke-width="1.3"/>
+    <circle cx="620" cy="635" r="56" fill="#fff" stroke="#E65100" stroke-width="1.5"/>
+    <text x="620" y="629" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Daftar</text>
+    <text x="620" y="645" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">&amp; Login</text>
+    <circle cx="620" cy="725" r="56" fill="#fff" stroke="#E65100" stroke-width="1.5"/>
+    <text x="620" y="719" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Ikuti</text>
+    <text x="620" y="735" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Kursus</text>
+    <circle cx="620" cy="815" r="56" fill="#fff" stroke="#E65100" stroke-width="1.5"/>
+    <text x="620" y="809" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Kerjakan</text>
+    <text x="620" y="825" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Kuis &amp; Tugas</text>
+    <circle cx="620" cy="905" r="56" fill="#fff" stroke="#E65100" stroke-width="1.5"/>
+    <text x="620" y="899" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Upload</text>
+    <text x="620" y="915" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Dokumen PKL</text>
+    <circle cx="620" cy="995" r="56" fill="#fff" stroke="#E65100" stroke-width="1.5"/>
+    <text x="620" y="989" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Lihat Nilai</text>
+    <text x="620" y="1005" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">&amp; Sertifikat</text>
+  </svg>
+</div>
+
+<!-- ══════════════════════════════ SUPER ADMIN ══════════════════════════════ -->
+<div id="tab-superadmin" class="tab-panel">
+  <div class="panel-title">Use Case – Super Admin</div>
+  <svg viewBox="0 0 750 1400" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="sa-arr" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0,8 3,0 6" fill="#666"/>
+      </marker>
+    </defs>
+    <rect x="145" y="25" width="590" height="1355" rx="6" fill="#f0f2ff" stroke="#333" stroke-width="1.5"/>
+    <text x="440" y="46" text-anchor="middle" font-size="13" font-family="Arial" fill="#333">Sistem LMS Indo Bismar</text>
+
+    <!-- Association lines actor→UC (actor center: 120,586) -->
+    <line x1="120" y1="586" x2="248" y2="90"   stroke="#333" stroke-width="1.5"/>
+    <line x1="120" y1="586" x2="230" y2="300"  stroke="#333" stroke-width="1.5"/>
+    <line x1="120" y1="586" x2="230" y2="756"  stroke="#333" stroke-width="1.5"/>
+    <line x1="120" y1="586" x2="230" y2="960"  stroke="#333" stroke-width="1.5"/>
+    <line x1="120" y1="586" x2="230" y2="1130" stroke="#333" stroke-width="1.5"/>
+    <line x1="120" y1="586" x2="248" y2="1280" stroke="#333" stroke-width="1.5"/>
+
+    <!-- Include: Kelola Data Cabang (cy=300) → sub-UCs -->
+    <line x1="370" y1="300" x2="530" y2="175" stroke="#555" stroke-width="1" stroke-dasharray="6,4" marker-end="url(#sa-arr)"/>
+    <line x1="370" y1="300" x2="530" y2="300" stroke="#555" stroke-width="1" stroke-dasharray="6,4" marker-end="url(#sa-arr)"/>
+    <line x1="370" y1="300" x2="530" y2="425" stroke="#555" stroke-width="1" stroke-dasharray="6,4" marker-end="url(#sa-arr)"/>
+    <!-- Include: Kelola Semua Pengguna (cy=756) → sub-UCs -->
+    <line x1="370" y1="756" x2="533" y2="590" stroke="#555" stroke-width="1" stroke-dasharray="6,4" marker-end="url(#sa-arr)"/>
+    <line x1="370" y1="756" x2="533" y2="710" stroke="#555" stroke-width="1" stroke-dasharray="6,4" marker-end="url(#sa-arr)"/>
+    <line x1="370" y1="756" x2="533" y2="830" stroke="#555" stroke-width="1" stroke-dasharray="6,4" marker-end="url(#sa-arr)"/>
+    <line x1="370" y1="756" x2="533" y2="950" stroke="#555" stroke-width="1" stroke-dasharray="6,4" marker-end="url(#sa-arr)"/>
+
+    <!-- Main UCs -->
+    <circle cx="300" cy="90"   r="52" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <text x="300" y="85"  text-anchor="middle" font-size="12" font-family="Arial" fill="#333">Login</text>
+    <text x="300" y="101" text-anchor="middle" font-size="12" font-family="Arial" fill="#333">dengan OTP</text>
+
+    <circle cx="300" cy="300"  r="70" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <text x="300" y="294" text-anchor="middle" font-size="12" font-family="Arial" fill="#333">Kelola</text>
+    <text x="300" y="310" text-anchor="middle" font-size="12" font-family="Arial" fill="#333">Data Cabang</text>
+
+    <circle cx="300" cy="756"  r="70" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <text x="300" y="750" text-anchor="middle" font-size="12" font-family="Arial" fill="#333">Kelola Semua</text>
+    <text x="300" y="766" text-anchor="middle" font-size="12" font-family="Arial" fill="#333">Pengguna</text>
+
+    <circle cx="300" cy="960"  r="70" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <text x="300" y="954" text-anchor="middle" font-size="12" font-family="Arial" fill="#333">Lihat Dashboard</text>
+    <text x="300" y="970" text-anchor="middle" font-size="12" font-family="Arial" fill="#333">Sistem</text>
+
+    <circle cx="300" cy="1130" r="70" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <text x="300" y="1124" text-anchor="middle" font-size="12" font-family="Arial" fill="#333">Rekap Login</text>
+    <text x="300" y="1140" text-anchor="middle" font-size="12" font-family="Arial" fill="#333">Sistem</text>
+
+    <circle cx="300" cy="1280" r="52" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <text x="300" y="1285" text-anchor="middle" font-size="12" font-family="Arial" fill="#333">Logout</text>
+
+    <!-- Sub UCs – Kelola Data Cabang (gap ≥15px between circles) -->
+    <!-- Tambah: bottom=230 | Edit: top=245 (gap=15) | Hapus: top=370 (gap=15 from Edit bottom=355) -->
+    <circle cx="585" cy="175" r="55" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <text x="585" y="171" text-anchor="middle" font-size="12" font-family="Arial" fill="#333">Tambah</text>
+    <text x="585" y="187" text-anchor="middle" font-size="12" font-family="Arial" fill="#333">Cabang</text>
+
+    <circle cx="585" cy="300" r="55" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <text x="585" y="296" text-anchor="middle" font-size="12" font-family="Arial" fill="#333">Edit</text>
+    <text x="585" y="312" text-anchor="middle" font-size="12" font-family="Arial" fill="#333">Cabang</text>
+
+    <circle cx="585" cy="425" r="55" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <text x="585" y="421" text-anchor="middle" font-size="12" font-family="Arial" fill="#333">Hapus</text>
+    <text x="585" y="437" text-anchor="middle" font-size="12" font-family="Arial" fill="#333">Cabang</text>
+
+    <!-- Sub UCs – Kelola Semua Pengguna (start cy=590, Hapus bottom=480, gap=58px) -->
+    <circle cx="585" cy="590" r="52" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <text x="585" y="586" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Lihat</text>
+    <text x="585" y="602" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Pengguna</text>
+
+    <circle cx="585" cy="710" r="52" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <text x="585" y="706" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Tambah</text>
+    <text x="585" y="722" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Pengguna</text>
+
+    <circle cx="585" cy="830" r="52" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <text x="585" y="826" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Edit</text>
+    <text x="585" y="842" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Pengguna</text>
+
+    <circle cx="585" cy="950" r="52" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <text x="585" y="946" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Update</text>
+    <text x="585" y="962" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Status Akun</text>
+
+    <!-- Include badges -->
+    <rect x="420" y="228" width="60" height="18" rx="3" fill="#ccc" opacity="0.9"/>
+    <text x="450" y="241" text-anchor="middle" font-size="10" font-family="Arial" fill="#333">include</text>
+    <rect x="420" y="291" width="60" height="18" rx="3" fill="#ccc" opacity="0.9"/>
+    <text x="450" y="304" text-anchor="middle" font-size="10" font-family="Arial" fill="#333">include</text>
+    <rect x="420" y="353" width="60" height="18" rx="3" fill="#ccc" opacity="0.9"/>
+    <text x="450" y="366" text-anchor="middle" font-size="10" font-family="Arial" fill="#333">include</text>
+    <rect x="421" y="664" width="60" height="18" rx="3" fill="#ccc" opacity="0.9"/>
+    <text x="451" y="677" text-anchor="middle" font-size="10" font-family="Arial" fill="#333">include</text>
+    <rect x="421" y="724" width="60" height="18" rx="3" fill="#ccc" opacity="0.9"/>
+    <text x="451" y="737" text-anchor="middle" font-size="10" font-family="Arial" fill="#333">include</text>
+    <rect x="421" y="784" width="60" height="18" rx="3" fill="#ccc" opacity="0.9"/>
+    <text x="451" y="797" text-anchor="middle" font-size="10" font-family="Arial" fill="#333">include</text>
+    <rect x="421" y="844" width="60" height="18" rx="3" fill="#ccc" opacity="0.9"/>
+    <text x="451" y="857" text-anchor="middle" font-size="10" font-family="Arial" fill="#333">include</text>
+
+    <!-- Actor box (stick figure, no emoji) -->
+    <rect x="10" y="561" width="110" height="50" rx="4" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <circle cx="30" cy="575" r="8" fill="none" stroke="#555" stroke-width="1.5"/>
+    <line x1="30" y1="583" x2="30" y2="599" stroke="#555" stroke-width="1.5"/>
+    <line x1="20" y1="589" x2="40" y2="589" stroke="#555" stroke-width="1.5"/>
+    <line x1="30" y1="599" x2="22" y2="611" stroke="#555" stroke-width="1.5"/>
+    <line x1="30" y1="599" x2="38" y2="611" stroke="#555" stroke-width="1.5"/>
+    <text x="73" y="582" text-anchor="middle" font-size="12" font-weight="bold" font-family="Arial" fill="#333">Super</text>
+    <text x="73" y="598" text-anchor="middle" font-size="12" font-weight="bold" font-family="Arial" fill="#333">Admin</text>
+  </svg>
+</div>
+
+<!-- ══════════════════════════════ ADMIN CABANG ══════════════════════════════ -->
+<div id="tab-admincabang" class="tab-panel">
+  <div class="panel-title">Use Case – Admin Cabang</div>
+  <svg viewBox="0 0 960 1520" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="ac-arr" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0,8 3,0 6" fill="#666"/>
+      </marker>
+    </defs>
+    <rect x="148" y="25" width="797" height="1482" rx="6" fill="#f0f2ff" stroke="#333" stroke-width="1.5"/>
+    <text x="546" y="46" text-anchor="middle" font-size="13" font-family="Arial" fill="#333">Sistem LMS Indo Bismar</text>
+
+    <!-- Actor → Main UCs -->
+    <line x1="125" y1="760" x2="240" y2="88"   stroke="#333" stroke-width="1.5"/>
+    <line x1="125" y1="760" x2="240" y2="340"  stroke="#333" stroke-width="1.5"/>
+    <line x1="125" y1="760" x2="240" y2="835"  stroke="#333" stroke-width="1.5"/>
+    <line x1="125" y1="760" x2="240" y2="1140" stroke="#333" stroke-width="1.5"/>
+    <line x1="125" y1="760" x2="240" y2="1310" stroke="#333" stroke-width="1.5"/>
+    <line x1="125" y1="760" x2="240" y2="1455" stroke="#333" stroke-width="1.5"/>
+
+    <!-- Include: Kelola Peserta PKL (cy=340) → L1 -->
+    <line x1="240" y1="340" x2="450" y2="185"  stroke="#555" stroke-width="1" stroke-dasharray="6,4" marker-end="url(#ac-arr)"/>
+    <line x1="240" y1="340" x2="450" y2="290"  stroke="#555" stroke-width="1" stroke-dasharray="6,4" marker-end="url(#ac-arr)"/>
+    <line x1="240" y1="340" x2="450" y2="400"  stroke="#555" stroke-width="1" stroke-dasharray="6,4" marker-end="url(#ac-arr)"/>
+    <line x1="240" y1="340" x2="450" y2="510"  stroke="#555" stroke-width="1" stroke-dasharray="6,4" marker-end="url(#ac-arr)"/>
+    <!-- Include: Verifikasi Dokumen PKL (L1,cy=510) → L2 -->
+    <line x1="450" y1="510" x2="660" y2="460"  stroke="#555" stroke-width="1" stroke-dasharray="6,4" marker-end="url(#ac-arr)"/>
+    <line x1="450" y1="510" x2="660" y2="570"  stroke="#555" stroke-width="1" stroke-dasharray="6,4" marker-end="url(#ac-arr)"/>
+    <!-- Include: Setujui Dokumen (L2,cy=460) → Aktifkan Akun (L3) -->
+    <line x1="660" y1="460" x2="850" y2="430"  stroke="#555" stroke-width="1" stroke-dasharray="6,4" marker-end="url(#ac-arr)"/>
+    <!-- Include: Kelola Kursus (cy=835) → L1 -->
+    <line x1="240" y1="835" x2="450" y2="700"  stroke="#555" stroke-width="1" stroke-dasharray="6,4" marker-end="url(#ac-arr)"/>
+    <line x1="240" y1="835" x2="450" y2="800"  stroke="#555" stroke-width="1" stroke-dasharray="6,4" marker-end="url(#ac-arr)"/>
+    <line x1="240" y1="835" x2="450" y2="900"  stroke="#555" stroke-width="1" stroke-dasharray="6,4" marker-end="url(#ac-arr)"/>
+    <line x1="240" y1="835" x2="450" y2="1005" stroke="#555" stroke-width="1" stroke-dasharray="6,4" marker-end="url(#ac-arr)"/>
+    <!-- Extend: Lihat Laporan (cy=1310) → Ekspor CSV -->
+    <line x1="240" y1="1310" x2="450" y2="1310" stroke="#555" stroke-width="1" stroke-dasharray="6,4" marker-end="url(#ac-arr)"/>
+
+    <!-- ── MAIN UCs (Col1 cx=240) ── -->
+    <circle cx="240" cy="88"   r="50" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <text x="240" y="83"  text-anchor="middle" font-size="12" font-family="Arial" fill="#333">Login</text>
+    <text x="240" y="99"  text-anchor="middle" font-size="12" font-family="Arial" fill="#333">Admin Cabang</text>
+
+    <circle cx="240" cy="340"  r="70" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <text x="240" y="334" text-anchor="middle" font-size="12" font-family="Arial" fill="#333">Kelola</text>
+    <text x="240" y="350" text-anchor="middle" font-size="12" font-family="Arial" fill="#333">Peserta PKL</text>
+
+    <circle cx="240" cy="835"  r="70" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <text x="240" y="829" text-anchor="middle" font-size="12" font-family="Arial" fill="#333">Kelola</text>
+    <text x="240" y="845" text-anchor="middle" font-size="12" font-family="Arial" fill="#333">Kursus</text>
+
+    <circle cx="240" cy="1140" r="70" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <text x="240" y="1134" text-anchor="middle" font-size="12" font-family="Arial" fill="#333">Kelola</text>
+    <text x="240" y="1150" text-anchor="middle" font-size="12" font-family="Arial" fill="#333">Trainer</text>
+
+    <circle cx="240" cy="1310" r="70" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <text x="240" y="1304" text-anchor="middle" font-size="12" font-family="Arial" fill="#333">Lihat</text>
+    <text x="240" y="1320" text-anchor="middle" font-size="12" font-family="Arial" fill="#333">Laporan</text>
+
+    <circle cx="240" cy="1455" r="50" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <text x="240" y="1460" text-anchor="middle" font-size="12" font-family="Arial" fill="#333">Logout</text>
+
+    <!-- ── L1 INCLUDES (Col2 cx=450) ── -->
+    <circle cx="450" cy="185" r="52" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <text x="450" y="181" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Tambah</text>
+    <text x="450" y="197" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Peserta</text>
+
+    <circle cx="450" cy="290" r="52" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <text x="450" y="286" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Edit</text>
+    <text x="450" y="302" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Peserta</text>
+
+    <circle cx="450" cy="400" r="52" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <text x="450" y="394" text-anchor="middle" font-size="10.5" font-family="Arial" fill="#333">Import CSV</text>
+    <text x="450" y="410" text-anchor="middle" font-size="10.5" font-family="Arial" fill="#333">Massal</text>
+
+    <circle cx="450" cy="510" r="60" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <text x="450" y="502" text-anchor="middle" font-size="10.5" font-family="Arial" fill="#333">Verifikasi</text>
+    <text x="450" y="518" text-anchor="middle" font-size="10.5" font-family="Arial" fill="#333">Dokumen PKL</text>
+
+    <circle cx="450" cy="700" r="52" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <text x="450" y="696" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Tambah</text>
+    <text x="450" y="712" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Kursus</text>
+
+    <circle cx="450" cy="800" r="52" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <text x="450" y="796" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Edit</text>
+    <text x="450" y="812" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Kursus</text>
+
+    <circle cx="450" cy="900" r="52" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <text x="450" y="896" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Hapus</text>
+    <text x="450" y="912" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Kursus</text>
+
+    <circle cx="450" cy="1005" r="60" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <text x="450" y="997" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Kelola</text>
+    <text x="450" y="1013" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Materi</text>
+    <text x="450" y="1082" text-anchor="middle" font-size="9" font-family="Arial" fill="#777" font-style="italic">(Video YT · PDF · PPT · Drive · Dokumen)</text>
+
+    <circle cx="450" cy="1310" r="58" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <text x="450" y="1304" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Ekspor</text>
+    <text x="450" y="1320" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">CSV</text>
+
+    <!-- ── L2 (Col3 cx=660) ── -->
+    <circle cx="660" cy="460" r="55" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <text x="660" y="454" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Setujui</text>
+    <text x="660" y="470" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Dokumen</text>
+
+    <circle cx="660" cy="570" r="55" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <text x="660" y="564" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Tolak</text>
+    <text x="660" y="580" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Dokumen</text>
+
+    <!-- ── L3 (Col4 cx=855) ── -->
+    <circle cx="855" cy="430" r="55" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <text x="855" y="422" text-anchor="middle" font-size="10.5" font-family="Arial" fill="#333">Aktifkan</text>
+    <text x="855" y="436" text-anchor="middle" font-size="10.5" font-family="Arial" fill="#333">Akun</text>
+    <text x="855" y="450" text-anchor="middle" font-size="10.5" font-family="Arial" fill="#333">Peserta</text>
+
+    <!-- ── Badges ── -->
+    <rect x="312" y="175" width="56" height="17" rx="3" fill="#ccc" opacity="0.9"/>
+    <text x="340" y="187" text-anchor="middle" font-size="9.5" font-family="Arial" fill="#333">include</text>
+    <rect x="312" y="282" width="56" height="17" rx="3" fill="#ccc" opacity="0.9"/>
+    <text x="340" y="294" text-anchor="middle" font-size="9.5" font-family="Arial" fill="#333">include</text>
+    <rect x="312" y="390" width="56" height="17" rx="3" fill="#ccc" opacity="0.9"/>
+    <text x="340" y="402" text-anchor="middle" font-size="9.5" font-family="Arial" fill="#333">include</text>
+    <rect x="312" y="500" width="56" height="17" rx="3" fill="#ccc" opacity="0.9"/>
+    <text x="340" y="512" text-anchor="middle" font-size="9.5" font-family="Arial" fill="#333">include</text>
+
+    <rect x="527" y="451" width="56" height="17" rx="3" fill="#ccc" opacity="0.9"/>
+    <text x="555" y="463" text-anchor="middle" font-size="9.5" font-family="Arial" fill="#333">include</text>
+    <rect x="527" y="560" width="56" height="17" rx="3" fill="#ccc" opacity="0.9"/>
+    <text x="555" y="572" text-anchor="middle" font-size="9.5" font-family="Arial" fill="#333">include</text>
+
+    <rect x="727" y="430" width="56" height="17" rx="3" fill="#ccc" opacity="0.9"/>
+    <text x="755" y="442" text-anchor="middle" font-size="9.5" font-family="Arial" fill="#333">include</text>
+
+    <rect x="318" y="691" width="56" height="17" rx="3" fill="#ccc" opacity="0.9"/>
+    <text x="346" y="703" text-anchor="middle" font-size="9.5" font-family="Arial" fill="#333">include</text>
+    <rect x="318" y="791" width="56" height="17" rx="3" fill="#ccc" opacity="0.9"/>
+    <text x="346" y="803" text-anchor="middle" font-size="9.5" font-family="Arial" fill="#333">include</text>
+    <rect x="318" y="891" width="56" height="17" rx="3" fill="#ccc" opacity="0.9"/>
+    <text x="346" y="903" text-anchor="middle" font-size="9.5" font-family="Arial" fill="#333">include</text>
+    <rect x="318" y="993" width="56" height="17" rx="3" fill="#ccc" opacity="0.9"/>
+    <text x="346" y="1005" text-anchor="middle" font-size="9.5" font-family="Arial" fill="#333">include</text>
+
+    <rect x="316" y="1301" width="56" height="17" rx="3" fill="#bbb" opacity="0.9"/>
+    <text x="344" y="1313" text-anchor="middle" font-size="9.5" font-family="Arial" fill="#333">extend</text>
+
+    <!-- Actor box (stick figure, no emoji) -->
+    <rect x="10" y="735" width="110" height="50" rx="4" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <circle cx="30" cy="749" r="8" fill="none" stroke="#555" stroke-width="1.5"/>
+    <line x1="30" y1="757" x2="30" y2="773" stroke="#555" stroke-width="1.5"/>
+    <line x1="20" y1="763" x2="40" y2="763" stroke="#555" stroke-width="1.5"/>
+    <line x1="30" y1="773" x2="22" y2="785" stroke="#555" stroke-width="1.5"/>
+    <line x1="30" y1="773" x2="38" y2="785" stroke="#555" stroke-width="1.5"/>
+    <text x="73" y="757" text-anchor="middle" font-size="11" font-weight="bold" font-family="Arial" fill="#333">Admin</text>
+    <text x="73" y="772" text-anchor="middle" font-size="11" font-weight="bold" font-family="Arial" fill="#333">Cabang</text>
+  </svg>
+</div>
+
+<!-- ══════════════════════════════ TRAINER ══════════════════════════════ -->
+<div id="tab-trainer" class="tab-panel">
+  <div class="panel-title">Use Case – Trainer</div>
+  <svg viewBox="0 0 750 1280" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="tr-arr" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0,8 3,0 6" fill="#666"/>
+      </marker>
+    </defs>
+    <rect x="145" y="25" width="590" height="1240" rx="6" fill="#f0f2ff" stroke="#333" stroke-width="1.5"/>
+    <text x="440" y="46" text-anchor="middle" font-size="13" font-family="Arial" fill="#333">Sistem LMS Indo Bismar</text>
+
+    <line x1="125" y1="630" x2="300" y2="90"   stroke="#333" stroke-width="1.5"/>
+    <line x1="125" y1="630" x2="300" y2="255"  stroke="#333" stroke-width="1.5"/>
+    <line x1="125" y1="630" x2="300" y2="490"  stroke="#333" stroke-width="1.5"/>
+    <line x1="125" y1="630" x2="300" y2="790"  stroke="#333" stroke-width="1.5"/>
+    <line x1="125" y1="630" x2="300" y2="1015" stroke="#333" stroke-width="1.5"/>
+    <line x1="125" y1="630" x2="300" y2="1155" stroke="#333" stroke-width="1.5"/>
+
+    <line x1="300" y1="255"  x2="505" y2="255"  stroke="#555" stroke-width="1" stroke-dasharray="6,4" marker-end="url(#tr-arr)"/>
+    <line x1="300" y1="490"  x2="515" y2="395"  stroke="#555" stroke-width="1" stroke-dasharray="6,4" marker-end="url(#tr-arr)"/>
+    <line x1="300" y1="490"  x2="515" y2="490"  stroke="#555" stroke-width="1" stroke-dasharray="6,4" marker-end="url(#tr-arr)"/>
+    <line x1="300" y1="490"  x2="515" y2="585"  stroke="#555" stroke-width="1" stroke-dasharray="6,4" marker-end="url(#tr-arr)"/>
+    <line x1="300" y1="790"  x2="515" y2="695"  stroke="#555" stroke-width="1" stroke-dasharray="6,4" marker-end="url(#tr-arr)"/>
+    <line x1="300" y1="790"  x2="515" y2="790"  stroke="#555" stroke-width="1" stroke-dasharray="6,4" marker-end="url(#tr-arr)"/>
+    <line x1="300" y1="790"  x2="515" y2="885"  stroke="#555" stroke-width="1" stroke-dasharray="6,4" marker-end="url(#tr-arr)"/>
+    <line x1="300" y1="1015" x2="505" y2="1015" stroke="#555" stroke-width="1" stroke-dasharray="6,4" marker-end="url(#tr-arr)"/>
+
+    <!-- Main UCs -->
+    <circle cx="300" cy="90"   r="52" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <text x="300" y="95"  text-anchor="middle" font-size="13" font-family="Arial" fill="#333">Login</text>
+    <circle cx="300" cy="255"  r="70" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <text x="300" y="249" text-anchor="middle" font-size="12" font-family="Arial" fill="#333">Lihat Kursus</text>
+    <text x="300" y="265" text-anchor="middle" font-size="12" font-family="Arial" fill="#333">yang Diampu</text>
+    <circle cx="300" cy="490"  r="70" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <text x="300" y="484" text-anchor="middle" font-size="12" font-family="Arial" fill="#333">Kelola</text>
+    <text x="300" y="500" text-anchor="middle" font-size="12" font-family="Arial" fill="#333">Materi</text>
+    <circle cx="300" cy="790"  r="70" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <text x="300" y="784" text-anchor="middle" font-size="12" font-family="Arial" fill="#333">Kelola</text>
+    <text x="300" y="800" text-anchor="middle" font-size="12" font-family="Arial" fill="#333">Penugasan</text>
+    <circle cx="300" cy="1015" r="70" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <text x="300" y="1009" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Monitor Progres</text>
+    <text x="300" y="1025" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Peserta PKL</text>
+    <circle cx="300" cy="1155" r="52" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <text x="300" y="1160" text-anchor="middle" font-size="13" font-family="Arial" fill="#333">Logout</text>
+
+    <!-- Sub UCs -->
+    <circle cx="575" cy="255"  r="65" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <text x="575" y="249" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Lihat Peserta</text>
+    <text x="575" y="265" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">per Kursus</text>
+    <circle cx="575" cy="395"  r="55" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <text x="575" y="391" text-anchor="middle" font-size="12" font-family="Arial" fill="#333">Upload</text>
+    <text x="575" y="407" text-anchor="middle" font-size="12" font-family="Arial" fill="#333">Materi</text>
+    <circle cx="575" cy="490"  r="55" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <text x="575" y="486" text-anchor="middle" font-size="12" font-family="Arial" fill="#333">Edit</text>
+    <text x="575" y="502" text-anchor="middle" font-size="12" font-family="Arial" fill="#333">Materi</text>
+    <circle cx="575" cy="585"  r="55" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <text x="575" y="581" text-anchor="middle" font-size="12" font-family="Arial" fill="#333">Hapus</text>
+    <text x="575" y="597" text-anchor="middle" font-size="12" font-family="Arial" fill="#333">Materi</text>
+    <circle cx="575" cy="695"  r="55" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <text x="575" y="691" text-anchor="middle" font-size="12" font-family="Arial" fill="#333">Buat</text>
+    <text x="575" y="707" text-anchor="middle" font-size="12" font-family="Arial" fill="#333">Tugas</text>
+    <circle cx="575" cy="790"  r="55" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <text x="575" y="784" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Edit / Hapus</text>
+    <text x="575" y="800" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Tugas</text>
+    <circle cx="575" cy="885"  r="55" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <text x="575" y="879" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Nilai Jawaban</text>
+    <text x="575" y="895" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Peserta</text>
+    <circle cx="575" cy="1015" r="65" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <text x="575" y="1009" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Beri Feedback</text>
+    <text x="575" y="1025" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">ke Peserta</text>
+
+    <!-- Badges -->
+    <rect x="375" y="246" width="60" height="18" rx="3" fill="#ccc" opacity="0.9"/>
+    <text x="405" y="259" text-anchor="middle" font-size="10" font-family="Arial" fill="#333">include</text>
+    <rect x="380" y="434" width="60" height="18" rx="3" fill="#ccc" opacity="0.9"/>
+    <text x="410" y="447" text-anchor="middle" font-size="10" font-family="Arial" fill="#333">include</text>
+    <rect x="375" y="481" width="60" height="18" rx="3" fill="#ccc" opacity="0.9"/>
+    <text x="405" y="494" text-anchor="middle" font-size="10" font-family="Arial" fill="#333">include</text>
+    <rect x="380" y="529" width="60" height="18" rx="3" fill="#ccc" opacity="0.9"/>
+    <text x="410" y="542" text-anchor="middle" font-size="10" font-family="Arial" fill="#333">include</text>
+    <rect x="380" y="734" width="60" height="18" rx="3" fill="#ccc" opacity="0.9"/>
+    <text x="410" y="747" text-anchor="middle" font-size="10" font-family="Arial" fill="#333">include</text>
+    <rect x="375" y="781" width="60" height="18" rx="3" fill="#ccc" opacity="0.9"/>
+    <text x="405" y="794" text-anchor="middle" font-size="10" font-family="Arial" fill="#333">include</text>
+    <rect x="380" y="829" width="60" height="18" rx="3" fill="#ccc" opacity="0.9"/>
+    <text x="410" y="842" text-anchor="middle" font-size="10" font-family="Arial" fill="#333">include</text>
+    <rect x="375" y="1006" width="60" height="18" rx="3" fill="#ccc" opacity="0.9"/>
+    <text x="405" y="1019" text-anchor="middle" font-size="10" font-family="Arial" fill="#333">extend</text>
+
+    <!-- Actor box -->
+    <rect x="10" y="605" width="110" height="50" rx="4" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <circle cx="30" cy="619" r="8" fill="none" stroke="#555" stroke-width="1.5"/>
+    <line x1="30" y1="627" x2="30" y2="643" stroke="#555" stroke-width="1.5"/>
+    <line x1="20" y1="633" x2="40" y2="633" stroke="#555" stroke-width="1.5"/>
+    <line x1="30" y1="643" x2="22" y2="655" stroke="#555" stroke-width="1.5"/>
+    <line x1="30" y1="643" x2="38" y2="655" stroke="#555" stroke-width="1.5"/>
+    <text x="73" y="633" text-anchor="middle" font-size="13" font-weight="bold" font-family="Arial" fill="#333">Trainer</text>
+  </svg>
+</div>
+
+<!-- ══════════════════════════════ PESERTA PKL ══════════════════════════════ -->
+<div id="tab-peserta" class="tab-panel">
+  <div class="panel-title">Use Case – Peserta PKL</div>
+  <svg viewBox="0 0 750 1230" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="ps-arr" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0,8 3,0 6" fill="#666"/>
+      </marker>
+    </defs>
+    <rect x="145" y="25" width="590" height="1190" rx="6" fill="#f0f2ff" stroke="#333" stroke-width="1.5"/>
+    <text x="440" y="46" text-anchor="middle" font-size="13" font-family="Arial" fill="#333">Sistem LMS Indo Bismar</text>
+
+    <line x1="125" y1="590" x2="300" y2="90"   stroke="#333" stroke-width="1.5"/>
+    <line x1="125" y1="590" x2="300" y2="255"  stroke="#333" stroke-width="1.5"/>
+    <line x1="125" y1="590" x2="300" y2="445"  stroke="#333" stroke-width="1.5"/>
+    <line x1="125" y1="590" x2="300" y2="625"  stroke="#333" stroke-width="1.5"/>
+    <line x1="125" y1="590" x2="300" y2="810"  stroke="#333" stroke-width="1.5"/>
+    <line x1="125" y1="590" x2="300" y2="980"  stroke="#333" stroke-width="1.5"/>
+    <line x1="125" y1="590" x2="300" y2="1150" stroke="#333" stroke-width="1.5"/>
+
+    <line x1="300" y1="255" x2="515" y2="200"  stroke="#555" stroke-width="1" stroke-dasharray="6,4" marker-end="url(#ps-arr)"/>
+    <line x1="300" y1="255" x2="515" y2="310"  stroke="#555" stroke-width="1" stroke-dasharray="6,4" marker-end="url(#ps-arr)"/>
+    <line x1="300" y1="445" x2="515" y2="445"  stroke="#555" stroke-width="1" stroke-dasharray="6,4" marker-end="url(#ps-arr)"/>
+    <line x1="300" y1="625" x2="515" y2="625"  stroke="#555" stroke-width="1" stroke-dasharray="6,4" marker-end="url(#ps-arr)"/>
+    <line x1="300" y1="810" x2="515" y2="810"  stroke="#555" stroke-width="1" stroke-dasharray="6,4" marker-end="url(#ps-arr)"/>
+
+    <!-- Main UCs -->
+    <circle cx="300" cy="90"   r="52" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <text x="300" y="86"  text-anchor="middle" font-size="12" font-family="Arial" fill="#333">Daftar</text>
+    <text x="300" y="102" text-anchor="middle" font-size="12" font-family="Arial" fill="#333">&amp; Login</text>
+    <circle cx="300" cy="255"  r="70" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <text x="300" y="249" text-anchor="middle" font-size="12" font-family="Arial" fill="#333">Ikuti &amp; Lihat</text>
+    <text x="300" y="265" text-anchor="middle" font-size="12" font-family="Arial" fill="#333">Kursus</text>
+    <circle cx="300" cy="445"  r="70" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <text x="300" y="439" text-anchor="middle" font-size="12" font-family="Arial" fill="#333">Kerjakan</text>
+    <text x="300" y="455" text-anchor="middle" font-size="12" font-family="Arial" fill="#333">Kuis</text>
+    <circle cx="300" cy="625"  r="70" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <text x="300" y="619" text-anchor="middle" font-size="12" font-family="Arial" fill="#333">Submit</text>
+    <text x="300" y="635" text-anchor="middle" font-size="12" font-family="Arial" fill="#333">Tugas</text>
+    <circle cx="300" cy="810"  r="70" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <text x="300" y="802" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Upload</text>
+    <text x="300" y="816" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Dokumen PKL</text>
+    <circle cx="300" cy="980"  r="70" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <text x="300" y="974" text-anchor="middle" font-size="12" font-family="Arial" fill="#333">Lihat Nilai</text>
+    <text x="300" y="990" text-anchor="middle" font-size="12" font-family="Arial" fill="#333">&amp; Sertifikat</text>
+    <circle cx="300" cy="1150" r="52" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <text x="300" y="1155" text-anchor="middle" font-size="13" font-family="Arial" fill="#333">Logout</text>
+
+    <!-- Sub UCs -->
+    <circle cx="585" cy="200"  r="58" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <text x="585" y="194" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Lihat &amp;</text>
+    <text x="585" y="210" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Unduh Materi</text>
+    <circle cx="585" cy="310"  r="58" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <text x="585" y="304" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Lihat Progres</text>
+    <text x="585" y="320" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Kursus</text>
+    <circle cx="585" cy="445"  r="62" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <text x="585" y="437" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Lihat Hasil</text>
+    <text x="585" y="453" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">&amp; Nilai Kuis</text>
+    <circle cx="585" cy="625"  r="62" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <text x="585" y="619" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Lihat Nilai</text>
+    <text x="585" y="635" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">&amp; Feedback</text>
+    <circle cx="585" cy="810"  r="62" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <text x="585" y="802" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Cek Status</text>
+    <text x="585" y="818" text-anchor="middle" font-size="11" font-family="Arial" fill="#333">Verifikasi</text>
+
+    <!-- Badges -->
+    <rect x="376" y="190" width="56" height="17" rx="3" fill="#ccc" opacity="0.9"/>
+    <text x="404" y="202" text-anchor="middle" font-size="9.5" font-family="Arial" fill="#333">include</text>
+    <rect x="376" y="300" width="56" height="17" rx="3" fill="#ccc" opacity="0.9"/>
+    <text x="404" y="312" text-anchor="middle" font-size="9.5" font-family="Arial" fill="#333">include</text>
+    <rect x="376" y="436" width="56" height="17" rx="3" fill="#ccc" opacity="0.9"/>
+    <text x="404" y="448" text-anchor="middle" font-size="9.5" font-family="Arial" fill="#333">include</text>
+    <rect x="376" y="616" width="56" height="17" rx="3" fill="#ccc" opacity="0.9"/>
+    <text x="404" y="628" text-anchor="middle" font-size="9.5" font-family="Arial" fill="#333">extend</text>
+    <rect x="376" y="801" width="56" height="17" rx="3" fill="#ccc" opacity="0.9"/>
+    <text x="404" y="813" text-anchor="middle" font-size="9.5" font-family="Arial" fill="#333">include</text>
+
+    <!-- Actor box -->
+    <rect x="10" y="565" width="110" height="50" rx="4" fill="#fff" stroke="#333" stroke-width="1.5"/>
+    <circle cx="30" cy="579" r="8" fill="none" stroke="#555" stroke-width="1.5"/>
+    <line x1="30" y1="587" x2="30" y2="603" stroke="#555" stroke-width="1.5"/>
+    <line x1="20" y1="593" x2="40" y2="593" stroke="#555" stroke-width="1.5"/>
+    <line x1="30" y1="603" x2="22" y2="615" stroke="#555" stroke-width="1.5"/>
+    <line x1="30" y1="603" x2="38" y2="615" stroke="#555" stroke-width="1.5"/>
+    <text x="73" y="587" text-anchor="middle" font-size="12" font-weight="bold" font-family="Arial" fill="#333">Peserta</text>
+    <text x="73" y="602" text-anchor="middle" font-size="12" font-weight="bold" font-family="Arial" fill="#333">PKL</text>
+  </svg>
+</div>
+
+</div>
+<script>
+function showTab(name, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+</script>
+</body>
+</html>

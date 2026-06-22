@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <title>Flowchart Trainer – LMS IndoBismar</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: true, theme: 'neutral', flowchart: { curve: 'linear' } });</script>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f5f5f5; padding: 24px 16px; margin: 0; }
+    header { text-align: center; margin-bottom: 20px; }
+    header .label { font-size: 11px; color: #888; letter-spacing: 1px; text-transform: uppercase; }
+    header h1 { font-size: 18px; color: #111; margin: 4px 0 4px; }
+    header p { font-size: 12px; color: #666; }
+    .diagram-box { background: #fff; border: 1px solid #ccc; border-radius: 8px;
+      padding: 32px 24px; max-width: 960px; margin: 0 auto; overflow-x: auto; }
+    .mermaid svg { max-width: 100% !important; height: auto !important; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="label">LMS IndoBismar</div>
+  <h1>Flowchart Trainer</h1>
+  <p>Alur login langsung tanpa OTP, pembuatan konten kursus, dan penilaian peserta</p>
+</header>
+
+<div class="diagram-box">
+  <div class="mermaid">
+flowchart TD
+    A([Mulai]) --> B[Buka Aplikasi LMS]
+    B --> C{Sudah Login?}
+    C -- Belum --> D[Halaman Login Trainer\nTanpa OTP]
+    C -- Sudah --> K
+    D --> E[Input Username dan Password]
+    E --> F{Kredensial Valid\ndan Status Aktif?}
+    F -- Tidak --> G[Tampil Pesan Error]
+    G --> D
+    F -- Ya --> K[Dashboard Trainer\nDaftar Kursus Saya]
+    K --> H[Pilih Kursus\ndari Daftar Kursus]
+    H --> L{Pilih Menu}
+
+    L --> MAT[Manajemen Materi]
+    L --> TGS[Manajemen Tugas]
+    L --> KUI[Manajemen Kuis]
+    L --> PROG[Progress Peserta]
+    L --> OUT[Logout]
+
+    MAT --> MA{Pilih Aksi}
+    MA --> MA1[Upload Materi File\nPDF PPT DOC XLS]
+    MA --> MA2[Tambah Link YouTube\natau Google Drive]
+    MA --> MA3[Edit Urutan dan Judul\natau Hapus Materi]
+    MA1 --> MS[Simpan Perubahan]
+    MA2 --> MS
+    MA3 --> MS
+    MS --> K
+
+    TGS --> TG{Pilih Aksi}
+    TG --> TG1[Buat atau Edit Tugas\nJudul Deadline Deskripsi]
+    TG --> TG2[Lihat Pengumpulan Peserta\nFile dan Tanggal Submit]
+    TG2 --> TG3{Sudah Ada\nPengumpulan?}
+    TG3 -- Ya --> TG4[Input Nilai dan Feedback\nke Peserta]
+    TG3 -- Belum --> TG5[Menunggu Peserta Submit]
+    TG1 --> TGS2[Simpan Perubahan]
+    TG4 --> TGS2
+    TG5 --> TGS2
+    TGS2 --> K
+
+    KUI --> KU{Pilih Aksi}
+    KU --> KU1[Buat Kuis\nWaktu Mulai dan Selesai]
+    KU --> KU2[Tambah Soal\nPilihan Ganda atau Esai]
+    KU --> KU3[Lihat Hasil Kuis\nSkor Semua Peserta]
+    KU3 --> KU4{Ada Soal Esai\nBelum Dinilai?}
+    KU4 -- Ya --> KU5[Input Nilai\ntiap Jawaban Esai]
+    KU4 -- Tidak --> KU6[Semua Soal\nSudah Dinilai]
+    KU1 --> KUS[Simpan Perubahan]
+    KU2 --> KUS
+    KU5 --> KUS
+    KU6 --> KUS
+    KUS --> K
+
+    PROG --> PR1[Lihat Progress Materi\nStatus Belum atau Sudah]
+    PR1 --> PR2[Lihat Nilai Tugas\ndan Kuis Peserta]
+    PR2 --> PR3[Kirim Feedback\nke Peserta Tertentu]
+    PR3 --> K
+
+    OUT --> END([Selesai])
+  </div>
+</div>
+
+</body>
+</html>

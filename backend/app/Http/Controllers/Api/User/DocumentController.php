@@ -37,28 +37,44 @@ class DocumentController extends Controller
 
         $id_pengguna = $request->user()->id_pengguna;
 
-        // Simpan file ke storage/app/public/dokumen/{id_pengguna}
+        // Simpan file ke private storage agar bisa diakses via secure endpoint
         $file     = $request->file('file');
         $namaFile = time() . '_' . $file->getClientOriginalName();
-        $path     = $file->storeAs("dokumen/{$id_pengguna}", $namaFile, 'public');
+        $path     = $file->storeAs("dokumen/{$id_pengguna}", $namaFile, 'local');
 
-        // Cek apakah row sudah ada untuk user ini
+        // Update tabel dokumen_verifikasi (dipakai user-side untuk cek status upload)
         $existing = DB::table('dokumen_verifikasi')
             ->where('id_pengguna', $id_pengguna)
             ->first();
 
         if ($existing) {
-            // Update kolom yang sesuai
             DB::table('dokumen_verifikasi')
                 ->where('id_pengguna', $id_pengguna)
                 ->update([$jenis => $path, 'status' => 'pending']);
         } else {
-            // Insert row baru
             DB::table('dokumen_verifikasi')->insert([
                 'id_pengguna'   => $id_pengguna,
                 $jenis          => $path,
                 'status'        => 'pending',
             ]);
+        }
+
+        // Sync ke data_peserta_pkl agar dokumen terlihat di panel admin
+        // kolom surat_orang_tua di dokumen_verifikasi → surat_ortu di data_peserta_pkl
+        $kolomPkl = $jenis === 'surat_orang_tua' ? 'surat_ortu' : 'surat_siswa';
+
+        $dataPkl = DB::table('data_peserta_pkl')
+            ->where('id_pengguna', $id_pengguna)
+            ->first();
+
+        if ($dataPkl) {
+            DB::table('data_peserta_pkl')
+                ->where('id_pengguna', $id_pengguna)
+                ->update([
+                    $kolomPkl        => $path,
+                    'status_dokumen' => 'menunggu',
+                    'catatan_dokumen'=> null,
+                ]);
         }
 
         // Kirim notifikasi ke semua admin cabang yang sama

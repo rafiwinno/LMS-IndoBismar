@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <title>Flowchart Belajar dan Evaluasi – LMS IndoBismar</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: true, theme: 'neutral', flowchart: { curve: 'linear' } });</script>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f5f5f5; padding: 24px 16px; margin: 0; }
+    header { text-align: center; margin-bottom: 20px; }
+    header .label { font-size: 11px; color: #888; letter-spacing: 1px; text-transform: uppercase; }
+    header h1 { font-size: 18px; color: #111; margin: 4px 0 4px; }
+    header p { font-size: 12px; color: #666; }
+    .diagram-box { background: #fff; border: 1px solid #ccc; border-radius: 8px;
+      padding: 32px 24px; max-width: 960px; margin: 0 auto; overflow-x: auto; }
+    .mermaid svg { max-width: 100% !important; height: auto !important; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="label">LMS IndoBismar</div>
+  <h1>Flowchart Belajar dan Evaluasi Peserta</h1>
+  <p>Alur akses materi, pengumpulan tugas, dan pengerjaan kuis oleh Peserta PKL</p>
+</header>
+
+<div class="diagram-box">
+  <div class="mermaid">
+flowchart TD
+    A([Mulai]) --> B[Peserta Login\nke Sistem LMS]
+    B --> C{Login Berhasil?}
+    C -- Tidak --> D[Tampil Pesan Error]
+    D --> B
+    C -- Ya --> E[Dashboard Peserta\nDaftar Kursus yang Diikuti]
+    E --> F{Ada Kursus\nyang Diikuti?}
+    F -- Tidak --> G[Hubungi Admin\nuntuk Didaftarkan ke Kursus]
+    G --> E
+    F -- Ya --> H[Pilih Kursus]
+    H --> I{Pilih Aktivitas\nPembelajaran}
+
+    I --> J[Akses Materi]
+    I --> K[Kerjakan Tugas]
+    I --> L[Kerjakan Kuis]
+
+    J --> J1[Lihat Daftar Materi\nbeserta Status Progres]
+    J1 --> J2[Buka Materi\nFile atau Video]
+    J2 --> J3{Tandai Sudah\nDibaca?}
+    J3 -- Ya --> J4[Progress Materi\nDisimpan sebagai Sudah]
+    J3 -- Tidak --> I
+    J4 --> I
+
+    K --> K1[Lihat Daftar Tugas\ndengan Informasi Deadline]
+    K1 --> K2{Deadline\nMasih Aktif?}
+    K2 -- Tidak --> K3[Tugas Tidak Bisa\nDikumpulkan Lagi]
+    K3 --> I
+    K2 -- Ya --> K4[Upload File Tugas\nmax 50MB]
+    K4 --> K5{File Valid?}
+    K5 -- Tidak --> K6[Tampil Error\nFormat atau Ukuran Salah]
+    K6 --> K4
+    K5 -- Ya --> K7[Tugas Berhasil Dikumpulkan\nMenunggu Penilaian]
+    K7 --> K8[Trainer Memberi\nNilai dan Feedback]
+    K8 --> K9[Peserta Melihat\nNilai dan Feedback]
+    K9 --> I
+
+    L --> L1[Lihat Daftar Kuis\nWaktu Mulai dan Selesai]
+    L1 --> L2{Kuis Sedang\nBerlangsung?}
+    L2 -- Tidak --> L3[Kuis Belum Dibuka\natau Sudah Selesai]
+    L3 --> I
+    L2 -- Ya --> L4[Mulai Kuis\nAttempt Dibuat]
+    L4 --> L5[Jawab Soal\nPilihan Ganda atau Esai]
+    L5 --> L6[Submit Semua Jawaban]
+    L6 --> L7[Skor Pilihan Ganda\nDihitung Otomatis]
+    L7 --> L8{Ada Soal\nEsai?}
+    L8 -- Tidak --> L9[Skor Final\nLangsung Ditampilkan]
+    L8 -- Ya --> L10[Menunggu Penilaian\nEsai dari Trainer]
+    L10 --> L11[Trainer Menilai\nJawaban Esai]
+    L11 --> L9
+    L9 --> L12[Peserta Melihat\nHasil dan Skor Kuis]
+    L12 --> I
+
+    I --> M{Selesai Belajar?}
+    M -- Lanjut --> H
+    M -- Selesai --> N([Selesai])
+  </div>
+</div>
+
+</body>
+</html>

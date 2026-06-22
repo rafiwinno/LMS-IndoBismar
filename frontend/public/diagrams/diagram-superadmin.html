@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <title>Flowchart Super Admin – LMS IndoBismar</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: true, theme: 'neutral', flowchart: { curve: 'linear' } });</script>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f5f5f5; padding: 24px 16px; margin: 0; }
+    header { text-align: center; margin-bottom: 20px; }
+    header .label { font-size: 11px; color: #888; letter-spacing: 1px; text-transform: uppercase; }
+    header h1 { font-size: 18px; color: #111; margin: 4px 0 4px; }
+    header p { font-size: 12px; color: #666; }
+    .diagram-box { background: #fff; border: 1px solid #ccc; border-radius: 8px;
+      padding: 32px 24px; max-width: 960px; margin: 0 auto; overflow-x: auto; }
+    .mermaid svg { max-width: 100% !important; height: auto !important; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="label">LMS IndoBismar</div>
+  <h1>Flowchart Super Admin</h1>
+  <p>Alur autentikasi OTP dan manajemen sistem oleh Super Admin</p>
+</header>
+
+<div class="diagram-box">
+  <div class="mermaid">
+flowchart TD
+    A([Mulai]) --> B[Buka Aplikasi LMS]
+    B --> C{Sudah Login?}
+    C -- Belum --> D[Halaman Login Super Admin]
+    C -- Sudah --> K
+    D --> E[Input Username dan Password]
+    E --> F{Kredensial Valid?}
+    F -- Tidak --> G[Tampil Pesan Error]
+    G --> D
+    F -- Ya --> H[Sistem Kirim OTP\nke Email Super Admin]
+    H --> I[Input Kode OTP dari Email]
+    I --> J{OTP Valid?}
+    J -- Tidak --> J2[Tampil Error OTP]
+    J2 --> I
+    J -- Ya --> K[Dashboard Super Admin]
+    K --> L{Pilih Menu}
+
+    L --> M[Manajemen Cabang]
+    L --> N[Manajemen Pengguna]
+    L --> O[Rekap Login]
+    L --> P[Logout]
+
+    M --> M1[Lihat Daftar Cabang]
+    M1 --> M2{Pilih Aksi}
+    M2 --> M3[Tambah Cabang Baru]
+    M2 --> M4[Edit Data Cabang]
+    M2 --> M5[Hapus Cabang]
+    M3 --> MS[Simpan Perubahan]
+    M4 --> MS
+    M5 --> MS
+    MS --> K
+
+    N --> N1[Lihat Semua Pengguna\nLintas Cabang]
+    N1 --> N2{Pilih Aksi}
+    N2 --> N3[Tambah Pengguna Baru]
+    N2 --> N4[Edit Data Pengguna]
+    N2 --> N5[Update Status\nAktif atau Nonaktif]
+    N2 --> N6[Hapus Pengguna Bulk]
+    N3 --> NS[Simpan Perubahan]
+    N4 --> NS
+    N5 --> NS
+    N6 --> NS
+    NS --> K
+
+    O --> O1[Lihat Statistik Login\nSeluruh Sistem dan Cabang]
+    O1 --> K
+
+    P --> Q([Selesai])
+  </div>
+</div>
+
+</body>
+</html>
