@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Search, Eye, Mail, MapPin, BookOpen, TrendingUp, Plus, Edit2, Trash2, X, CheckCircle, Clock, FileText, CheckCircle2, XCircle, ExternalLink, UserPlus, UserMinus, Upload, Download, AlertCircle } from 'lucide-react';
 import CustomSelect from '../../components/ui/CustomSelect';
 import { api } from '../../lib/api';
-import { sanitizeUrl } from '../../lib/sanitize';
 import { confirm } from '../../lib/confirm';
 import { useToast } from '../../lib/toast';
 
@@ -30,6 +29,18 @@ interface ImportResult {
   berhasil: { nama: string; username: string; password: string; tanggal_lahir: string }[];
   gagal: { baris: number; nama: string; alasan: string }[];
   message: string;
+}
+
+async function openSecureDoc(url: string) {
+  const token = sessionStorage.getItem('token');
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/pdf' },
+  });
+  if (!res.ok) return;
+  const blob = await res.blob();
+  const blobUrl = URL.createObjectURL(blob);
+  const win = window.open(blobUrl, '_blank');
+  if (win) setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
 }
 
 export function Participants() {
@@ -443,20 +454,20 @@ export function Participants() {
                     </div>
                     <div className="space-y-2">
                       {detailPeserta.surat_siswa_url ? (
-                        <a href={sanitizeUrl(detailPeserta.surat_siswa_url)} target="_blank" rel="noopener noreferrer"
-                          className="flex items-center gap-2 px-3 py-2 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-red-600 hover:bg-red-50 transition-colors">
+                        <button onClick={() => openSecureDoc(detailPeserta.surat_siswa_url)}
+                          className="w-full flex items-center gap-2 px-3 py-2 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-red-600 hover:bg-red-50 transition-colors">
                           <FileText className="w-4 h-4 flex-shrink-0" />
                           Surat Pernyataan Siswa PKL
                           <ExternalLink className="w-3.5 h-3.5 ml-auto flex-shrink-0" />
-                        </a>
+                        </button>
                       ) : <p className="text-sm text-gray-400 italic">Surat siswa belum diupload</p>}
                       {detailPeserta.surat_ortu_url ? (
-                        <a href={sanitizeUrl(detailPeserta.surat_ortu_url)} target="_blank" rel="noopener noreferrer"
-                          className="flex items-center gap-2 px-3 py-2 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-red-600 hover:bg-red-50 transition-colors">
+                        <button onClick={() => openSecureDoc(detailPeserta.surat_ortu_url)}
+                          className="w-full flex items-center gap-2 px-3 py-2 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-red-600 hover:bg-red-50 transition-colors">
                           <FileText className="w-4 h-4 flex-shrink-0" />
                           Surat Pernyataan Orang Tua
                           <ExternalLink className="w-3.5 h-3.5 ml-auto flex-shrink-0" />
-                        </a>
+                        </button>
                       ) : <p className="text-sm text-gray-400 italic">Surat orang tua belum diupload</p>}
                       {detailPeserta.catatan_dokumen && (
                         <p className="text-xs text-red-500 mt-1"><span className="font-semibold">Catatan:</span> {detailPeserta.catatan_dokumen}</p>
@@ -570,22 +581,22 @@ export function Participants() {
               <div className="space-y-2">
                 <p className="text-sm font-medium text-gray-700">Dokumen Terlampir</p>
                 {reviewPeserta.surat_siswa_url ? (
-                  <a href={sanitizeUrl(reviewPeserta.surat_siswa_url)} target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-2 px-3 py-2 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-red-600 hover:bg-red-50 transition-colors">
+                  <button onClick={() => openSecureDoc(reviewPeserta.surat_siswa_url)}
+                    className="w-full flex items-center gap-2 px-3 py-2 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-red-600 hover:bg-red-50 transition-colors">
                     <FileText className="w-4 h-4 flex-shrink-0" />
                     Surat Pernyataan Siswa PKL
                     <ExternalLink className="w-3.5 h-3.5 ml-auto flex-shrink-0" />
-                  </a>
+                  </button>
                 ) : (
                   <p className="text-sm text-gray-400 italic">Surat siswa belum diupload</p>
                 )}
                 {reviewPeserta.surat_ortu_url ? (
-                  <a href={sanitizeUrl(reviewPeserta.surat_ortu_url)} target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-2 px-3 py-2 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-red-600 hover:bg-red-50 transition-colors">
+                  <button onClick={() => openSecureDoc(reviewPeserta.surat_ortu_url)}
+                    className="w-full flex items-center gap-2 px-3 py-2 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-red-600 hover:bg-red-50 transition-colors">
                     <FileText className="w-4 h-4 flex-shrink-0" />
                     Surat Pernyataan Orang Tua
                     <ExternalLink className="w-3.5 h-3.5 ml-auto flex-shrink-0" />
-                  </a>
+                  </button>
                 ) : (
                   <p className="text-sm text-gray-400 italic">Surat orang tua belum diupload</p>
                 )}

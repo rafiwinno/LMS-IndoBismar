@@ -548,8 +548,8 @@ class PesertaController extends Controller
             'join_date'        => $p->dibuat_pada,
             'status_dokumen'   => $p->dataPkl?->status_dokumen  ?? null,
             'catatan_dokumen'  => $p->dataPkl?->catatan_dokumen ?? null,
-            'surat_siswa_url'  => $siswaPath ? url('/api/dokumen/secure/' . urlencode($siswaPath)) : null,
-            'surat_ortu_url'   => $ortuPath  ? url('/api/dokumen/secure/' . urlencode($ortuPath))  : null,
+            'surat_siswa_url'  => $siswaPath ? url('/api/dokumen/secure/' . $siswaPath) : null,
+            'surat_ortu_url'   => $ortuPath  ? url('/api/dokumen/secure/' . $ortuPath)  : null,
         ];
     }
 
