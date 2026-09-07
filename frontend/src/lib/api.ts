@@ -160,6 +160,13 @@ export const api = {
       body: JSON.stringify({ aksi, catatan }),
     }),
 
+  // Kode Sertifikat (admin cabang)
+  updateSertifikat: (id: number, kode_sertifikat: string) =>
+    apiFetch(`/peserta/${id}/sertifikat`, {
+      method: 'PATCH',
+      body: JSON.stringify({ kode_sertifikat }),
+    }),
+
   // Upload dokumen oleh peserta (setelah login)
   uploadDokumen: (formData: FormData) =>
     apiFetch('/user/dokumen-pkl', { method: 'POST', body: formData }),

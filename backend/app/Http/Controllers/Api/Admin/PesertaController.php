@@ -311,6 +311,53 @@ class PesertaController extends Controller
     }
 
     /**
+     * PATCH /api/peserta/{id}/sertifikat
+     * Admin cabang mengisi/mengubah kode sertifikat peserta.
+     */
+    public function updateSertifikat(Request $request, $id)
+    {
+        $request->validate([
+            'kode_sertifikat' => 'required|string|max:50',
+        ]);
+
+        $peserta = Pengguna::where('id_cabang', $request->user()->id_cabang)
+            ->where('id_role', 4)
+            ->findOrFail($id);
+
+        $admin = $request->user();
+
+        $penilaian = \App\Models\PenilaianPkl::updateOrCreate(
+            ['id_pengguna' => $peserta->id_pengguna],
+            [
+                'kode_sertifikat'   => $request->kode_sertifikat,
+                'dinilai_oleh'      => $admin->id_pengguna,
+                'tanggal_penilaian' => now(),
+            ]
+        );
+
+        Notifikasi::create([
+            'id_penerima'  => $peserta->id_pengguna,
+            'judul'        => 'Kode Sertifikat Tersedia',
+            'pesan'        => 'Kode sertifikat PKL Anda telah tersedia. Silakan cek halaman Nilai.',
+            'tipe'         => 'sertifikat_tersedia',
+            'id_referensi' => $peserta->id_pengguna,
+        ]);
+
+        AuditLog::log(
+            $admin->id_pengguna,
+            'update_sertifikat',
+            'penilaian_pkl', $peserta->id_pengguna,
+            ['kode_sertifikat' => $request->kode_sertifikat],
+            [], $request->ip()
+        );
+
+        return response()->json([
+            'message'         => 'Kode sertifikat berhasil disimpan.',
+            'kode_sertifikat' => $penilaian->kode_sertifikat,
+        ]);
+    }
+
+    /**
      * POST /api/peserta/saya/dokumen
      * Peserta upload dokumen PKL ke private storage (tidak bisa diakses publik)
      */
@@ -599,6 +646,7 @@ class PesertaController extends Controller
                 'nilai_teknis'     => $p->penilaianPkl->nilai_teknis,
                 'nilai_non_teknis' => $p->penilaianPkl->nilai_non_teknis,
                 'nilai_akhir'      => $p->penilaianPkl->nilai_akhir,
+                'kode_sertifikat'  => $p->penilaianPkl->kode_sertifikat,
             ] : null,
         ]);
     }

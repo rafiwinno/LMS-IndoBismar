@@ -240,6 +240,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/peserta/{id}',       [AdminPesertaController::class, 'destroy']);
         Route::patch('/peserta/{id}/status', [AdminPesertaController::class, 'updateStatus']);
         Route::patch('/peserta/{id}/verifikasi-dokumen', [AdminPesertaController::class, 'verifikasiDokumen']);
+        Route::patch('/peserta/{id}/sertifikat',         [AdminPesertaController::class, 'updateSertifikat']);
 
         // Kursus (admin)
         Route::get('/kursus',                                     [AdminKursusController::class, 'index']);

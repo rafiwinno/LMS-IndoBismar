@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Eye, Mail, MapPin, BookOpen, TrendingUp, Plus, Edit2, Trash2, X, CheckCircle, Clock, FileText, CheckCircle2, XCircle, ExternalLink, UserPlus, UserMinus, Upload, Download, AlertCircle } from 'lucide-react';
+import { Search, Eye, Mail, MapPin, BookOpen, TrendingUp, Plus, Edit2, Trash2, X, CheckCircle, Clock, FileText, CheckCircle2, XCircle, ExternalLink, UserPlus, UserMinus, Upload, Download, AlertCircle, Award } from 'lucide-react';
 import CustomSelect from '../../components/ui/CustomSelect';
 import { api } from '../../lib/api';
 import { confirm } from '../../lib/confirm';
@@ -62,6 +62,8 @@ export function Participants() {
   const [reviewPeserta, setReviewPeserta] = useState<any>(null);
   const [catatanTolak, setCatatanTolak] = useState('');
   const [verifying, setVerifying] = useState(false);
+  const [kodeSertifikat, setKodeSertifikat] = useState('');
+  const [savingSertifikat, setSavingSertifikat] = useState(false);
 
   // Enrollment state
   const [allKursus, setAllKursus] = useState<any[]>([]);
@@ -161,12 +163,30 @@ export function Participants() {
         api.getKursus('status=aktif&per_page=100'),
       ]);
       setDetailPeserta(detail);
+      setKodeSertifikat(detail.penilaian_pkl?.kode_sertifikat ?? '');
       setAllKursus(kursusRes.data ?? []);
     } catch (e: any) {
       toast.error(e.message);
       setDetailPeserta(null);
     } finally {
       setLoadingDetail(false);
+    }
+  };
+
+  const handleSaveSertifikat = async () => {
+    if (!detailPeserta || !kodeSertifikat.trim()) return;
+    setSavingSertifikat(true);
+    try {
+      await api.updateSertifikat(detailPeserta.id, kodeSertifikat.trim());
+      setDetailPeserta({
+        ...detailPeserta,
+        penilaian_pkl: { ...detailPeserta.penilaian_pkl, kode_sertifikat: kodeSertifikat.trim() },
+      });
+      toast.success('Kode sertifikat berhasil disimpan.');
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setSavingSertifikat(false);
     }
   };
 
@@ -475,6 +495,34 @@ export function Participants() {
                     </div>
                   </div>
                 )}
+
+                {/* Kode Sertifikat */}
+                <div className="p-6 border-b border-gray-100 dark:border-white/8">
+                  <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                    <Award className="w-3.5 h-3.5" /> Kode Sertifikat PKL
+                  </h4>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      maxLength={50}
+                      value={kodeSertifikat}
+                      onChange={e => setKodeSertifikat(e.target.value)}
+                      placeholder="Masukkan kode sertifikat, mis. CERT-2026-0001"
+                      className="flex-1 px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-red-500 outline-none text-sm bg-white dark:bg-[#161b22] dark:text-white"
+                    />
+                    <button
+                      onClick={handleSaveSertifikat}
+                      disabled={savingSertifikat || !kodeSertifikat.trim() || kodeSertifikat.trim() === (detailPeserta.penilaian_pkl?.kode_sertifikat ?? '')}
+                      className="flex items-center gap-1.5 px-3 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white text-sm rounded-lg transition-colors"
+                    >
+                      <Upload className="w-4 h-4" />
+                      {savingSertifikat ? 'Menyimpan...' : 'Simpan'}
+                    </button>
+                  </div>
+                  <p className="text-xs text-gray-400 mt-2">
+                    Kode ini akan langsung terlihat oleh peserta di halaman Nilai mereka.
+                  </p>
+                </div>
 
                 {/* Kursus & Enrollment */}
                 <div className="p-6">
